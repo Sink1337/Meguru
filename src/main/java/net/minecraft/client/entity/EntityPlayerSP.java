@@ -775,12 +775,18 @@ public class EntityPlayerSP extends AbstractClientPlayer {
 
     @Override
     public void moveEntity(double x, double y, double z) {
-        MoveEvent event = new MoveEvent(x, y, z);
+        float strafe = Minecraft.getMinecraft().thePlayer.moveStrafing;
+        float forward = Minecraft.getMinecraft().thePlayer.moveForward;
+
+        MoveEvent event = new MoveEvent(x, y, z, strafe, forward);
+
         Tenacity.INSTANCE.getEventProtocol().handleEvent(event);
+
         if (!event.isCancelled()) {
             x = event.getX();
             y = event.getY();
             z = event.getZ();
+
             super.moveEntity(x, y, z);
         }
     }

@@ -1,5 +1,6 @@
 package dev.tenacity.module.impl.movement;
 
+import dev.tenacity.event.impl.network.PacketReceiveEvent;
 import dev.tenacity.event.impl.network.PacketSendEvent;
 import dev.tenacity.event.impl.player.MotionEvent;
 import dev.tenacity.event.impl.player.MoveEvent;
@@ -8,6 +9,8 @@ import dev.tenacity.module.Module;
 import dev.tenacity.module.settings.impl.BooleanSetting;
 import dev.tenacity.module.settings.impl.ModeSetting;
 import dev.tenacity.module.settings.impl.NumberSetting;
+import dev.tenacity.ui.notifications.NotificationManager;
+import dev.tenacity.ui.notifications.NotificationType;
 import dev.tenacity.utils.misc.MathUtils;
 import dev.tenacity.utils.player.MovementUtils;
 import dev.tenacity.utils.server.PacketUtils;
@@ -15,11 +18,13 @@ import dev.tenacity.utils.time.TimerUtil;
 import net.minecraft.init.Items;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
+import net.minecraft.item.ItemBow;
 import net.minecraft.network.Packet;
 import net.minecraft.network.play.client.C03PacketPlayer;
 import net.minecraft.network.play.client.C07PacketPlayerDigging;
 import net.minecraft.network.play.client.C08PacketPlayerBlockPlacement;
 import net.minecraft.network.play.client.C09PacketHeldItemChange;
+import net.minecraft.network.play.server.S12PacketEntityVelocity;
 import net.minecraft.util.BlockPos;
 import net.minecraft.util.EnumFacing;
 
@@ -28,7 +33,7 @@ import java.util.List;
 
 public final class LongJump extends Module {
 
-    private final ModeSetting mode = new ModeSetting("Mode", "Vanilla", "Vanilla", "Watchdog", "NCP", "AGC");
+    private final ModeSetting mode = new ModeSetting("Mode", "Vanilla", "Vanilla", "Watchdog", "NCP", "AGC", "Bloxd");
     private final ModeSetting watchdogMode = new ModeSetting("Watchdog Mode", "Damage", "Damage", "Damageless");
     private final NumberSetting damageSpeed = new NumberSetting("Damage Speed", 1, 20, 1, 0.5);
     private final BooleanSetting spoofY = new BooleanSetting("Spoof Y", false);
@@ -44,6 +49,22 @@ public final class LongJump extends Module {
     private double z;
     private final List<Packet> packets = new ArrayList<>();
     private int stage;
+
+    private final TimerUtil flightTimer = new TimerUtil();
+    private boolean bloxdFlying;
+
+    // 对应 BowLongJump 中的 ticks，记录模块启用时的 ticksExisted
+    private int bowModuleEnableTicks = 0;
+    private int bowSlot = -1;
+    // 对应 BowLongJump 中的 hasHurt，表示是否已受到弓箭击退伤害
+    private boolean hasTakenBowDamage = false;
+
+    private final NumberSetting bloxdHorizontalSpeed = new NumberSetting("Bloxd Horizontal Speed", 0.5, 5, 0.1, 0.1);
+    private final NumberSetting bloxdVerticalSpeed = new NumberSetting("Bloxd Vertical Speed", 0.2, 5, 0.1, 0.1);
+    // 对应 BowLongJump 中拉弓并释放的时间点 (ticks)
+    private final NumberSetting bowPullTicks = new NumberSetting("Bow Release Tick", 3, 1, 20, 1);
+
+    public static boolean isBloxdLongJumping = false;
 
     @Override
     public void onMotionEvent(MotionEvent event) {
@@ -128,7 +149,7 @@ public final class LongJump extends Module {
                 }
                 break;
             case "AGC":
-                int bow = getBowSlot();
+                int agcBowSlot = getBowSlot();
 
                 if (damagedBow) {
                     if (mc.thePlayer.onGround && jumpTimer.hasTimeElapsed(1000)) {
@@ -142,19 +163,23 @@ public final class LongJump extends Module {
                 }
 
                 if (!damagedBow) {
+                    if (mc.thePlayer.inventory.currentItem != agcBowSlot) {
+                        PacketUtils.sendPacketNoEvent(new C09PacketHeldItemChange(agcBowSlot));
+                        mc.thePlayer.inventory.currentItem = agcBowSlot;
+                    }
+
                     switch (ticks) {
                         case 0:
-                            if (prevSlot != bow) {
-                                PacketUtils.sendPacketNoEvent(new C09PacketHeldItemChange(bow));
-                            }
-                            PacketUtils.sendPacketNoEvent(new C08PacketPlayerBlockPlacement(mc.thePlayer.inventory.getStackInSlot(bow)));
+                            mc.playerController.sendUseItem(mc.thePlayer, mc.theWorld, mc.thePlayer.getHeldItem());
                             break;
                         case 3:
                             event.setPitch(-89.93F);
-                            PacketUtils.sendPacketNoEvent(new C03PacketPlayer.C06PacketPlayerPosLook(event.getX(), event.getY(), event.getZ(), event.getYaw(), pitch, event.isOnGround()));
                             PacketUtils.sendPacketNoEvent(new C07PacketPlayerDigging(C07PacketPlayerDigging.Action.RELEASE_USE_ITEM, new BlockPos(-1, -1, -1), EnumFacing.DOWN));
-                            if (prevSlot != bow) {
+                            mc.thePlayer.stopUsingItem();
+
+                            if (mc.thePlayer.inventory.currentItem != prevSlot) {
                                 PacketUtils.sendPacketNoEvent(new C09PacketHeldItemChange(prevSlot));
+                                mc.thePlayer.inventory.currentItem = prevSlot;
                             }
                             break;
                     }
@@ -162,13 +187,81 @@ public final class LongJump extends Module {
                         damagedBow = true;
                     }
                 }
+                break;
+            case "Bloxd":
+                if (event.isPre()) {
+                    if (!bloxdFlying) {
+                        // 在没有受到击退伤害时，执行 BowLongJump 的拉弓逻辑
+                        if (!hasTakenBowDamage) {
+                            // 强制视角向上，确保始终正确
+                            event.setPitch(-90.0F);
+
+                            // 模仿 BowLongJump 的 ticksExisted 计时和释放逻辑
+                            if (mc.thePlayer.ticksExisted - bowModuleEnableTicks == bowPullTicks.getValue().intValue()) {
+                                // 发送精确的视角包，BowLongJump 使用 -89.5f
+                                PacketUtils.sendPacketNoEvent(new C03PacketPlayer.C05PacketPlayerLook(mc.thePlayer.rotationYaw, -89.5f, true));
+                                // 发送释放物品包
+                                PacketUtils.sendPacketNoEvent(new C07PacketPlayerDigging(C07PacketPlayerDigging.Action.RELEASE_USE_ITEM, new BlockPos(0, 0, 0), EnumFacing.DOWN));
+                                mc.thePlayer.stopUsingItem(); // 确保客户端停止使用物品动画
+
+                                // 切换回原始槽位，模仿 BowLongJump 立即切换
+                                if (mc.thePlayer.inventory.currentItem != prevSlot) {
+                                    PacketUtils.sendPacketNoEvent(new C09PacketHeldItemChange(prevSlot));
+                                    mc.thePlayer.inventory.currentItem = prevSlot;
+                                }
+                            }
+                        }
+                    } else {
+                        // Bloxd 飞行状态下的逻辑 (保持不变)
+                        if (mc.gameSettings.keyBindJump.isKeyDown()) {
+                            mc.thePlayer.motionY = bloxdVerticalSpeed.getValue();
+                        } else if (mc.gameSettings.keyBindSneak.isKeyDown()) {
+                            mc.thePlayer.motionY = -bloxdVerticalSpeed.getValue();
+                        } else {
+                            mc.thePlayer.motionY = 0;
+                        }
+
+                        if (flightTimer.hasTimeElapsed(1500)) {
+                            toggle();
+                        }
+                    }
+                }
+                break;
         }
-        if (!mode.is("Watchdog"))
+        if (!mode.is("Watchdog") && !mode.is("Bloxd"))
             ticks++;
     }
 
     @Override
     public void onPacketSendEvent(PacketSendEvent event) {
+        // 在 Bloxd 模式下，如果还没有受到击退伤害（即还在拉弓阶段），取消所有 C03PacketPlayer 包
+        if (mode.is("Bloxd") && !bloxdFlying && !hasTakenBowDamage) {
+            if (event.getPacket() instanceof C03PacketPlayer) {
+                event.cancel();
+            }
+        }
+    }
+
+    @Override
+    public void onPacketReceiveEvent(PacketReceiveEvent event) {
+        if (mode.is("Bloxd")) {
+            Packet<?> packet = event.getPacket();
+            if (packet instanceof S12PacketEntityVelocity) {
+                S12PacketEntityVelocity s12 = (S12PacketEntityVelocity) packet;
+                if (s12.getEntityID() == mc.thePlayer.getEntityId()) {
+                    // 当收到击退包时，标记已经受到伤害，并开始飞行
+                    if (!bloxdFlying) {
+                        bloxdFlying = true;
+                        hasTakenBowDamage = true; // 标记已受到击退伤害，相当于 BowLongJump 的 hasHurt
+                        flightTimer.reset();
+                        // mc.thePlayer.motionY = 0.42; // 如果希望模块控制初始跳跃高度可以取消注释
+                        mc.thePlayer.stopUsingItem(); // 确保停止客户端使用物品动画
+                        isBloxdLongJumping = true;
+                    }
+                    event.cancel(); // 取消击退包，避免实际击退影响位移
+                }
+            }
+        }
     }
 
     @Override
@@ -180,12 +273,24 @@ public final class LongJump extends Module {
         if (!damaged && mode.is("Watchdog") && watchdogMode.is("Damage")) {
             event.setSpeed(0);
         }
+        if (mode.is("Bloxd")) {
+            // 在没有受到击退伤害时（拉弓阶段），完全阻止玩家移动，模仿 BowLongJump
+            if (!bloxdFlying && !hasTakenBowDamage) {
+                event.setX(0);
+                event.setZ(0);
+                event.setY(0); // 确保 y 轴移动也被阻止
+                MovementUtils.setSpeed(0); // 确保速度为0
+            } else {
+                // 受到击退伤害后（飞行阶段），允许水平移动 (保留原逻辑)
+                event.setSpeed(MovementUtils.isMoving() ? bloxdHorizontalSpeed.getValue().floatValue() : 0);
+            }
+        }
     }
 
     public int getBowSlot() {
         for (int i = 0; i < 9; i++) {
             ItemStack is = mc.thePlayer.inventory.getStackInSlot(i);
-            if (is != null && is.getItem() == Items.bow) {
+            if (is != null && is.getItem() instanceof ItemBow) { // 确保是弓
                 return i;
             }
         }
@@ -205,15 +310,52 @@ public final class LongJump extends Module {
 
     @Override
     public void onEnable() {
-        if ((mode.is("AGC"))) {
-            prevSlot = mc.thePlayer.inventory.currentItem;
+        if (mc.thePlayer == null) {
+            toggleSilent();
+            return;
+        }
+        prevSlot = mc.thePlayer.inventory.currentItem;
+
+        if (mode.is("AGC")) {
             pitch = MathUtils.getRandomFloat(-89.2F, -89.99F);
-            if (getBowSlot() == -1) {
+            int agcBowSlot = getBowSlot();
+            if (agcBowSlot == -1) {
                 this.toggleSilent();
+                NotificationManager.post(NotificationType.DISABLE, "LongJump", "AGC: No bow found!");
                 return;
             } else if (getItemCount(Items.arrow) == 0) {
                 this.toggleSilent();
+                NotificationManager.post(NotificationType.DISABLE, "LongJump", "AGC: No arrows found!");
                 return;
+            }
+            mc.thePlayer.inventory.currentItem = agcBowSlot;
+        } else if (mode.is("Bloxd")) {
+            bowSlot = getBowSlot();
+            if (bowSlot == -1) {
+                this.toggleSilent();
+                NotificationManager.post(NotificationType.DISABLE, "LongJump", "Bloxd: No bow found!");
+                return;
+            } else if (getItemCount(Items.arrow) == 0) {
+                this.toggleSilent();
+                NotificationManager.post(NotificationType.DISABLE, "LongJump", "Bloxd: No arrows found!");
+                return;
+            }
+
+            bloxdFlying = false;
+            hasTakenBowDamage = false; // 重置状态
+            bowModuleEnableTicks = mc.thePlayer.ticksExisted; // 记录启用时的 ticks
+            mc.timer.timerSpeed = 1.0F; // 确保计时器速度正常
+            isBloxdLongJumping = true;
+
+            // 模仿 BowLongJump: 立即切换到弓箭槽位并发送拉弓包
+            // BowLongJump 在 onEnable 中直接发送 C09 和 C08
+            if (mc.thePlayer != null) {
+                PacketUtils.sendPacketNoEvent(new C09PacketHeldItemChange(bowSlot));
+                mc.thePlayer.inventory.currentItem = bowSlot; // 更新客户端当前物品槽位
+                ItemStack itemStack = mc.thePlayer.getHeldItem(); // 获取当前持有的物品，确保是弓
+                if (itemStack != null && itemStack.getItem() instanceof ItemBow) {
+                    PacketUtils.sendPacketNoEvent(new C08PacketPlayerBlockPlacement(itemStack));
+                }
             }
         }
         ticks = 0;
@@ -234,6 +376,17 @@ public final class LongJump extends Module {
         mc.timer.timerSpeed = 1;
         packets.forEach(PacketUtils::sendPacketNoEvent);
         packets.clear();
+        if (mc.thePlayer != null) {
+            // 确保切换回原始槽位并停止使用物品
+            PacketUtils.sendPacketNoEvent(new C09PacketHeldItemChange(prevSlot));
+            mc.thePlayer.inventory.currentItem = prevSlot;
+            mc.thePlayer.stopUsingItem();
+        }
+
+        if (mode.is("Bloxd")) {
+            isBloxdLongJumping = false;
+        }
+
         super.onDisable();
     }
 
@@ -242,6 +395,10 @@ public final class LongJump extends Module {
         watchdogMode.addParent(mode, m -> m.is("Watchdog"));
         damageSpeed.addParent(mode, m -> m.is("Watchdog") && watchdogMode.is("Damage"));
         this.addSettings(mode, watchdogMode, damageSpeed, spoofY);
-    }
 
+        bloxdHorizontalSpeed.addParent(mode, m -> m.is("Bloxd"));
+        bloxdVerticalSpeed.addParent(mode, m -> m.is("Bloxd"));
+        bowPullTicks.addParent(mode, m -> m.is("Bloxd"));
+        this.addSettings(bloxdHorizontalSpeed, bloxdVerticalSpeed, bowPullTicks);
+    }
 }
