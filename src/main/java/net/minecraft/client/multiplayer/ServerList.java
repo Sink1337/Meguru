@@ -38,9 +38,6 @@ public class ServerList {
                 return;
             }
 
-            servers.add(new ServerData("No Rules HvH Server", "play.norules.wtf", false));
-            servers.add(new ServerData("No Rules SMP Server", "smp.norules.wtf", false));
-
             NBTTagList nbttaglist = nbttagcompound.getTagList("servers", 10);
 
             for (int i = 0; i < nbttaglist.tagCount(); ++i) {

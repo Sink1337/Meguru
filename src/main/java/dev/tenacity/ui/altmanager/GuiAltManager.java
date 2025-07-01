@@ -1,6 +1,7 @@
 package dev.tenacity.ui.altmanager;
 
 import dev.tenacity.Tenacity;
+import dev.tenacity.module.impl.render.HUDMod;
 import dev.tenacity.module.impl.render.NotificationsMod;
 import dev.tenacity.ui.Screen;
 import dev.tenacity.ui.altmanager.helpers.Alt;
@@ -13,12 +14,14 @@ import dev.tenacity.ui.mainmenu.CustomMainMenu;
 import dev.tenacity.ui.notifications.NotificationManager;
 import dev.tenacity.ui.notifications.NotificationType;
 import dev.tenacity.ui.sidegui.utils.ToggleButton;
+import dev.tenacity.utils.misc.SoundUtils;
 import dev.tenacity.utils.objects.TextField;
 import dev.tenacity.utils.render.ColorUtil;
 import dev.tenacity.utils.render.GLUtil;
 import net.minecraft.client.gui.Gui;
 import net.minecraft.client.gui.GuiScreen;
 import net.minecraft.client.gui.ScaledResolution;
+import net.minecraft.util.ResourceLocation;
 import org.lwjgl.input.Keyboard;
 
 import java.awt.*;
@@ -32,6 +35,8 @@ public class GuiAltManager extends GuiScreen {
     public final TextField searchField = new TextField(tenacityFont20);
     public final ToggleButton filterBanned = new ToggleButton("Filter banned accounts");
     private final AltPanel.AltRect altRect = new AltPanel.AltRect(null);
+    private static final ResourceLocation successfullysound = new ResourceLocation("Tenacity/Sounds/successfully.wav");
+    private static final ResourceLocation failedsound = new ResourceLocation("Tenacity/Sounds/failed.wav");
 
     public GuiAltManager() {
         if (panels == null) {
@@ -143,13 +148,19 @@ public class GuiAltManager extends GuiScreen {
         switch (Alt.stage) {
             case 1:
                 NotificationManager.post(NotificationType.INFO, "Alt Manager", "Invalid credentials!", 3);
+                if (HUDMod.specialsound.isEnabled()) {
+                    SoundUtils.playSound(failedsound, HUDMod.soundVolume.getValue().floatValue());
+                }
                 Alt.stage = 0;
                 break;
             case 2:
                 NotificationManager.post(NotificationType.SUCCESS, "Alt Manager", "Logged in successfully!", 3);
-                Alt.stage = 0;
-                break;
-        }
+                if (HUDMod.specialsound.isEnabled()) {
+                    SoundUtils.playSound(successfullysound, HUDMod.soundVolume.getValue().floatValue());
+                }
+                    Alt.stage = 0;
+                    break;
+                }
     }
 
     @Override

@@ -7,11 +7,13 @@ import dev.tenacity.event.impl.render.Render2DEvent;
 import dev.tenacity.module.Category;
 import dev.tenacity.module.Module;
 import dev.tenacity.module.impl.render.HUDMod;
+import dev.tenacity.module.impl.render.GlowESP;
 import dev.tenacity.module.settings.ParentAttribute;
 import dev.tenacity.module.settings.impl.BooleanSetting;
 import dev.tenacity.module.settings.impl.NumberSetting;
 import dev.tenacity.utils.font.AbstractFontRenderer;
 import dev.tenacity.utils.player.RotationUtils;
+import dev.tenacity.utils.server.PacketUtils;
 import dev.tenacity.utils.time.TimerUtil;
 import net.minecraft.client.gui.ScaledResolution;
 import net.minecraft.client.gui.inventory.GuiChest;
@@ -22,104 +24,204 @@ import net.minecraft.inventory.IInventory;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemBlock;
 import net.minecraft.item.ItemStack;
+import net.minecraft.network.play.client.C0APacketAnimation;
 import net.minecraft.util.BlockPos;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.Vec3;
+import net.minecraft.util.MovingObjectPosition;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 public class ChestStealer extends Module {
 
     private final NumberSetting delay = new NumberSetting("Delay", 80, 300, 0, 10);
     private final BooleanSetting aura = new BooleanSetting("Aura", false);
-    private final NumberSetting auraRange = new NumberSetting("Aura Range", 3, 6, 1, 1);
-    public static BooleanSetting stealingIndicator = new BooleanSetting("Stealing Indicator", false);
-    public static BooleanSetting titleCheck = new BooleanSetting("Title Check", true);
-    public static BooleanSetting freeLook = new BooleanSetting("Free Look", true);
+    private final BooleanSetting throughWalls = new BooleanSetting("Through Walls", false);
+    private final NumberSetting wallDistance = new NumberSetting("Through Block Distance", 3, 6, 1, 0.1);
+    private final BooleanSetting swing = new BooleanSetting("Swing", false);
+    private final NumberSetting auraRange = new NumberSetting("Aura Range", 3, 6, 1, 0.1);
+    private final NumberSetting auradelay = new NumberSetting("Aura Delay (ms)", 500, 1000, 50, 50);
+    public static final BooleanSetting stealingIndicator = new BooleanSetting("Stealing Indicator", false);
+    public static final BooleanSetting freeLook = new BooleanSetting("Free Look", true);
     private final BooleanSetting reverse = new BooleanSetting("Reverse", false);
     public static final BooleanSetting silent = new BooleanSetting("Silent", false);
+    public static final BooleanSetting titleCheck = new BooleanSetting("Title Check", true);
     private final BooleanSetting smart = new BooleanSetting("Smart", false);
 
-    private final List<BlockPos> openedChests = new ArrayList<>();
-    private final List<Item> items = new ArrayList<>();
+
+    private final Set<BlockPos> openedChests = new HashSet<>();
+    private final Set<Item> grabbedItems = new HashSet<>();
     private final TimerUtil timer = new TimerUtil();
+    private final TimerUtil openTimer = new TimerUtil();
+    private final TimerUtil auraDelay = new TimerUtil();
     public static boolean stealing;
     private InvManager invManager;
-    private boolean clear;
+    private boolean isClearState;
+    private AbstractFontRenderer tenacityFont20;
 
     public ChestStealer() {
         super("ChestStealer", Category.PLAYER, "auto loot chests");
         auraRange.addParent(aura, ParentAttribute.BOOLEAN_CONDITION);
+        throughWalls.addParent(aura, ParentAttribute.BOOLEAN_CONDITION);
+        wallDistance.addParent(throughWalls, ParentAttribute.BOOLEAN_CONDITION);
+        swing.addParent(aura, ParentAttribute.BOOLEAN_CONDITION);
+        auradelay.addParent(aura, ParentAttribute.BOOLEAN_CONDITION);
         stealingIndicator.addParent(silent, ParentAttribute.BOOLEAN_CONDITION);
-        this.addSettings(delay, aura, auraRange, stealingIndicator, titleCheck, freeLook, reverse, silent, smart);
+        this.addSettings(delay, aura, throughWalls, wallDistance, swing, auraRange, auradelay, titleCheck, freeLook, reverse, silent, stealingIndicator, smart);
     }
 
     @Override
     public void onMotionEvent(MotionEvent e) {
-        if (e.isPre()) {
-            setSuffix(smart.isEnabled() ? "Smart" : null);
-            if (invManager == null) invManager = Tenacity.INSTANCE.getModuleCollection().getModule(InvManager.class);
-            if (aura.isEnabled()) {
-                final int radius = auraRange.getValue().intValue();
-                for (int x = -radius; x < radius; x++) {
-                    for (int y = -radius; y < radius; y++) {
-                        for (int z = -radius; z < radius; z++) {
-                            final BlockPos pos = new BlockPos(mc.thePlayer.posX + x, mc.thePlayer.posY + y, mc.thePlayer.posZ + z);
-                            if (pos.getBlock() == Blocks.chest && !openedChests.contains(pos)) {
-                                if (mc.playerController.onPlayerRightClick(mc.thePlayer, mc.theWorld, mc.thePlayer.getHeldItem(), pos, EnumFacing.UP, new Vec3(pos))) {
-                                    mc.thePlayer.swingItem();
-                                    final float[] rotations = RotationUtils.getFacingRotations2(pos.getX(), pos.getY(), pos.getZ());
-                                    e.setRotations(rotations[0], rotations[1]);
-                                    RotationUtils.setVisualRotations(rotations[0], rotations[1]);
-                                    openedChests.add(pos);
-                                }
+        if (!e.isPre()) {
+            return;
+        }
+
+        setSuffix(smart.isEnabled() ? "Smart" : null);
+
+        if (invManager == null) {
+            invManager = Tenacity.INSTANCE.getModuleCollection().getModule(InvManager.class);
+        }
+
+        handleAuraStealing(e);
+        handleContainerChestStealing();
+    }
+
+    private void handleAuraStealing(MotionEvent e) {
+        if (!aura.isEnabled() || (mc.thePlayer.openContainer instanceof ContainerChest) || !auraDelay.hasTimeElapsed(auradelay.getValue().longValue())) {
+            return;
+        }
+
+        final int radius = auraRange.getValue().intValue();
+        final double reachSq = mc.playerController.getBlockReachDistance() * mc.playerController.getBlockReachDistance();
+        final double wallDistSq = throughWalls.isEnabled() ? wallDistance.getValue().doubleValue() * wallDistance.getValue().doubleValue() : -1.0;
+
+        for (int x = -radius; x <= radius; x++) {
+            for (int y = -radius; y <= radius; y++) {
+                for (int z = -radius; z <= radius; z++) {
+                    final BlockPos pos = new BlockPos(mc.thePlayer.posX + x, mc.thePlayer.posY + y, mc.thePlayer.posZ + z);
+
+                    if (mc.theWorld.getBlockState(pos).getBlock() != Blocks.chest || openedChests.contains(pos)) {
+                        continue;
+                    }
+
+                    final double distToChestSq = mc.thePlayer.getDistanceSq(pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5);
+
+                    boolean canInteract = false;
+                    if (distToChestSq < reachSq) {
+                        Vec3 hitVec = new Vec3(pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5);
+                        Vec3 playerEyePos = new Vec3(mc.thePlayer.posX, mc.thePlayer.posY + mc.thePlayer.getEyeHeight(), mc.thePlayer.posZ);
+                        MovingObjectPosition mop = mc.theWorld.rayTraceBlocks(playerEyePos, hitVec, false, true, false);
+
+                        if (mop != null && mop.typeOfHit == MovingObjectPosition.MovingObjectType.BLOCK && mop.getBlockPos().equals(pos)) {
+                            canInteract = true;
+                        }
+                    }
+
+                    if (!canInteract && throughWalls.isEnabled() && distToChestSq <= wallDistSq) {
+                        canInteract = true;
+                    }
+
+                    if (canInteract) {
+                        Vec3 hitVec = new Vec3(pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5);
+                        if (mc.playerController.onPlayerRightClick(mc.thePlayer, mc.theWorld, mc.thePlayer.getHeldItem(), pos, EnumFacing.UP, hitVec)) {
+                            if (swing.isEnabled()) {
+                                mc.thePlayer.swingItem();
+                            } else {
+                                PacketUtils.sendPacketNoEvent(new C0APacketAnimation());
                             }
+
+                            GlowESP.openedChests.add(pos);
+
+                            final float[] rotations = RotationUtils.getFacingRotations2(pos.getX(), pos.getY(), pos.getZ());
+                            if (!freeLook.isEnabled() || silent.isEnabled()) {
+                                e.setRotations(rotations[0], rotations[1]);
+                                RotationUtils.setVisualRotations(rotations[0], rotations[1]);
+                            }
+
+                            openedChests.add(pos);
+                            openTimer.reset();
+                            auraDelay.reset();
+                            return;
                         }
                     }
                 }
             }
-            if (mc.thePlayer.openContainer instanceof ContainerChest) {
-                ContainerChest chest = (ContainerChest) mc.thePlayer.openContainer;
-                IInventory chestInv = chest.getLowerChestInventory();
-                if (titleCheck.isEnabled() && (!(chestInv instanceof ContainerLocalMenu) || !((ContainerLocalMenu) chestInv).realChest))
-                    return;
-                clear = true;
+        }
+        auraDelay.reset();
+    }
 
-                List<Integer> slots = new ArrayList<>();
-                for (int i = 0; i < chestInv.getSizeInventory(); i++) {
-                    ItemStack is = chestInv.getStackInSlot(i);
-                    if (is != null && (!smart.isEnabled() || !(invManager.isBadItem(is, -1, true) || items.contains(is.getItem())))) {
-                        slots.add(i);
-                    }
-                }
-
-                if (reverse.isEnabled()) {
-                    Collections.reverse(slots);
-                }
-
-                slots.forEach(s -> {
-                    ItemStack is = chestInv.getStackInSlot(s);
-                    Item item = is != null ? is.getItem() : null;
-                    if (item != null && !items.contains(item) && (delay.getValue() == 0 || timer.hasTimeElapsed(delay.getValue().longValue(), true))) {
-                        if (smart.isEnabled() && !(item instanceof ItemBlock)) {
-                            items.add(is.getItem());
-                        }
-                        mc.playerController.windowClick(chest.windowId, s, 0, 1, mc.thePlayer);
-                    }
-                });
-
-                if (slots.isEmpty() || isInventoryFull()) {
-                    items.clear();
-                    clear = false;
-                    stealing = false;
-                    mc.thePlayer.closeScreen();
-                }
-            } else if (clear) {
-                items.clear();
-                clear = false;
+    private void handleContainerChestStealing() {
+        if (!(mc.thePlayer.openContainer instanceof ContainerChest)) {
+            if (isClearState) {
+                grabbedItems.clear();
+                isClearState = false;
+                stealing = false;
             }
+            return;
+        }
+
+        ContainerChest chest = (ContainerChest) mc.thePlayer.openContainer;
+        IInventory chestInv = chest.getLowerChestInventory();
+
+        if (titleCheck.isEnabled()) {
+            if (!(chestInv instanceof ContainerLocalMenu) || !((ContainerLocalMenu) chestInv).realChest) {
+                stealing = false;
+                isClearState = false;
+                grabbedItems.clear();
+                mc.thePlayer.closeScreen();
+                return;
+            }
+        }
+
+        isClearState = true;
+
+        List<Integer> slotsToSteal = new ArrayList<>();
+        for (int i = 0; i < chestInv.getSizeInventory(); i++) {
+            ItemStack is = chestInv.getStackInSlot(i);
+            if (is != null) {
+                boolean shouldGrab = true;
+                if (smart.isEnabled()) {
+                    if (invManager != null && invManager.isBadItem(is, -1, true)) {
+                        shouldGrab = false;
+                    }
+                    if (!(is.getItem() instanceof ItemBlock) && grabbedItems.contains(is.getItem())) {
+                        shouldGrab = false;
+                    }
+                }
+                if (shouldGrab) {
+                    slotsToSteal.add(i);
+                }
+            }
+        }
+
+        if (reverse.isEnabled()) {
+            Collections.reverse(slotsToSteal);
+        }
+
+        stealing = !slotsToSteal.isEmpty() && !isInventoryFull();
+
+        if (stealing) {
+            if (delay.getValue() == 0 || timer.hasTimeElapsed(delay.getValue().longValue(), true)) {
+                for (Integer slot : slotsToSteal) {
+                    ItemStack is = chestInv.getStackInSlot(slot);
+                    if (is != null) {
+                        if (smart.isEnabled() && !(is.getItem() instanceof ItemBlock)) {
+                            grabbedItems.add(is.getItem());
+                        }
+                        mc.playerController.windowClick(chest.windowId, slot, 0, 1, mc.thePlayer);
+                        timer.reset();
+                        return;
+                    }
+                }
+            }
+        } else {
+            grabbedItems.clear();
+            isClearState = false;
+            mc.thePlayer.closeScreen();
         }
     }
 
@@ -127,15 +229,31 @@ public class ChestStealer extends Module {
     public void onRender2DEvent(Render2DEvent event) {
         if (stealingIndicator.isEnabled() && stealing) {
             ScaledResolution sr = new ScaledResolution(mc);
-            AbstractFontRenderer fr = HUDMod.customFont.isEnabled() ? tenacityFont20 : mc.fontRendererObj;
-            fr.drawStringWithShadow("§lStealing...", sr.getScaledWidth() / 2.0F - fr.getStringWidth("§lStealing...") / 2.0F, sr.getScaledHeight() / 2.0F + 10, HUDMod.getClientColors().getFirst());
+            AbstractFontRenderer fr = HUDMod.customFont.isEnabled() ? (tenacityFont20 != null ? tenacityFont20 : mc.fontRendererObj) : mc.fontRendererObj;
+            String text = "§lStealing...";
+            float x = sr.getScaledWidth() / 2.0F - fr.getStringWidth(text) / 2.0F;
+            float y = sr.getScaledHeight() / 2.0F + 10;
+            fr.drawStringWithShadow(text, x, y, HUDMod.getClientColors().getFirst().getRGB());
         }
     }
 
     @Override
     public void onEnable() {
-        openedChests.clear();
+        grabbedItems.clear();
+        isClearState = false;
+        stealing = false;
+        openTimer.reset();
+        timer.reset();
+        auraDelay.reset();
         super.onEnable();
+    }
+
+    @Override
+    public void onDisable() {
+        grabbedItems.clear();
+        isClearState = false;
+        stealing = false;
+        super.onDisable();
     }
 
     private boolean isInventoryFull() {
@@ -160,7 +278,12 @@ public class ChestStealer extends Module {
     public void onWorldEvent(WorldEvent event) {
         if (event instanceof WorldEvent.Load) {
             openedChests.clear();
+            grabbedItems.clear();
+            isClearState = false;
+            stealing = false;
+            openTimer.reset();
+            timer.reset();
+            auraDelay.reset();
         }
     }
-
 }

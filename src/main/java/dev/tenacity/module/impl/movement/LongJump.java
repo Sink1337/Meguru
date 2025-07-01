@@ -23,7 +23,7 @@ import net.minecraft.network.Packet;
 import net.minecraft.network.play.client.C03PacketPlayer;
 import net.minecraft.network.play.client.C07PacketPlayerDigging;
 import net.minecraft.network.play.client.C08PacketPlayerBlockPlacement;
-import net.minecraft.network.play.client.C09PacketHeldItemChange; // 尽管不主动发，但可能需要这个类
+import net.minecraft.network.play.client.C09PacketHeldItemChange;
 import net.minecraft.network.play.server.S12PacketEntityVelocity;
 import net.minecraft.util.BlockPos;
 import net.minecraft.util.EnumFacing;
@@ -54,16 +54,17 @@ public final class LongJump extends Module {
     private boolean bloxdFlying;
 
     private int bowModuleEnableTicks = 0;
-    private int bowSlot = -1; // 存储弓箭的槽位
+    private int bowSlot = -1;
     private boolean hasTakenBowDamage = false;
 
     private final NumberSetting bloxdHorizontalSpeed = new NumberSetting("Bloxd Horizontal Speed", 0.5, 5, 0.1, 0.1);
     private final NumberSetting bloxdVerticalSpeed = new NumberSetting("Bloxd Vertical Speed", 0.2, 5, 0.1, 0.1);
     private final NumberSetting bowPullTicks = new NumberSetting("Bow Release Tick", 5, 20, 1, 1);
+    private final NumberSetting bloxdFlyTime = new NumberSetting("Bloxd Fly Time(ms)", 1000, 5000, 500, 50);
+
 
     public static boolean isBloxdFlying = false;
-    // private boolean clientSwitchedToBow = false; // 不再需要这个变量，或者可以保留但改变其意义
-    private boolean waitingForBowPullTick = false; // 标记是否在等待拉弓的第一个 tick
+    private boolean waitingForBowPullTick = false;
 
     @Override
     public void onMotionEvent(MotionEvent event) {
@@ -159,15 +160,12 @@ public final class LongJump extends Module {
                             MovementUtils.setSpeed(MovementUtils.getBaseMoveSpeed() * 1.8);
                         }
                     } else {
-                        // 在等待一个 tick 后再发送拉弓包
                         if (waitingForBowPullTick) {
-                            // 使用 getStackInSlot(bowSlot) 来获取弓箭 ItemStack
                             ItemStack bowItemStack = mc.thePlayer.inventory.getStackInSlot(bowSlot);
                             if (bowItemStack != null && bowItemStack.getItem() instanceof ItemBow) {
-                                // 发送拉弓包，并指定正确的弓箭物品
                                 PacketUtils.sendPacketNoEvent(new C08PacketPlayerBlockPlacement(bowItemStack));
                             }
-                            waitingForBowPullTick = false; // 发送后重置标记
+                            waitingForBowPullTick = false;
                         }
 
                         if (ticks == bowPullTicks.getValue().intValue()) {
@@ -186,15 +184,12 @@ public final class LongJump extends Module {
                     if (!bloxdFlying) {
                         event.setPitch(-90.0F);
 
-                        // 在等待一个 tick 后再发送拉弓包
                         if (waitingForBowPullTick) {
-                            // 使用 getStackInSlot(bowSlot) 来获取弓箭 ItemStack
                             ItemStack bowItemStack = mc.thePlayer.inventory.getStackInSlot(bowSlot);
                             if (bowItemStack != null && bowItemStack.getItem() instanceof ItemBow) {
-                                // 发送拉弓包，并指定正确的弓箭物品
                                 PacketUtils.sendPacketNoEvent(new C08PacketPlayerBlockPlacement(bowItemStack));
                             }
-                            waitingForBowPullTick = false; // 发送后重置标记
+                            waitingForBowPullTick = false;
                         }
 
                         if (mc.thePlayer.ticksExisted - bowModuleEnableTicks == bowPullTicks.getValue().intValue()) {
@@ -210,27 +205,23 @@ public final class LongJump extends Module {
                         } else {
                             mc.thePlayer.motionY = 0;
                         }
-
-                        if (flightTimer.hasTimeElapsed(1000)) {
+                        if (flightTimer.hasTimeElapsed(bloxdFlyTime.getValue().longValue())) {
                             toggle();
                         }
                     }
                 }
                 break;
         }
-        // 对于 AGC 和 Bloxd 模式，ticks 应该用于计时弓箭拉取时间
         if (mode.is("AGC") || mode.is("Bloxd")) {
             ticks++;
-        } else if (!mode.is("Watchdog")) { // 其他模式的 ticks 逻辑不变
+        } else if (!mode.is("Watchdog")) {
             ticks++;
         }
     }
 
     @Override
     public void onPacketSendEvent(PacketSendEvent event) {
-        // Bloxd 模式下，如果还没有飞行，可以取消发送移动包来保持静止，直到受到伤害
         if (mode.is("Bloxd") && !bloxdFlying) {
-            // event.cancel(); // 暂时不取消，因为 onMoveEvent 已经处理了速度为0
         }
     }
 
@@ -248,13 +239,8 @@ public final class LongJump extends Module {
                         mc.thePlayer.stopUsingItem();
                         isBloxdFlying = true;
 
-                        // 收到伤害后切换回之前的物品栏 (这里不再是客户端主动切换，而是恢复到旧槽位)
-                        // mc.thePlayer.inventory.currentItem = prevSlot; // 这一行可能不再需要，因为我们没有主动改变 clientSwitchedToBow 的逻辑
-                        // PacketUtils.sendPacketNoEvent(new C09PacketHeldItemChange(prevSlot)); // 不再发送
-                        // clientSwitchedToBow = false; // 不再需要
-
                     }
-                    event.cancel(); // 取消速度包，由模块自己控制移动
+                    event.cancel();
                 }
             }
         }
@@ -273,7 +259,7 @@ public final class LongJump extends Module {
             if (!bloxdFlying && !hasTakenBowDamage) {
                 event.setX(0);
                 event.setZ(0);
-                MovementUtils.setSpeed(0); // 确保在受到弓箭伤害前保持静止
+                MovementUtils.setSpeed(0);
             } else {
                 MovementUtils.setSpeed(MovementUtils.isMoving() ? bloxdHorizontalSpeed.getValue().floatValue() : 0);
             }
@@ -307,9 +293,8 @@ public final class LongJump extends Module {
             toggleSilent();
             return;
         }
-        prevSlot = mc.thePlayer.inventory.currentItem; // 仍然记录旧槽位
-        // clientSwitchedToBow = false; // 不再需要或更改含义
-        ticks = 0; // 重置 ticks
+        prevSlot = mc.thePlayer.inventory.currentItem;
+        ticks = 0;
         damagedBow = false;
         damaged = false;
         jumpTimer.reset();
@@ -319,12 +304,12 @@ public final class LongJump extends Module {
         packets.clear();
         stage = 0;
         speed = 1.4f;
-        mc.timer.timerSpeed = 1.0F; // 确保计时器速度重置
-        waitingForBowPullTick = false; // 启用时重置等待标记
+        mc.timer.timerSpeed = 1.0F;
+        waitingForBowPullTick = false;
 
         if (mode.is("AGC")) {
             pitch = MathUtils.getRandomFloat(-89.2F, -89.99F);
-            bowSlot = getBowSlot(); // 找到弓箭槽位并存储
+            bowSlot = getBowSlot();
             if (bowSlot == -1) {
                 this.toggleSilent();
                 NotificationManager.post(NotificationType.DISABLE, "LongJump", "AGC: No bow found!");
@@ -334,12 +319,9 @@ public final class LongJump extends Module {
                 NotificationManager.post(NotificationType.DISABLE, "LongJump", "AGC: No arrows found!");
                 return;
             }
-            // 不再发送 C09PacketHeldItemChange
-            // mc.thePlayer.inventory.currentItem = agcBowSlot; // 不再主动修改客户端 currentItem
-            // clientSwitchedToBow = true; // 也不再需要这个来表示“客户端已切换”
-            waitingForBowPullTick = true; // 标记需要等待一个 tick 后再拉弓
+            waitingForBowPullTick = true;
         } else if (mode.is("Bloxd")) {
-            bowSlot = getBowSlot(); // 找到弓箭槽位并存储
+            bowSlot = getBowSlot();
             if (bowSlot == -1) {
                 this.toggleSilent();
                 NotificationManager.post(NotificationType.DISABLE, "LongJump", "Bloxd: No bow found!");
@@ -352,13 +334,10 @@ public final class LongJump extends Module {
 
             bloxdFlying = false;
             hasTakenBowDamage = false;
-            bowModuleEnableTicks = mc.thePlayer.ticksExisted; // 记录模块启用的 tick
+            bowModuleEnableTicks = mc.thePlayer.ticksExisted;
             isBloxdFlying = false;
 
-            // 不再发送 C09PacketHeldItemChange
-            // mc.thePlayer.inventory.currentItem = bowSlot; // 不再主动修改客户端 currentItem
-            // clientSwitchedToBow = true; // 也不再需要这个来表示“客户端已切换”
-            waitingForBowPullTick = true; // 标记需要等待一个 tick 后再拉弓
+            waitingForBowPullTick = true;
         }
         super.onEnable();
     }
@@ -369,11 +348,7 @@ public final class LongJump extends Module {
         packets.forEach(PacketUtils::sendPacketNoEvent);
         packets.clear();
         if (mc.thePlayer != null) {
-            mc.thePlayer.stopUsingItem(); // 确保停止使用物品
-            // 恢复到之前的槽位，但不发送 C09PacketHeldItemChange
-            // mc.thePlayer.inventory.currentItem = prevSlot; // 这一行可能也不需要，因为我们没有改变它
-            // PacketUtils.sendPacketNoEvent(new C09PacketHeldItemChange(prevSlot)); // 不再发送
-            // clientSwitchedToBow = false; // 不再需要
+            mc.thePlayer.stopUsingItem();
         }
 
         if (mode.is("Bloxd")) {
@@ -392,6 +367,7 @@ public final class LongJump extends Module {
         bloxdHorizontalSpeed.addParent(mode, m -> m.is("Bloxd"));
         bloxdVerticalSpeed.addParent(mode, m -> m.is("Bloxd"));
         bowPullTicks.addParent(mode, m -> m.is("Bloxd"));
-        this.addSettings(bloxdHorizontalSpeed, bloxdVerticalSpeed, bowPullTicks);
+        bloxdFlyTime.addParent(mode, m -> m.is("Bloxd"));
+        this.addSettings(bloxdHorizontalSpeed, bloxdVerticalSpeed, bowPullTicks, bloxdFlyTime);
     }
 }

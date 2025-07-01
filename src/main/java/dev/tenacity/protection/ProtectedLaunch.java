@@ -75,7 +75,8 @@ public class ProtectedLaunch {
         modules.put(AntiFreeze.class, new AntiFreeze());
         modules.put(LightningTracker.class, new LightningTracker());
         modules.put(MurderDetector.class, new MurderDetector());
-        modules.put(AutoHypixel.class, new AutoHypixel());
+        modules.put(Ciallo.class, new Ciallo());
+        modules.put(AutoPlay.class, new AutoPlay());
         modules.put(NoRotate.class, new NoRotate());
         modules.put(AutoRespawn.class, new AutoRespawn());
         modules.put(MCF.class, new MCF());

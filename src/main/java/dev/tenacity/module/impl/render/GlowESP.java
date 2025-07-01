@@ -23,6 +23,7 @@ import net.minecraft.entity.monster.EntityMob;
 import net.minecraft.entity.passive.EntityAnimal;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.tileentity.TileEntityChest;
+import net.minecraft.util.BlockPos;
 import org.lwjgl.BufferUtils;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL13;
@@ -34,6 +35,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.HashSet;
 
 import static org.lwjgl.opengl.GL11.*;
 import static org.lwjgl.opengl.GL20.glUniform1;
@@ -51,6 +54,7 @@ public class GlowESP extends Module {
     private final ColorSetting animalColor = new ColorSetting("Animal Color", Tenacity.INSTANCE.getAlternateClientColor());
     private final ColorSetting mobColor = new ColorSetting("Mob Color", Color.RED);
     private final ColorSetting chestColor = new ColorSetting("Chest Color", Color.GREEN);
+    private final ColorSetting openedChestColor = new ColorSetting("Opened Chest Color", Color.RED);
     private final ColorSetting hurtTimeColor = new ColorSetting("Hurt Time Color", Color.RED);
     private final NumberSetting radius = new NumberSetting("Radius", 4, 20, 2, 2);
     private final NumberSetting iterationsSetting = new NumberSetting("Iterations", 4, 10, 2, 1);
@@ -58,17 +62,20 @@ public class GlowESP extends Module {
     private final NumberSetting exposure = new NumberSetting("Exposure", 2.2, 3.5, .5, .1);
     private final BooleanSetting seperate = new BooleanSetting("Seperate Texture", false);
 
+    public static final Set<BlockPos> openedChests = new HashSet<>();
+
     public GlowESP() {
         super("GlowESP", Category.RENDER, "ESP that glows on players");
         playerColor.addParent(colorMode, modeSetting -> modeSetting.is("Custom") && validEntities.getSetting("Players").isEnabled());
         animalColor.addParent(colorMode, modeSetting -> modeSetting.is("Custom") && validEntities.getSetting("Animals").isEnabled());
         mobColor.addParent(colorMode, modeSetting -> modeSetting.is("Custom") && validEntities.getSetting("Mobs").isEnabled());
         chestColor.addParent(colorMode, modeSetting -> modeSetting.is("Custom") && validEntities.getSetting("Chests").isEnabled());
+        openedChestColor.addParent(colorMode, modeSetting -> modeSetting.is("Custom") && validEntities.getSetting("Chests").isEnabled());
 
         radius.addParent(kawaseGlow, ParentAttribute.BOOLEAN_CONDITION.negate());
         iterationsSetting.addParent(kawaseGlow, ParentAttribute.BOOLEAN_CONDITION);
         offsetSetting.addParent(kawaseGlow, ParentAttribute.BOOLEAN_CONDITION);
-        addSettings(kawaseGlow, colorMode, validEntities, playerColor, animalColor, mobColor, chestColor, hurtTimeColor, iterationsSetting, offsetSetting, radius, exposure, seperate);
+        addSettings(kawaseGlow, colorMode, validEntities, playerColor, animalColor, mobColor, chestColor, openedChestColor, hurtTimeColor, iterationsSetting, offsetSetting, radius, exposure, seperate);
     }
 
     public static boolean renderNameTags = true;
@@ -96,12 +103,14 @@ public class GlowESP extends Module {
     @Override
     public void onWorldEvent(WorldEvent event) {
         entityColorMap.clear();
+        openedChests.clear();
     }
 
     @Override
     public void onEnable() {
         super.onEnable();
         entityColorMap.clear();
+        openedChests.clear();
         fadeIn = new DecelerateAnimation(250, 1);
     }
 
@@ -136,20 +145,17 @@ public class GlowESP extends Module {
             chamsShader.setUniformi("textureIn", 0);
             Color color = getColor(e.getEntity());
 
-            // TODO: Fix gradient
             chamsShader.setUniformf("color", color.getRed() / 255f, color.getGreen() / 255f, color.getBlue() / 255f, 1);
             RenderUtil.resetColor();
             GlStateManager.enableCull();
             renderGlint = false;
             e.drawModel();
 
-            //Needed to add the other layers to the entity
             e.drawLayers();
             renderGlint = true;
             GlStateManager.disableCull();
 
             chamsShader.unload();
-
 
             mc.getFramebuffer().bindFramebuffer(false);
         }
@@ -165,15 +171,6 @@ public class GlowESP extends Module {
             RenderUtil.setAlphaLimit(0);
             GLUtil.startBlend();
 
-    /*        RenderUtil.bindTexture(framebuffer.framebufferTexture);
-            ShaderUtil.drawQuads();
-            framebuffer.framebufferClear();
-            mc.getFramebuffer().bindFramebuffer(false);
-
-
-            if(true) return;*/
-
-
             outlineFrameBuffer.framebufferClear();
             outlineFrameBuffer.bindFramebuffer(false);
             outlineShader.init();
@@ -186,7 +183,6 @@ public class GlowESP extends Module {
             ShaderUtil.drawQuads();
             outlineShader.unload();
             outlineFrameBuffer.unbindFramebuffer();
-
 
             if (kawaseGlow.isEnabled()) {
                 int offset = offsetSetting.getValue().intValue();
@@ -203,12 +199,10 @@ public class GlowESP extends Module {
                 GL11.glClearColor(0, 0, 0, 0);
                 renderFBO(framebufferList.get(1), outlineFrameBuffer.framebufferTexture, kawaseGlowShader, offset);
 
-                //Downsample
                 for (int i = 1; i < iterations; i++) {
                     renderFBO(framebufferList.get(i + 1), framebufferList.get(i).framebufferTexture, kawaseGlowShader, offset);
                 }
 
-                //Upsample
                 for (int i = iterations; i > 1; i--) {
                     renderFBO(framebufferList.get(i - 1), framebufferList.get(i).framebufferTexture, kawaseGlowShader2, offset);
                 }
@@ -280,12 +274,8 @@ public class GlowESP extends Module {
 
                 framebuffer.framebufferClear();
                 mc.getFramebuffer().bindFramebuffer(false);
-
-
             }
         }
-
-
     }
 
     private void initFramebuffers(float iterations) {
@@ -294,9 +284,7 @@ public class GlowESP extends Module {
         }
         framebufferList.clear();
 
-        //Have to make the framebuffer null so that it does not try to delete a framebuffer that has already been deleted
         framebufferList.add(glowFrameBuffer = RenderUtil.createFrameBuffer(null));
-
 
         for (int i = 1; i <= iterations; i++) {
             Framebuffer currentBuffer = new Framebuffer((int) (mc.displayWidth / Math.pow(2, i)), (int) (mc.displayHeight / Math.pow(2, i)), true);
@@ -327,7 +315,6 @@ public class GlowESP extends Module {
         shader.unload();
     }
 
-
     public void setupGlowUniforms(float dir1, float dir2) {
         glowShader.setUniformi("texture", 0);
         if (seperate.isEnabled()) {
@@ -348,7 +335,6 @@ public class GlowESP extends Module {
         glUniform1(glowShader.getUniform("weights"), buffer);
     }
 
-
     public void setupOutlineUniforms(float dir1, float dir2) {
         outlineShader.setUniformi("textureIn", 0);
         float iterations = kawaseGlow.isEnabled() ? (iterationsSetting.getValue().floatValue() * 2f) : radius.getValue().floatValue() / 1.5f;
@@ -356,7 +342,6 @@ public class GlowESP extends Module {
         outlineShader.setUniformf("texelSize", 1.0f / mc.displayWidth, 1.0f / mc.displayHeight);
         outlineShader.setUniformf("direction", dir1, dir2);
     }
-
 
     private Color getColor(Object entity) {
         Color color = Color.WHITE;
@@ -372,7 +357,13 @@ public class GlowESP extends Module {
                     color = animalColor.getColor();
                 }
                 if (entity instanceof TileEntityChest) {
-                    color = chestColor.getColor();
+                    TileEntityChest chest = (TileEntityChest) entity;
+                    BlockPos chestPos = chest.getPos();
+                    if (openedChests.contains(chestPos)) {
+                        color = openedChestColor.getColor();
+                    } else {
+                        color = chestColor.getColor();
+                    }
                 }
                 break;
             case "Sync":
@@ -396,7 +387,6 @@ public class GlowESP extends Module {
         if (entity instanceof EntityLivingBase) {
             EntityLivingBase entityLivingBase = (EntityLivingBase) entity;
             if (entityLivingBase.hurtTime > 0) {
-                //We use a the first part of the sine wave to make the color more red as the entity gets hurt and animate it back to normal
                 color = ColorUtil.interpolateColorC(color, hurtTimeColor.getColor(), (float) Math.sin(entityLivingBase.hurtTime * (18 * Math.PI / 180)));
             }
         }
@@ -422,6 +412,4 @@ public class GlowESP extends Module {
             }
         }
     }
-
-
 }

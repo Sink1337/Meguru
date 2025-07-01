@@ -9,6 +9,7 @@ import dev.tenacity.module.Module;
 import dev.tenacity.module.impl.combat.TargetStrafe;
 import dev.tenacity.module.settings.impl.BooleanSetting;
 import dev.tenacity.module.settings.impl.ModeSetting;
+import dev.tenacity.module.settings.impl.NumberSetting;
 import dev.tenacity.utils.player.MovementUtils;
 import net.minecraft.client.entity.EntityPlayerSP;
 import net.minecraft.network.Packet;
@@ -27,19 +28,22 @@ public final class TerrainSpeed extends Module {
     private long knockbackTime = 0;
 
     private long damageBoostStartTime = 0L;
-    private final long DAMAGE_BOOST_DURATION = 1000L;
     private boolean wasOnGroundLastTick;
 
     private final ModeSetting mode = new ModeSetting("Mode", "Bloxd", "Bloxd");
     private final BooleanSetting spiderValue = new BooleanSetting("Spider", true);
     private final BooleanSetting damageBoost = new BooleanSetting("Damage Boost", false);
+    private final NumberSetting damageSpeed = new NumberSetting("Damage Speed", 1.0, 3.0, 0.5, 0.1);
+    private final NumberSetting damageTime = new NumberSetting("Damage Time(ms)", 1000, 3000, 100, 100);
     private final NoaPhysics bloxdPhysics = new NoaPhysics();
+
+    private final long DAMAGE_BOOST_DURATION = damageTime.getValue().longValue();
 
     public TerrainSpeed() {
         super("TerrainSpeed", Category.MOVEMENT, "Simulates Bloxd.io physics for movement.");
         this.addSettings(mode);
         spiderValue.addParent(mode, m -> m.is("Bloxd"));
-        this.addSettings(spiderValue, damageBoost);
+        this.addSettings(spiderValue, damageBoost, damageSpeed, damageTime);
     }
 
     @Override
@@ -51,7 +55,7 @@ public final class TerrainSpeed extends Module {
         jumpfunny = 0;
         jumpticks = 0L;
         damageBoostStartTime = 0L;
-        wasOnGroundLastTick = false; // 初始化状态
+        wasOnGroundLastTick = false;
         super.onEnable();
     }
 
@@ -174,18 +178,18 @@ public final class TerrainSpeed extends Module {
 
         if (damageBoost.isEnabled() && damageBoostStartTime != 0L) {
             if (System.currentTimeMillis() - damageBoostStartTime <= DAMAGE_BOOST_DURATION) {
-                finalSpeed = 1.0;
+                finalSpeed = damageSpeed.getValue();
             } else {
                 damageBoostStartTime = 0L;
             }
         }
 
         if (jumpfunny == 2) {
-            finalSpeed += 0.025;
+            finalSpeed += 0.024;
         } else if (jumpfunny == 3) {
-            finalSpeed += 0.050;
+            finalSpeed += 0.048;
         } else if (jumpfunny == 4) {
-            finalSpeed += 0.075;
+            finalSpeed += 0.072;
         }
 
         if (player.isUsingItem()) {
@@ -194,16 +198,6 @@ public final class TerrainSpeed extends Module {
         return finalSpeed;
     }
 
-    /**
-     * 根据玩家输入、速度和指定的YAW角度计算Bloxd风格的移动向量。
-     * 这个方法是为TargetStrafe模块设计的，允许其传入自定义的环绕YAW。
-     *
-     * @param strafeIn 侧向移动输入
-     * @param forwardIn 前后移动输入
-     * @param speed 移动速度
-     * @param customYaw 用于计算移动方向的自定义YAW角度
-     * @return 包含X、Y、Z方向移动的MutableVec3d
-     */
     public MutableVec3d getBloxdMoveVec(float strafeIn, float forwardIn, double speed, float customYaw) {
         float forward = forwardIn;
         float strafe = strafeIn;
@@ -226,15 +220,6 @@ public final class TerrainSpeed extends Module {
         return new MutableVec3d(x, 0, z);
     }
 
-    /**
-     * 根据玩家输入、速度和玩家自身的YAW角度计算Bloxd风格的移动向量。
-     * 这个方法是TerrainSpeed模块内部使用的。
-     *
-     * @param strafeIn 侧向移动输入
-     * @param forwardIn 前后移动输入
-     * @param speed 移动速度
-     * @return 包含X、Y、Z方向移动的MutableVec3d
-     */
     private MutableVec3d getBloxdMoveVec(float strafeIn, float forwardIn, double speed) {
         EntityPlayerSP player = mc.thePlayer;
         if (player == null) return new MutableVec3d(0.0D, 0.0D, 0.0D);

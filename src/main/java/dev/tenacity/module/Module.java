@@ -16,6 +16,9 @@ import dev.tenacity.utils.animations.Animation;
 import dev.tenacity.utils.animations.Direction;
 import dev.tenacity.utils.animations.impl.DecelerateAnimation;
 import dev.tenacity.utils.misc.Multithreading;
+import dev.tenacity.utils.misc.SoundUtils;
+import net.minecraft.util.ResourceLocation;
+import dev.tenacity.module.impl.render.HUDMod;
 import lombok.Getter;
 import lombok.Setter;
 import org.lwjgl.input.Keyboard;
@@ -53,6 +56,9 @@ public class Module extends ListenerAdapter implements Utils {
     public static float allowedClickGuiHeight = 300;
 
     private final KeybindSetting keybind = new KeybindSetting(Keyboard.KEY_NONE);
+
+    private final ResourceLocation enableSound = new ResourceLocation("Tenacity/Sounds/ciallo.wav");
+    private final ResourceLocation disableSound = new ResourceLocation("Tenacity/Sounds/boyangyang.wav");
 
     public Module(String name, Category category, String description) {
         this.name = name;
@@ -99,10 +105,21 @@ public class Module extends ListenerAdapter implements Utils {
         }
     }
 
-    //TODO: wtf is this code.
     @Exclude(Strategy.NAME_REMAPPING)
     public void toggle() {
         toggleSilent();
+
+        HUDMod hudMod = Tenacity.INSTANCE.getModuleCollection().getModule(HUDMod.class);
+
+        if (hudMod != null && HUDMod.specialsound.isEnabled()) {
+            float volume = HUDMod.soundVolume.getValue().floatValue();
+            if (enabled) {
+                SoundUtils.playSound(enableSound, volume);
+            } else {
+                SoundUtils.playSound(disableSound, volume);
+            }
+        }
+
         if (NotificationsMod.toggleNotifications.isEnabled()) {
             String titleToggle = "Module toggled";
             String descriptionToggleOn = this.getName() + " was " + "§aenabled\r";
@@ -235,5 +252,4 @@ public class Module extends ListenerAdapter implements Utils {
         }
         return null;
     }
-
 }

@@ -8,6 +8,7 @@ import dev.tenacity.module.Module;
 import dev.tenacity.module.impl.combat.KillAura;
 import dev.tenacity.module.impl.player.ChestStealer;
 import dev.tenacity.module.impl.player.InvManager;
+import dev.tenacity.module.settings.ParentAttribute;
 import dev.tenacity.module.settings.impl.*;
 import dev.tenacity.utils.animations.Animation;
 import dev.tenacity.utils.animations.Direction;
@@ -47,6 +48,11 @@ public class HUDMod extends Module {
     public static final ColorSetting color2 = new ColorSetting("Color 2", new Color(0xff0008ff));
     public static final ModeSetting theme = Theme.getModeSetting("Theme Selection", "Tenacity");
     public static final BooleanSetting customFont = new BooleanSetting("Custom Font", true);
+    public static BooleanSetting customStatsRender = null;
+
+    public static final BooleanSetting specialsound = new BooleanSetting("Special Sound", true);
+    public static final NumberSetting soundVolume = new NumberSetting("Sound Volume", 0.8, 1.0, 0.1, 0.1);
+
     private static final MultipleBoolSetting infoCustomization = new MultipleBoolSetting("Info Options",
             new BooleanSetting("Show Ping", false),
             new BooleanSetting("Semi-Bold Info", true),
@@ -54,6 +60,7 @@ public class HUDMod extends Module {
             new BooleanSetting("Info Shadow", true));
 
     public static final MultipleBoolSetting hudCustomization = new MultipleBoolSetting("HUD Options",
+        customStatsRender = new BooleanSetting("Stats HUD", true),
             new BooleanSetting("Radial Gradients", true),
             new BooleanSetting("Potion HUD", true),
             new BooleanSetting("Armor HUD", true),
@@ -69,7 +76,8 @@ public class HUDMod extends Module {
         super("HUD", Category.RENDER, "customizes the client's appearance");
         color1.addParent(theme, modeSetting -> modeSetting.is("Custom Theme"));
         color2.addParent(theme, modeSetting -> modeSetting.is("Custom Theme") && !color1.isRainbow());
-        this.addSettings(clientName, watermarkMode, theme, color1, color2, customFont, infoCustomization, hudCustomization, disableButtons);
+        soundVolume.addParent(specialsound, ParentAttribute.BOOLEAN_CONDITION);
+        this.addSettings(clientName, watermarkMode, theme, color1, color2, customFont, specialsound, soundVolume, infoCustomization, hudCustomization, disableButtons);
         if (!enabled) this.toggleSilent();
     }
 
@@ -80,7 +88,6 @@ public class HUDMod extends Module {
     private boolean version = true;
 
     public static float xOffset = 0;
-
 
     @Override
     public void onShaderEvent(ShaderEvent e) {
@@ -339,7 +346,7 @@ public class HUDMod extends Module {
         boolean shadowInfo = infoCustomization.isEnabled("Info Shadow");
 
         if (hudCustomization.getSetting("Potion HUD").isEnabled()) {
-            java.util.List<PotionEffect> potions = new ArrayList<>(mc.thePlayer.getActivePotionEffects());
+            List<PotionEffect> potions = new ArrayList<>(mc.thePlayer.getActivePotionEffects());
             potions.sort(Comparator.comparingDouble(e -> -fr.getStringWidth(I18n.format(e.getEffectName()))));
 
             int count = 0;
@@ -498,13 +505,12 @@ public class HUDMod extends Module {
             }
             Collections.reverse(equipment);
 
-            // 绘制盔甲和附魔效果
             for (ItemStack itemStack : equipment) {
                 armorPiece = itemStack;
                 RenderHelper.enableGUIStandardItemLighting();
                 x += 15;
                 if (armorPiece == mc.thePlayer.getHeldItem()) {
-                    x -= 15; // 如果是手持物品，调整位置，与盔甲相隔一定距离
+                    x -= 15;
                 }
                 GlStateManager.pushMatrix();
                 GlStateManager.disableAlpha();
@@ -514,7 +520,6 @@ public class HUDMod extends Module {
                 mc.getRenderItem().renderItemAndEffectIntoGUI(armorPiece, -x + sr.getScaledWidth() / 2 - 4,
                         (int) (sr.getScaledHeight() - (inWater ? 65 : 55) + s - 5 - (16 * GuiChat.openingAnimation.getOutput().floatValue())));
 
-                // 如果物品数量大于1，渲染物品数量
                 if (armorPiece.stackSize > 1) {
                     String count = String.valueOf(armorPiece.stackSize);
                     mc.fontRendererObj.drawStringWithShadow(count,
@@ -531,7 +536,6 @@ public class HUDMod extends Module {
                 GlStateManager.popMatrix();
                 armorPiece.getEnchantmentTagList();
 
-                // 绘制附魔效果
                 RenderUtil.drawExhiEnchants(armorPiece, -x + sr.getScaledWidth() / 2 - 4, sr.getScaledHeight() - (inWater ? 65 : 55) + s - 5 - (16 * GuiChat.openingAnimation.getOutput().floatValue()));
             }
         }
@@ -583,6 +587,4 @@ public class HUDMod extends Module {
         private final BooleanSetting setting;
         private final GuiButton button;
     }
-
 }
-
