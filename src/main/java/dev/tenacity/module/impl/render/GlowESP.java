@@ -63,6 +63,7 @@ public class GlowESP extends Module {
     private final BooleanSetting seperate = new BooleanSetting("Seperate Texture", false);
 
     public static final Set<BlockPos> openedChests = new HashSet<>();
+    public static final Set<BlockPos> renderableChests = new HashSet<>();
 
     public GlowESP() {
         super("GlowESP", Category.RENDER, "ESP that glows on players");
@@ -104,6 +105,7 @@ public class GlowESP extends Module {
     public void onWorldEvent(WorldEvent event) {
         entityColorMap.clear();
         openedChests.clear();
+        renderableChests.clear();
     }
 
     @Override
@@ -111,6 +113,7 @@ public class GlowESP extends Module {
         super.onEnable();
         entityColorMap.clear();
         openedChests.clear();
+        renderableChests.clear();
         fadeIn = new DecelerateAnimation(250, 1);
     }
 
@@ -122,6 +125,13 @@ public class GlowESP extends Module {
     @Override
     public void onRenderChestEvent(RenderChestEvent e) {
         if (validEntities.getSetting("Chests").isEnabled() && framebuffer != null) {
+            TileEntityChest chest = (TileEntityChest) e.getEntity();
+            BlockPos chestPos = chest.getPos();
+
+            if (!openedChests.contains(chestPos)) {
+                renderableChests.add(chestPos);
+            }
+
             framebuffer.bindFramebuffer(false);
             chamsShader.init();
             chamsShader.setUniformi("textureIn", 0);
