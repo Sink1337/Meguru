@@ -42,6 +42,7 @@ public final class InventoryMove extends Module {
 
     @Override
     public void onMotionEvent(MotionEvent e) {
+        this.setSuffix(mode.getMode());
         boolean inContainer = mc.currentScreen instanceof GuiContainer;
         if (wasInContainer && !inContainer) {
             wasInContainer = false;

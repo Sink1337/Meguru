@@ -13,7 +13,7 @@ public class InfoPanel extends Panel {
         configInfo = new InfoRect();
         configInfo.faqButtons.addAll(Arrays.asList(
                 new InfoButton("What client is this?",
-                        "This client was coded by cedo and others,edited by Razzle. " +
+                        "This client was coded by cedo and others,edited by Sink. " +
                                 "And this client will be opensource when it is fully fixed."),
 
                 new InfoButton("How do I download an online config?", "To download an online config, " +
@@ -93,7 +93,7 @@ public class InfoPanel extends Panel {
     public void drawScreen(int mouseX, int mouseY) {
 
         tenacityBoldFont40.drawString("Info", getX() + 8, getY() + 8, getTextColor());
-        tenacityFont18.drawString("edited by Razzle", getX() + 8, getY() + 30, ColorUtil.applyOpacity(getTextColor(), .3f));
+        tenacityFont18.drawString("edited by Sink", getX() + 8, getY() + 30, ColorUtil.applyOpacity(getTextColor(), .3f));
 
         float spacing = 8;
         float infoWidth = (getWidth() - (spacing * 3)) / 2f;

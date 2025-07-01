@@ -194,7 +194,7 @@ public class CustomMainMenu extends GuiScreen {
 
         tenacityBoldFont80.drawCenteredString("Tenacity", width / 2f, height / 2f - 110, Color.WHITE.getRGB());
         tenacityFont32.drawString(Tenacity.VERSION, width / 2f + tenacityBoldFont80.getStringWidth("Tenacity") / 2f - (tenacityFont32.getStringWidth(Tenacity.VERSION) / 2f), height / 2f - 113, Color.WHITE.getRGB());
-        tenacityFont18.drawCenteredString("edited by Razzle", width / 2f, height / 2f - 68, Color.WHITE.getRGB());
+        tenacityFont18.drawCenteredString("edited by Sink", width / 2f, height / 2f - 68, Color.WHITE.getRGB());
 
     }
 

@@ -468,7 +468,6 @@ public class HUDMod extends Module {
         return Math.round(bps * 100.0) / 100.0;
     }
 
-
     public static Pair<Color, Color> getClientColors() {
         return Theme.getThemeColors(theme.getMode());
     }

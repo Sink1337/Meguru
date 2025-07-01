@@ -7,6 +7,8 @@ import dev.tenacity.utils.server.PacketUtils;
 import net.minecraft.entity.player.PlayerCapabilities;
 import net.minecraft.network.play.client.C13PacketPlayerAbilities;
 import net.minecraft.potion.Potion;
+import net.minecraft.util.AxisAlignedBB;
+import net.minecraft.util.BlockPos;
 import net.minecraft.util.MathHelper;
 import org.lwjgl.util.vector.Vector2f;
 
@@ -100,6 +102,23 @@ public class MovementUtils implements Utils {
         setSpeed(moveEvent, moveSpeed, mc.thePlayer.rotationYaw, mc.thePlayer.movementInput.moveStrafe, mc.thePlayer.movementInput.moveForward);
     }
 
+    /**
+     * 设置 MoveEvent 的速度和方向。此方法主要用于 TargetStrafe 模块。
+     * @param moveEvent 要修改的 MoveEvent 实例。
+     * @param speed 移动速度。
+     * @param yaw 移动的 yaw 方向（角度）。
+     */
+    public static void setMoveEventSpeed(MoveEvent moveEvent, double speed, float yaw) {
+        double forward = 1.0;
+        double strafe = 0.0;
+
+        double mx = Math.cos(Math.toRadians((yaw + 90.0F)));
+        double mz = Math.sin(Math.toRadians((yaw + 90.0F)));
+
+        moveEvent.setX(forward * speed * mx + strafe * speed * mz);
+        moveEvent.setZ(forward * speed * mz - strafe * speed * mx);
+    }
+
     public static double getBaseMoveSpeed() {
         double baseSpeed = mc.thePlayer.capabilities.getWalkSpeed() * 2.873;
         if (mc.thePlayer.isPotionActive(Potion.moveSlowdown)) {
@@ -141,6 +160,10 @@ public class MovementUtils implements Utils {
         return !mc.theWorld.getCollidingBoundingBoxes(mc.thePlayer, mc.thePlayer.getEntityBoundingBox().offset(0, -height, 0)).isEmpty();
     }
 
+    public static boolean isBlockUnder(int offset, boolean checkThroughBlocks) {
+        return !mc.theWorld.getCollidingBoundingBoxes(mc.thePlayer, mc.thePlayer.getEntityBoundingBox().offset(0.0, -offset, 0.0)).isEmpty();
+    }
+
     public static float getSpeed() {
         if (mc.thePlayer == null || mc.theWorld == null) return 0;
         return (float) Math.sqrt(mc.thePlayer.motionX * mc.thePlayer.motionX + mc.thePlayer.motionZ * mc.thePlayer.motionZ);
@@ -149,5 +172,4 @@ public class MovementUtils implements Utils {
     public static float getMaxFallDist() {
         return mc.thePlayer.getMaxFallHeight() + (mc.thePlayer.isPotionActive(Potion.jump) ? mc.thePlayer.getActivePotionEffect(Potion.jump).getAmplifier() + 1 : 0);
     }
-
 }

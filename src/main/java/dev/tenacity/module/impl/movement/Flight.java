@@ -1,5 +1,6 @@
 package dev.tenacity.module.impl.movement;
 
+import dev.tenacity.Tenacity;
 import dev.tenacity.event.impl.network.PacketReceiveEvent;
 import dev.tenacity.event.impl.network.PacketSendEvent;
 import dev.tenacity.event.impl.player.BoundingBoxEvent;
@@ -94,10 +95,15 @@ public final class Flight extends Module {
 
     @Override
     public void onMoveEvent(MoveEvent e) {
+        TargetStrafe targetStrafeModule = Tenacity.INSTANCE.getModuleCollection().getModule(TargetStrafe.class);
+
+        if (targetStrafeModule != null && targetStrafeModule.active) {
+            return;
+        }
+
         switch (mode.getMode()) {
             case "Vanilla":
                 e.setSpeed(MovementUtils.isMoving() ? horizontalSpeed.getValue().floatValue() : 0);
-                TargetStrafe.strafe(e, horizontalSpeed.getValue().floatValue());
                 break;
             case "Watchdog":
                 e.setSpeed(0);
@@ -115,7 +121,6 @@ public final class Flight extends Module {
                     e.setSpeed(0);
                 break;
             default:
-                TargetStrafe.strafe(e);
                 break;
         }
     }
@@ -123,6 +128,8 @@ public final class Flight extends Module {
     @Override
     public void onMotionEvent(MotionEvent e) {
         this.setSuffix(mode.getMode());
+        TargetStrafe targetStrafeModule = Tenacity.INSTANCE.getModuleCollection().getModule(TargetStrafe.class);
+        boolean isTargetStrafeActive = (targetStrafeModule != null && targetStrafeModule.active);
         if (viewBobbing.isEnabled()) {
             mc.thePlayer.cameraYaw = mc.thePlayer.cameraPitch = 0.08F;
         }
@@ -203,7 +210,7 @@ public final class Flight extends Module {
                 }
                 break;
             case "Vanilla":
-                if (TargetStrafe.canStrafe()) {
+                if (isTargetStrafeActive) {
                     mc.thePlayer.motionY = antiKick.isEnabled() ? -0.0625 : 0;
                 } else {
                     mc.thePlayer.motionY = mc.gameSettings.keyBindJump.isKeyDown() ? verticalSpeed.getValue() : mc.gameSettings.keyBindSneak.isKeyDown() ? -verticalSpeed.getValue() : antiKick.isEnabled() ? -0.0625 : 0;

@@ -1,10 +1,14 @@
 package dev.tenacity.module.impl.movement;
 
+import dev.tenacity.Tenacity;
 import dev.tenacity.event.impl.player.MotionEvent;
 import dev.tenacity.event.impl.player.MoveEvent;
+import dev.tenacity.event.impl.network.PacketReceiveEvent;
 import dev.tenacity.module.Category;
 import dev.tenacity.module.Module;
+import dev.tenacity.module.impl.combat.TargetStrafe;
 import dev.tenacity.module.settings.impl.BooleanSetting;
+import dev.tenacity.module.settings.impl.ModeSetting;
 import dev.tenacity.utils.player.MovementUtils;
 import net.minecraft.client.entity.EntityPlayerSP;
 import net.minecraft.network.Packet;
@@ -12,7 +16,7 @@ import net.minecraft.network.play.server.S12PacketEntityVelocity;
 import net.minecraft.util.MathHelper;
 
 @SuppressWarnings("unused")
-public final class BloxdPhysics extends Module {
+public final class TerrainSpeed extends Module {
 
     private static int groundTicksLocal;
     private static double lastMotionY;
@@ -22,13 +26,20 @@ public final class BloxdPhysics extends Module {
     private static long jumpticks = 0L;
     private long knockbackTime = 0;
 
-    private final BooleanSetting spiderValue = new BooleanSetting("Spider", true);
+    private long damageBoostStartTime = 0L;
+    private final long DAMAGE_BOOST_DURATION = 1000L;
+    private boolean wasOnGroundLastTick;
 
+    private final ModeSetting mode = new ModeSetting("Mode", "Bloxd", "Bloxd");
+    private final BooleanSetting spiderValue = new BooleanSetting("Spider", true);
+    private final BooleanSetting damageBoost = new BooleanSetting("Damage Boost", false);
     private final NoaPhysics bloxdPhysics = new NoaPhysics();
 
-    public BloxdPhysics() {
-        super("BloxdPhysics", Category.MOVEMENT, "Simulates Bloxd.io physics for movement.");
-        this.addSettings(spiderValue);
+    public TerrainSpeed() {
+        super("TerrainSpeed", Category.MOVEMENT, "Simulates Bloxd.io physics for movement.");
+        this.addSettings(mode);
+        spiderValue.addParent(mode, m -> m.is("Bloxd"));
+        this.addSettings(spiderValue, damageBoost);
     }
 
     @Override
@@ -39,6 +50,8 @@ public final class BloxdPhysics extends Module {
         wasClimbing = false;
         jumpfunny = 0;
         jumpticks = 0L;
+        damageBoostStartTime = 0L;
+        wasOnGroundLastTick = false; // 初始化状态
         super.onEnable();
     }
 
@@ -46,12 +59,30 @@ public final class BloxdPhysics extends Module {
     public void onDisable() {
         bloxdPhysics.reset();
         mc.timer.timerSpeed = 1;
+        damageBoostStartTime = 0L;
         super.onDisable();
     }
 
     @Override
+    public void onPacketReceiveEvent(PacketReceiveEvent event) {
+        if (damageBoost.isEnabled()) {
+            Packet<?> packet = event.getPacket();
+            if (packet instanceof S12PacketEntityVelocity) {
+                S12PacketEntityVelocity s12 = (S12PacketEntityVelocity) packet;
+                if (s12.getEntityID() == mc.thePlayer.getEntityId()) {
+                    if (damageBoostStartTime == 0L) {
+                        damageBoostStartTime = System.currentTimeMillis();
+                        // NotificationManager.post(NotificationType.INFO, "Damage Boost", "Speed boosted for 1 second!");
+                    }
+                }
+            }
+        }
+    }
+
+    @Override
     public void onMotionEvent(MotionEvent e) {
-        if (LongJump.isBloxdLongJumping) {
+        this.setSuffix(mode.getMode());
+        if (LongJump.isBloxdFlying) {
             return;
         }
 
@@ -59,6 +90,8 @@ public final class BloxdPhysics extends Module {
 
         EntityPlayerSP player = mc.thePlayer;
         if (player == null) return;
+
+        wasOnGroundLastTick = player.onGround;
 
         if (player.onGround) {
             groundTicksLocal++;
@@ -77,7 +110,7 @@ public final class BloxdPhysics extends Module {
 
     @Override
     public void onMoveEvent(MoveEvent e) {
-        if (LongJump.isBloxdLongJumping) {
+        if (LongJump.isBloxdFlying) {
             return;
         }
 
@@ -88,12 +121,14 @@ public final class BloxdPhysics extends Module {
             bloxdPhysics.getVelocityVector().set(0, 0, 0);
         }
 
-        if (player.onGround && player.motionY > 0.4199 && player.motionY < 0.4201) {
+        if (wasOnGroundLastTick && player.motionY > 0.4199 && player.motionY < 0.4201) {
             if (jumpfunny < 4) {
                 jumpfunny++;
             }
             bloxdPhysics.getImpulseVector().add(0, 8, 0);
+            bloxdPhysics.getVelocityVector().setY(0.0);
         }
+
 
         if (!player.onGround && player.motionY < 0) {
             bloxdPhysics.getForceVector().add(0, -10, 0);
@@ -110,16 +145,25 @@ public final class BloxdPhysics extends Module {
             }
         }
 
-        double speed = getBloxdSpeed();
-        MutableVec3d moveDir = getBloxdMoveVec(e.getStrafe(), e.getForward(), speed);
+        bloxdPhysics.getMotionForTick();
+        e.setY(bloxdPhysics.getVelocityVector().getY() / 30.0);
 
-        e.setX(moveDir.getX());
-        e.setZ(moveDir.getZ());
-        e.setY(bloxdPhysics.getMotionForTick().getY() / 30.0);
+
+        TargetStrafe targetStrafe = Tenacity.INSTANCE.getModuleCollection().getModule(TargetStrafe.class);
+        if (targetStrafe != null && targetStrafe.isEnabled() && targetStrafe.active) {
+            double bloxdSpeed = getBloxdSpeed();
+            TerrainSpeed.MutableVec3d moveDir = getBloxdMoveVec(e.getStrafe(), e.getForward(), bloxdSpeed, targetStrafe.strafeYaw);
+            e.setX(moveDir.getX());
+            e.setZ(moveDir.getZ());
+        } else {
+            double speed = getBloxdSpeed();
+            MutableVec3d moveDir = getBloxdMoveVec(e.getStrafe(), e.getForward(), speed, player.rotationYaw);
+            e.setX(moveDir.getX());
+            e.setZ(moveDir.getZ());
+        }
     }
 
-
-    private double getBloxdSpeed() {
+    public double getBloxdSpeed() {
         EntityPlayerSP player = mc.thePlayer;
         if (player == null) return 0;
 
@@ -127,6 +171,15 @@ public final class BloxdPhysics extends Module {
         if (player.isUsingItem()) return 0.10;
 
         double finalSpeed = 0.26;
+
+        if (damageBoost.isEnabled() && damageBoostStartTime != 0L) {
+            if (System.currentTimeMillis() - damageBoostStartTime <= DAMAGE_BOOST_DURATION) {
+                finalSpeed = 1.0;
+            } else {
+                damageBoostStartTime = 0L;
+            }
+        }
+
         if (jumpfunny == 2) {
             finalSpeed += 0.025;
         } else if (jumpfunny == 3) {
@@ -141,13 +194,20 @@ public final class BloxdPhysics extends Module {
         return finalSpeed;
     }
 
-    private MutableVec3d getBloxdMoveVec(float strafeIn, float forwardIn, double speed) {
-        EntityPlayerSP player = mc.thePlayer;
-        if (player == null) return new MutableVec3d(0.0D, 0.0D, 0.0D);
-
+    /**
+     * 根据玩家输入、速度和指定的YAW角度计算Bloxd风格的移动向量。
+     * 这个方法是为TargetStrafe模块设计的，允许其传入自定义的环绕YAW。
+     *
+     * @param strafeIn 侧向移动输入
+     * @param forwardIn 前后移动输入
+     * @param speed 移动速度
+     * @param customYaw 用于计算移动方向的自定义YAW角度
+     * @return 包含X、Y、Z方向移动的MutableVec3d
+     */
+    public MutableVec3d getBloxdMoveVec(float strafeIn, float forwardIn, double speed, float customYaw) {
         float forward = forwardIn;
         float strafe = strafeIn;
-        float yaw = player.rotationYaw;
+        float yaw = customYaw;
 
         float sqrt = MathHelper.sqrt_float(forward * forward + strafe * strafe);
         if (sqrt < 0.01F) return new MutableVec3d(0.0D, 0.0D, 0.0D);
@@ -164,6 +224,26 @@ public final class BloxdPhysics extends Module {
         double x = (strafe * cosYaw - forward * sinYaw) * speed;
         double z = (forward * cosYaw + strafe * sinYaw) * speed;
         return new MutableVec3d(x, 0, z);
+    }
+
+    /**
+     * 根据玩家输入、速度和玩家自身的YAW角度计算Bloxd风格的移动向量。
+     * 这个方法是TerrainSpeed模块内部使用的。
+     *
+     * @param strafeIn 侧向移动输入
+     * @param forwardIn 前后移动输入
+     * @param speed 移动速度
+     * @return 包含X、Y、Z方向移动的MutableVec3d
+     */
+    private MutableVec3d getBloxdMoveVec(float strafeIn, float forwardIn, double speed) {
+        EntityPlayerSP player = mc.thePlayer;
+        if (player == null) return new MutableVec3d(0.0D, 0.0D, 0.0D);
+        return getBloxdMoveVec(strafeIn, forwardIn, speed, player.rotationYaw);
+    }
+
+
+    public NoaPhysics getBloxdPhysics() {
+        return bloxdPhysics;
     }
 
     public static final class NoaPhysics {

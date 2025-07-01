@@ -179,7 +179,7 @@ public class SplashScreen implements Utils {
 
 
             float textAlpha = progress2Anim.getDirection().forwards() ? progress2Anim.getOutput().floatValue() : 1;
-            tenacityFont18.drawCenteredString("edited by Razzle", width / 2f, actualY + 42, ColorUtil.applyOpacity(-1, textAlpha));
+            tenacityFont18.drawCenteredString("edited by Sink", width / 2f, actualY + 42, ColorUtil.applyOpacity(-1, textAlpha));
 
 
             if (progressAnim.finished(Direction.FORWARDS) && progress2Anim.finished(Direction.FORWARDS)) {

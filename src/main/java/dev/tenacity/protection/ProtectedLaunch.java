@@ -87,7 +87,7 @@ public class ProtectedLaunch {
         modules.put(Sprint.class, new Sprint());
         modules.put(Scaffold.class, new Scaffold());
         modules.put(Speed.class, new Speed());
-        modules.put(BloxdPhysics.class, new BloxdPhysics());
+        modules.put(TerrainSpeed.class, new TerrainSpeed());
         modules.put(Flight.class, new Flight());
         modules.put(LongJump.class, new LongJump());
         modules.put(Step.class, new Step());

@@ -29,7 +29,7 @@ import java.util.concurrent.ThreadLocalRandom;
 @SuppressWarnings("unused")
 public final class Speed extends Module {
     private final ModeSetting mode = new ModeSetting("Mode", "Watchdog",
-            "Watchdog", "Strafe", "Matrix", "HurtTime", "Vanilla", "BHop", "Verus", "Viper", "Vulcan", "Zonecraft", "Heatseeker", "Mineland");
+            "Watchdog", "Strafe", "Matrix", "HurtTime", "Vanilla", "BHop", "Verus", "Viper", "Vulcan", "Zonecraft", "Heatseeker", "Mineland", "Legit");
     private final ModeSetting watchdogMode = new ModeSetting("Watchdog Mode", "Hop", "Hop", "Dev", "Low Hop", "Ground");
     private final ModeSetting verusMode = new ModeSetting("Verus Mode", "Normal", "Low", "Normal");
     private final ModeSetting viperMode = new ModeSetting("Viper Mode", "Normal", "High", "Normal");
@@ -238,12 +238,27 @@ public final class Speed extends Module {
                     }
                 }
                 break;
+            case "Legit":
+                if (e.isPre()) {
+                    if (MovementUtils.isMoving() && mc.thePlayer.onGround) {
+                        mc.thePlayer.jump();
+                    }
+                }
+                break;
         }
 
     }
 
     @Override
     public void onMoveEvent(MoveEvent e) {
+
+
+        TargetStrafe targetStrafeModule = Tenacity.INSTANCE.getModuleCollection().getModule(TargetStrafe.class);
+
+        if (targetStrafeModule != null && targetStrafeModule.active) {
+            return;
+        }
+
         if (mode.is("Watchdog")) {
             switch (watchdogMode.getMode()) {
                 case "Ground":
@@ -267,11 +282,14 @@ public final class Speed extends Module {
                     break;
             }
         }
-        TargetStrafe.strafe(e);
     }
 
     @Override
     public void onPlayerMoveUpdateEvent(PlayerMoveUpdateEvent e) {
+
+
+        TargetStrafe targetStrafeModule = Tenacity.INSTANCE.getModuleCollection().getModule(TargetStrafe.class);
+        boolean isTargetStrafeActive = (targetStrafeModule != null && targetStrafeModule.active);
         if (mode.is("Watchdog") && (watchdogMode.is("Hop") || watchdogMode.is("Dev") || watchdogMode.is("Low Hop")) && mc.thePlayer.fallDistance < 1 && !mc.thePlayer.isPotionActive(Potion.jump)) {
             if (MovementUtils.isMoving()) {
                 switch (watchdogMode.getMode()) {
@@ -291,7 +309,7 @@ public final class Speed extends Module {
                             moveSpeed *= 1 / 0.91;
                             wasOnGround = false;
                         } else {
-                            moveSpeed -= TargetStrafe.canStrafe() ? lastDist / 100.0 : lastDist / 150.0;
+                            moveSpeed -= isTargetStrafeActive ? lastDist / 100.0 : lastDist / 150.0;
                         }
                         if (mc.thePlayer.isInWater() || mc.thePlayer.isInLava()) {
                             speed = MovementUtils.getBaseMoveSpeed() * 0.25;
@@ -320,6 +338,10 @@ public final class Speed extends Module {
     }
 
     public boolean shouldPreventJumping() {
+        TerrainSpeed terrainSpeed = Tenacity.INSTANCE.getModuleCollection().getModule(TerrainSpeed.class);
+        if (terrainSpeed != null && terrainSpeed.isEnabled()) {
+            return false;
+        }
         return Tenacity.INSTANCE.isEnabled(Speed.class) && MovementUtils.isMoving() && !(mode.is("Watchdog") && watchdogMode.is("Ground"));
     }
 
