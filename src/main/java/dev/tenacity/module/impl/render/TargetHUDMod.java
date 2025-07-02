@@ -38,6 +38,7 @@ public class TargetHUDMod extends Module {
     private final ModeSetting targetHud = new ModeSetting("Mode", "Tenacity", "Tenacity", "Old Tenacity", "Rise", "Exhibition", "Auto-Dox", "Akrien", "Astolfo", "Novoline", "Vape");
     private final BooleanSetting trackTarget = new BooleanSetting("Track Target", false);
     private final ModeSetting trackingMode = new ModeSetting("Tracking Mode", "Middle", "Middle", "Top", "Left", "Right");
+    private final BooleanSetting Animation = new BooleanSetting("Animation", true);
 
     public static boolean renderLayers = true;
 
@@ -46,7 +47,7 @@ public class TargetHUDMod extends Module {
     public TargetHUDMod() {
         super("TargetHUD", Category.RENDER, "Displays info about the KillAura target");
         trackingMode.addParent(trackTarget, ParentAttribute.BOOLEAN_CONDITION);
-        addSettings(targetHud, trackTarget, trackingMode, colorWheel.createModeSetting("Color Mode", "Dark"), colorWheel.getColorSetting());
+        addSettings(targetHud, trackTarget, trackingMode, Animation, colorWheel.createModeSetting("Color Mode", "Dark"), colorWheel.getColorSetting());
         TargetHUD.init();
     }
 
@@ -79,6 +80,10 @@ public class TargetHUDMod extends Module {
         TargetHUD currentTargetHUD = TargetHUD.get(targetHud.getMode());
         drag.setWidth(currentTargetHUD.getWidth());
         drag.setHeight(currentTargetHUD.getHeight());
+
+        if (!Animation.isEnabled() && !openAnimation.isDone()) {
+            openAnimation.timerUtil.lastMS = System.currentTimeMillis() - openAnimation.getDuration();
+        }
 
 
         if (killAura == null) {
@@ -136,8 +141,6 @@ public class TargetHUDMod extends Module {
         TargetHUD currentTargetHUD = TargetHUD.get(targetHud.getMode());
 
         if (target != null) {
-
-
             float trackScale = 1;
             float x = drag.getX(), y = drag.getY();
             if (tracking) {
@@ -149,13 +152,29 @@ public class TargetHUDMod extends Module {
                 y = coords.getSecond();
             }
 
+            float scaleOutput;
+            if (Animation.isEnabled()) {
+                scaleOutput = (float) (.5 + openAnimation.getOutput().floatValue());
+            } else {
+                scaleOutput = (float) openAnimation.getOutput().floatValue();
+                if (openAnimation.getDirection().forwards()) {
+                    scaleOutput = (float) openAnimation.getEndPoint();
+                } else {
+                    scaleOutput = 0.0f;
+                }
+                scaleOutput = 1.0f;
+            }
 
-            RenderUtil.scaleStart(x + drag.getWidth() / 2f, y + drag.getHeight() / 2f,
-                    (float) (.5 + openAnimation.getOutput().floatValue()) * trackScale);
-            float alpha = Math.min(1, openAnimation.getOutput().floatValue() * 2);
+            RenderUtil.scaleStart(x + drag.getWidth() / 2f, y + drag.getHeight() / 2f, scaleOutput * trackScale);
+
+            float alpha;
+            if (Animation.isEnabled()) {
+                alpha = Math.min(1, openAnimation.getOutput().floatValue() * 2);
+            } else {
+                alpha = 1f;
+            }
 
             currentTargetHUD.render(x, y, alpha, target);
-
 
             RenderUtil.scaleEnd();
         }
@@ -180,9 +199,22 @@ public class TargetHUDMod extends Module {
         if (target != null) {
 
             boolean glow = e.getBloomOptions().getSetting("TargetHud").isEnabled();
-            RenderUtil.scaleStart(x + drag.getWidth() / 2f, y + drag.getHeight() / 2f,
-                    (float) (.5 + openAnimation.getOutput().floatValue()) * trackScale);
-            float alpha = Math.min(1, openAnimation.getOutput().floatValue() * 2);
+
+            float scaleOutput;
+            if (Animation.isEnabled()) {
+                scaleOutput = (float) (.5 + openAnimation.getOutput().floatValue());
+            } else {
+                scaleOutput = 1.0f;
+            }
+
+            RenderUtil.scaleStart(x + drag.getWidth() / 2f, y + drag.getHeight() / 2f, scaleOutput * trackScale);
+
+            float alpha;
+            if (Animation.isEnabled()) {
+                alpha = Math.min(1, openAnimation.getOutput().floatValue() * 2);
+            } else {
+                alpha = 1f;
+            }
 
             currentTargetHUD.renderEffects(x, y, alpha, glow);
 
@@ -218,6 +250,4 @@ public class TargetHUDMod extends Module {
                 return Pair.of(x + entityWidth - (width / 4f), middleY);
         }
     }
-
-
 }
