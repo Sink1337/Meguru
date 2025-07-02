@@ -182,10 +182,14 @@ public class PlayerProfileCache {
      */
     public void load() {
         BufferedReader bufferedreader = null;
-
         try {
             bufferedreader = Files.newReader(this.usercacheFile, Charsets.UTF_8);
             List<PlayerProfileCache.ProfileEntry> list = (List) this.gson.fromJson((Reader) bufferedreader, TYPE);
+
+            if (list == null) {
+                return;
+            }
+
             this.usernameToProfileEntryMap.clear();
             this.uuidToProfileEntryMap.clear();
             this.gameProfiles.clear();
@@ -196,9 +200,7 @@ public class PlayerProfileCache {
                 }
             }
         } catch (FileNotFoundException var9) {
-            ;
         } catch (JsonParseException var10) {
-            ;
         } finally {
             IOUtils.closeQuietly((Reader) bufferedreader);
         }
