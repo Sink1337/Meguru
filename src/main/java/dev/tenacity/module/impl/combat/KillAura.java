@@ -224,7 +224,7 @@ public final class KillAura extends Module {
     }
 
     public boolean isValid(Entity entity) {
-        if (addons.isEnabled("Through Walls") && !mc.thePlayer.canEntityBeSeen(entity)) return false;
+        if (!addons.isEnabled("Through Walls") && !mc.thePlayer.canEntityBeSeen(entity)) return false;
         else return TargetManager.checkEntity(entity);
     }
 
