@@ -37,7 +37,7 @@ public class ArrayListMod extends Module {
             new BooleanSetting("Bold", false),
             new BooleanSetting("Small Font", false), minecraftFont);
     public final NumberSetting height = new NumberSetting("Height", 11, 20, 9, .5f);
-    private final ModeSetting animation = new ModeSetting("Animation", "Scale in", "Move in", "Scale in");
+    private final ModeSetting animation = new ModeSetting("Animation", "Scale in", "Move in", "Scale in", "None");
     private final NumberSetting colorIndex = new NumberSetting("Color Seperation", 20, 100, 5, 1);
     private final NumberSetting colorSpeed = new NumberSetting("Color Speed", 15, 30, 2, 1);
     private final BooleanSetting background = new BooleanSetting("Background", true);
@@ -83,6 +83,11 @@ public class ArrayListMod extends Module {
         for (Module module : modules) {
             if (importantModules.isEnabled() && module.getCategory() == Category.RENDER) continue;
             final Animation moduleAnimation = module.getAnimation();
+
+            if (animation.is("None") && !moduleAnimation.isDone()) {
+                moduleAnimation.timerUtil.lastMS = System.currentTimeMillis() - moduleAnimation.getDuration();
+            }
+
             if (!module.isEnabled() && moduleAnimation.finished(Direction.BACKWARDS)) continue;
 
             String displayText = HUDMod.get(module.getName() + (module.hasMode() ? " §7" + module.getSuffix() : ""));
@@ -112,6 +117,8 @@ public class ArrayListMod extends Module {
                     }
                     scaleIn = true;
                     break;
+                case "None":
+                    break;
             }
 
 
@@ -128,9 +135,12 @@ public class ArrayListMod extends Module {
                 float offset = minecraftFont.isEnabled() ? 4 : 5;
                 int rectColor = e.getBloomOptions().getSetting("Arraylist").isEnabled() ? textcolor.getRGB() : (rectangle.getMode().equals("Outline") && partialGlow.isEnabled() ? textcolor.getRGB() : Color.BLACK.getRGB());
 
-
-                Gui.drawRect2(x - 2, y, font.getStringWidth(displayText) + offset, heightVal,
-                        scaleIn ? ColorUtil.applyOpacity(rectColor, moduleAnimation.getOutput().floatValue()) : rectColor);
+                if(animation.is("None")) {
+                    Gui.drawRect2(x - 2, y, font.getStringWidth(displayText) + offset, heightVal, rectColor);
+                } else {
+                    Gui.drawRect2(x - 2, y, font.getStringWidth(displayText) + offset, heightVal,
+                            scaleIn ? ColorUtil.applyOpacity(rectColor, moduleAnimation.getOutput().floatValue()) : rectColor);
+                }
 
                 float offset2 = minecraftFont.isEnabled() ? 1 : 0;
 
@@ -138,7 +148,10 @@ public class ArrayListMod extends Module {
 
                 if (scaleIn) {
                     rectangleColor = ColorUtil.applyOpacity(rectangleColor, moduleAnimation.getOutput().floatValue());
+                } else if (animation.is("None")) {
+                    rectangleColor = ColorUtil.applyOpacity(rectangleColor, 1.0f);
                 }
+
 
                 switch (rectangle.getMode()) {
                     default:
@@ -165,7 +178,11 @@ public class ArrayListMod extends Module {
                 RenderUtil.scaleEnd();
             }
 
-            yOffset += moduleAnimation.getOutput().floatValue() * heightVal;
+            if (animation.is("None")) {
+                yOffset += heightVal;
+            } else {
+                yOffset += moduleAnimation.getOutput().floatValue() * heightVal;
+            }
             count++;
         }
     }
@@ -186,6 +203,10 @@ public class ArrayListMod extends Module {
         for (Module module : modules) {
             if (importantModules.isEnabled() && module.getCategory() == Category.RENDER) continue;
             final Animation moduleAnimation = module.getAnimation();
+
+            if (animation.is("None") && !moduleAnimation.isDone()) {
+                moduleAnimation.timerUtil.lastMS = System.currentTimeMillis() - moduleAnimation.getDuration();
+            }
 
             moduleAnimation.setDirection(module.isEnabled() ? Direction.FORWARDS : Direction.BACKWARDS);
 
@@ -227,6 +248,8 @@ public class ArrayListMod extends Module {
                         RenderUtil.scaleStart(x + font.getStringWidth(displayText) / 2f, y + heightVal / 2 - font.getHeight() / 2f, (float) moduleAnimation.getOutput().floatValue());
                     }
                     alphaAnimation = (float) moduleAnimation.getOutput().floatValue();
+                    break;
+                case "None":
                     break;
             }
 
@@ -311,7 +334,7 @@ public class ArrayListMod extends Module {
                     break;
                 case "Colored":
                     RenderUtil.resetColor();
-                    font.drawString(StringUtils.stripColorCodes(displayText), x + 1, y + font.getMiddleOfBox(heightVal) + 1, ColorUtil.darker(color, .5f).getRGB());
+                    font.drawString(StringUtils.stripColorCodes(displayText), x + 1, y + font.getMiddleOfBox(heightVal) + 1, ColorUtil.applyOpacity(ColorUtil.darker(color, .5f), alphaAnimation).getRGB());
                     RenderUtil.resetColor();
                     font.drawString(displayText, x, y + font.getMiddleOfBox(heightVal), color.getRGB());
                     break;
@@ -334,7 +357,11 @@ public class ArrayListMod extends Module {
 
             lastModule = module;
 
-            yOffset += moduleAnimation.getOutput().floatValue() * heightVal;
+            if (animation.is("None")) {
+                yOffset += heightVal;
+            } else {
+                yOffset += moduleAnimation.getOutput().floatValue() * heightVal;
+            }
             count++;
         }
         lastCount = count;

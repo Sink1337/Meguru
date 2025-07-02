@@ -72,6 +72,10 @@ public abstract class Animation {
         this.duration = duration;
     }
 
+    public int getDuration() {
+        return duration;
+    }
+
     protected boolean correctOutput() {
         return false;
     }
