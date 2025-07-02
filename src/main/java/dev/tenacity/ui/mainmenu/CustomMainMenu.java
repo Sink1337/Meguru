@@ -178,7 +178,7 @@ public class CustomMainMenu extends GuiScreen {
                     break;
                 case "Discord":
                     button.clickAction = () -> {
-                        IOUtils.openLink("https://tenacity.dev/discord");
+                        IOUtils.openLink("https://discord.com/channels/1389913736168345753/1389917096280068189/1389917987888169031");
                     };
                     break;
             }
