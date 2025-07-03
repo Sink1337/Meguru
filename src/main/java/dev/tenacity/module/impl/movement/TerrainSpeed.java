@@ -18,7 +18,6 @@ import net.minecraft.block.Block;
 import net.minecraft.init.Blocks;
 import net.minecraft.network.Packet;
 import net.minecraft.network.play.server.S12PacketEntityVelocity;
-import net.minecraft.network.play.server.S08PacketPlayerPosLook;
 import net.minecraft.util.AxisAlignedBB;
 import net.minecraft.util.MathHelper;
 import net.minecraft.util.BlockPos;
@@ -29,6 +28,7 @@ public final class TerrainSpeed extends Module {
     private static int groundTicksLocal;
     private static double lastMotionY;
     private static boolean wasClimbing;
+    private boolean isFalling;
 
     static int jumpfunny = 0;
     private static long jumpticks = 0L;
@@ -67,6 +67,7 @@ public final class TerrainSpeed extends Module {
     public void onEnable() {
         resetModuleState();
         flying = false;
+        isFalling = false;
         if (boundingBoxFix.isEnabled()) {
             registerEventProtocol();
         }
@@ -94,6 +95,7 @@ public final class TerrainSpeed extends Module {
         damageBoostStartTime = 0L;
         wasOnGroundLastTick = false;
         damageFlightStartTime = 0L;
+        isFalling = false;
     }
 
     private void registerEventProtocol() {
@@ -153,8 +155,16 @@ public final class TerrainSpeed extends Module {
         if (player.onGround) {
             groundTicksLocal++;
             if (groundTicksLocal > 5) jumpfunny = 0;
+            isFalling = false;
         } else {
             groundTicksLocal = 0;
+            if (player.motionY <= 0 && lastMotionY > 0) {
+                isFalling = true;
+            } else if (player.motionY < 0) {
+                isFalling = true;
+            } else {
+                isFalling = false;
+            }
         }
 
         if (player.isCollidedVertically && lastMotionY > 0 && player.motionY <= 0) {
@@ -215,7 +225,7 @@ public final class TerrainSpeed extends Module {
                 bloxdPhysics.getVelocityVector().setY(0.0);
             }
 
-            if (!player.onGround && player.motionY < 0) {
+            if (isFalling) {
                 bloxdPhysics.getForceVector().add(0, -10, 0);
             }
 
