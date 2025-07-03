@@ -114,50 +114,54 @@ public final class KillAura extends Module {
         if (event.isPre()) {
             attacking = !targets.isEmpty() && (addons.getSetting("Allow Scaffold").isEnabled() || !Tenacity.INSTANCE.isEnabled(Scaffold.class));
             blocking = autoblock.isEnabled() && attacking && InventoryUtils.isHoldingSword();
+
             if (attacking) {
                 TargetManager.target = targets.get(0);
 
-                if (rotations.isEnabled()) {
-                    float[] rotations = new float[]{0, 0};
-                    switch (rotationMode.getMode()) {
-                        case "Vanilla":
-                            rotations = RotationUtils.getRotationsNeeded(TargetManager.target);
-                            break;
-                        case "Smooth":
-                            rotations = RotationUtils.getSmoothRotations(TargetManager.target);
-                            break;
+                if (TargetManager.target != null) {
+                    if (rotations.isEnabled()) {
+                        float[] rotations = new float[]{0, 0};
+                        switch (rotationMode.getMode()) {
+                            case "Vanilla":
+                                rotations = RotationUtils.getRotationsNeeded(TargetManager.target);
+                                break;
+                            case "Smooth":
+                                rotations = RotationUtils.getSmoothRotations(TargetManager.target);
+                                break;
+                        }
+                        yaw = event.getYaw();
+                        event.setRotations(rotations[0], rotations[1]);
+                        RotationUtils.setVisualRotations(event.getYaw(), event.getPitch());
                     }
-                    yaw = event.getYaw();
-                    event.setRotations(rotations[0], rotations[1]);
-                    RotationUtils.setVisualRotations(event.getYaw(), event.getPitch());
-                }
 
-                if (addons.getSetting("Ray Cast").isEnabled() && !RotationUtils.isMouseOver(event.getYaw(), event.getPitch(), TargetManager.target, reach.getValue().floatValue()))
-                    return;
+                    if (addons.getSetting("Ray Cast").isEnabled() && !RotationUtils.isMouseOver(event.getYaw(), event.getPitch(), TargetManager.target, reach.getValue().floatValue())) {
+                        return;
+                    }
 
-                if (attackTimer.hasTimeElapsed(cps, true)) {
-                    final int maxValue = (int) ((minCPS.getMaxValue() - maxCPS.getValue()) * 20);
-                    final int minValue = (int) ((minCPS.getMaxValue() - minCPS.getValue()) * 20);
-                    cps = MathUtils.getRandomInRange(minValue, maxValue);
-                    if (mode.is("Multi")) {
-                        for (EntityLivingBase entityLivingBase : targets) {
-                            AttackEvent attackEvent = new AttackEvent(entityLivingBase);
+                    if (attackTimer.hasTimeElapsed(cps, true)) {
+                        final int maxValue = (int) ((minCPS.getMaxValue() - maxCPS.getValue()) * 20);
+                        final int minValue = (int) ((minCPS.getMaxValue() - minCPS.getValue()) * 20);
+                        cps = MathUtils.getRandomInRange(minValue, maxValue);
+
+                        if (mode.is("Multi")) {
+                            for (EntityLivingBase entityLivingBase : targets) {
+                                AttackEvent attackEvent = new AttackEvent(entityLivingBase);
+                                Tenacity.INSTANCE.getEventProtocol().handleEvent(attackEvent);
+
+                                if (!attackEvent.isCancelled()) {
+                                    AttackOrder.sendFixedAttack(mc.thePlayer, entityLivingBase);
+                                }
+                            }
+                        } else {
+                            AttackEvent attackEvent = new AttackEvent(TargetManager.target);
                             Tenacity.INSTANCE.getEventProtocol().handleEvent(attackEvent);
 
                             if (!attackEvent.isCancelled()) {
-                                AttackOrder.sendFixedAttack(mc.thePlayer, entityLivingBase);
+                                AttackOrder.sendFixedAttack(mc.thePlayer, TargetManager.target);
                             }
-                        }
-                    } else {
-                        AttackEvent attackEvent = new AttackEvent(TargetManager.target);
-                        Tenacity.INSTANCE.getEventProtocol().handleEvent(attackEvent);
-
-                        if (!attackEvent.isCancelled()) {
-                            AttackOrder.sendFixedAttack(mc.thePlayer, TargetManager.target);
                         }
                     }
                 }
-
             } else {
                 TargetManager.target = null;
                 switchTimer.reset();
@@ -199,10 +203,12 @@ public final class KillAura extends Module {
 
     private void sortTargets() {
         targets.clear();
+        if (mc.theWorld == null) return;
+
         for (Entity entity : mc.theWorld.getLoadedEntityList()) {
-            if (entity instanceof EntityLivingBase) {
+            if (entity instanceof EntityLivingBase && mc.thePlayer != null && mc.thePlayer != entity) {
                 EntityLivingBase entityLivingBase = (EntityLivingBase) entity;
-                if (mc.thePlayer.getDistanceToEntity(entity) <= reach.getValue() && isValid(entity) && mc.thePlayer != entityLivingBase && !FriendCommand.isFriend(entityLivingBase.getName())) {
+                if (mc.thePlayer.getDistanceToEntity(entity) <= reach.getValue() && isValid(entity) && !FriendCommand.isFriend(entityLivingBase.getName())) {
                     targets.add(entityLivingBase);
                 }
             }
@@ -224,6 +230,7 @@ public final class KillAura extends Module {
     }
 
     public boolean isValid(Entity entity) {
+        if (mc.thePlayer == null) return false;
         if (!addons.isEnabled("Through Walls") && !mc.thePlayer.canEntityBeSeen(entity)) return false;
         else return TargetManager.checkEntity(entity);
     }
@@ -267,7 +274,6 @@ public final class KillAura extends Module {
         if (auraESP.isEnabled("Custom Color")) {
             color = customColor.getColor();
         }
-
 
         if (auraESPTarget != null) {
             if (auraESP.getSetting("Box").isEnabled()) {

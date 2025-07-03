@@ -149,14 +149,14 @@ public class GuiAltManager extends GuiScreen {
             case 1:
                 NotificationManager.post(NotificationType.INFO, "Alt Manager", "Invalid credentials!", 3);
                 if (HUDMod.specialsound.isEnabled()) {
-                    SoundUtils.playSound(failedsound, HUDMod.soundVolume.getValue().floatValue());
+                    SoundUtils.playSound(failedsound, HUDMod.specicalsoundVolume.getValue().floatValue());
                 }
                 Alt.stage = 0;
                 break;
             case 2:
                 NotificationManager.post(NotificationType.SUCCESS, "Alt Manager", "Logged in successfully!", 3);
                 if (HUDMod.specialsound.isEnabled()) {
-                    SoundUtils.playSound(successfullysound, HUDMod.soundVolume.getValue().floatValue());
+                    SoundUtils.playSound(successfullysound, HUDMod.specicalsoundVolume.getValue().floatValue());
                 }
                     Alt.stage = 0;
                     break;

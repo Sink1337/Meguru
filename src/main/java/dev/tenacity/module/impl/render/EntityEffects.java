@@ -1,6 +1,7 @@
 package dev.tenacity.module.impl.render;
 
 import dev.tenacity.Tenacity;
+import dev.tenacity.module.api.TargetManager;
 import dev.tenacity.event.impl.render.Render2DEvent;
 import dev.tenacity.event.impl.render.Render3DEvent;
 import dev.tenacity.event.impl.render.RenderModelEvent;
@@ -31,13 +32,14 @@ public class EntityEffects extends Module {
 
     private final MultipleBoolSetting validEntities = new MultipleBoolSetting("Valid Entities",
             new BooleanSetting("Players", true),
+            new BooleanSetting("Self", false),
+            new BooleanSetting("Bots", false),
             new BooleanSetting("Animals", true),
             new BooleanSetting("Mobs", true));
 
     private final BooleanSetting blur = new BooleanSetting("Blur", true);
     private final BooleanSetting bloom = new BooleanSetting("Bloom", true);
     private final BooleanSetting blackBloom = new BooleanSetting("Black Bloom", true);
-
 
     private Framebuffer entityFramebuffer = new Framebuffer(1, 1, false);
 
@@ -69,7 +71,6 @@ public class EntityEffects extends Module {
         }
     }
 
-
     @Override
     public void onRenderModelEvent(RenderModelEvent event) {
         if (event.isPost() && entities.contains(event.getEntity())) {
@@ -79,7 +80,6 @@ public class EntityEffects extends Module {
             GlowESP.renderGlint = false;
             event.drawModel();
 
-            //Needed to add the other layers to the entity
             event.drawLayers();
             GlowESP.renderGlint = true;
             GlStateManager.disableCull();
@@ -101,7 +101,6 @@ public class EntityEffects extends Module {
 
             RenderUtil.bindTexture(entityFramebuffer.framebufferTexture);
             ShaderUtil.drawQuads();
-
         }
     }
 
@@ -113,20 +112,26 @@ public class EntityEffects extends Module {
     }
 
     private boolean shouldRender(Entity entity) {
-        if (entity.isDead || entity.isInvisible()) {
+        if (entity == null || entity.isDead || entity.isInvisible()) {
             return false;
         }
-        if (validEntities.getSetting("Players").isEnabled() && entity instanceof EntityPlayer) {
-            if (entity == mc.thePlayer) {
-                return mc.gameSettings.thirdPersonView != 0;
-            }
-            return !entity.getDisplayName().getUnformattedText().contains("[NPC");
+
+        if (entity == mc.thePlayer) {
+            return validEntities.isEnabled("Self") && mc.gameSettings.thirdPersonView != 0;
         }
-        if (validEntities.getSetting("Animals").isEnabled() && entity instanceof EntityAnimal) {
+
+        if (TargetManager.isBot(entity)) {
+            return validEntities.isEnabled("Bots");
+        }
+
+        if (validEntities.isEnabled("Players") && entity instanceof EntityPlayer) {
             return true;
         }
 
-        return validEntities.getSetting("mobs").isEnabled() && entity instanceof EntityMob;
-    }
+        if (validEntities.isEnabled("Animals") && entity instanceof EntityAnimal) {
+            return true;
+        }
 
+        return validEntities.isEnabled("Mobs") && entity instanceof EntityMob;
+    }
 }

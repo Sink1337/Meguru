@@ -1495,6 +1495,11 @@ public class NetHandlerPlayClient implements INetHandlerPlayClient {
      */
     public void handleTeams(S3EPacketTeams packetIn) {
         PacketThreadUtil.checkThreadAndEnqueue(packetIn, this, this.gameController);
+        PacketThreadUtil.checkThreadAndEnqueue(packetIn, this, this.gameController);
+
+        if (this.clientWorldController == null) {
+            return;
+        }
         Scoreboard scoreboard = this.clientWorldController.getScoreboard();
         ScorePlayerTeam scoreplayerteam;
 

@@ -8,6 +8,7 @@ import dev.tenacity.event.impl.player.PlayerMoveUpdateEvent;
 import dev.tenacity.module.Category;
 import dev.tenacity.module.Module;
 import dev.tenacity.module.impl.combat.TargetStrafe;
+import dev.tenacity.module.impl.movement.TerrainSpeed.NoaPhysics;
 import dev.tenacity.module.settings.impl.BooleanSetting;
 import dev.tenacity.module.settings.impl.ModeSetting;
 import dev.tenacity.module.settings.impl.NumberSetting;
@@ -16,7 +17,6 @@ import dev.tenacity.ui.notifications.NotificationType;
 import dev.tenacity.utils.misc.MathUtils;
 import dev.tenacity.utils.player.MovementUtils;
 import dev.tenacity.utils.player.RotationUtils;
-import dev.tenacity.utils.server.PacketUtils;
 import dev.tenacity.utils.time.TimerUtil;
 import net.minecraft.init.Blocks;
 import net.minecraft.network.play.client.C03PacketPlayer;
@@ -28,8 +28,9 @@ import java.util.concurrent.ThreadLocalRandom;
 
 @SuppressWarnings("unused")
 public final class Speed extends Module {
-    private final ModeSetting mode = new ModeSetting("Mode", "Watchdog",
-            "Watchdog", "Strafe", "Matrix", "HurtTime", "Vanilla", "BHop", "Verus", "Viper", "Vulcan", "Zonecraft", "Heatseeker", "Mineland", "Legit");
+    public final ModeSetting mode = new ModeSetting("Mode", "Watchdog",
+            "Watchdog", "Strafe", "Matrix", "HurtTime", "Vanilla", "BHop", "Verus", "Viper", "Vulcan", "Zonecraft", "Heatseeker", "Mineland", "Legit", "Bloxd");
+    public final ModeSetting bloxdMode = new ModeSetting("Bloxd Mode", "LowHop", "LowHop", "Normal");
     private final ModeSetting watchdogMode = new ModeSetting("Watchdog Mode", "Hop", "Hop", "Dev", "Low Hop", "Ground");
     private final ModeSetting verusMode = new ModeSetting("Verus Mode", "Normal", "Low", "Normal");
     private final ModeSetting viperMode = new ModeSetting("Viper Mode", "Normal", "High", "Normal");
@@ -48,6 +49,8 @@ public final class Speed extends Module {
     private double moveSpeed;
     private int inAirTicks;
 
+    private final NoaPhysics bloxdPhysics = new NoaPhysics();
+
     public Speed() {
         super("Speed", Category.MOVEMENT, "Makes you go faster");
         watchdogMode.addParent(mode, modeSetting -> modeSetting.is("Watchdog"));
@@ -55,7 +58,34 @@ public final class Speed extends Module {
         viperMode.addParent(mode, modeSetting -> modeSetting.is("Viper"));
         groundSpeed.addParent(watchdogMode, modeSetting -> modeSetting.is("Ground") && mode.is("Watchdog"));
         vanillaSpeed.addParent(mode, modeSetting -> modeSetting.is("Vanilla") || modeSetting.is("BHop"));
-        this.addSettings(mode, vanillaSpeed, watchdogMode, verusMode, viperMode, autoDisable, groundSpeed, timer);
+        bloxdMode.addParent(mode, modeSetting -> modeSetting.is("Bloxd"));
+
+        this.addSettings(mode, vanillaSpeed, watchdogMode, verusMode, viperMode, bloxdMode, autoDisable, groundSpeed, timer);
+    }
+
+    @Override
+    public void onEnable() {
+        bloxdPhysics.reset();
+        speed = 1.5f;
+        timerUtil.reset();
+        if (mc.thePlayer != null) {
+            wasOnGround = mc.thePlayer.onGround;
+        }
+        inAirTicks = 0;
+        moveSpeed = 0;
+        stage = 0;
+
+        super.onEnable();
+    }
+
+    @Override
+    public void onDisable() {
+        bloxdPhysics.reset();
+        mc.timer.timerSpeed = 1;
+        mc.thePlayer.motionX = 0;
+        mc.thePlayer.motionZ = 0;
+
+        super.onDisable();
     }
 
     @Override
@@ -239,57 +269,78 @@ public final class Speed extends Module {
                 }
                 break;
             case "Legit":
-                if (e.isPre()) {
-                    if (MovementUtils.isMoving() && mc.thePlayer.onGround) {
-                        mc.thePlayer.jump();
-                    }
+                if (e.isPre() && MovementUtils.isMoving() && mc.thePlayer.onGround) {
+                    mc.thePlayer.jump();
+                }
+                break;
+            case "Bloxd":
+                switch (bloxdMode.getMode()) {
+                    case "LowHop":
+                        break;
+                    case "Normal":
+                        if (e.isPre() && MovementUtils.isMoving() && mc.thePlayer.onGround) {
+                            mc.thePlayer.jump();
+                        }
+                        break;
                 }
                 break;
         }
-
     }
 
     @Override
     public void onMoveEvent(MoveEvent e) {
-
-
         TargetStrafe targetStrafeModule = Tenacity.INSTANCE.getModuleCollection().getModule(TargetStrafe.class);
 
         if (targetStrafeModule != null && targetStrafeModule.active) {
             return;
         }
 
-        if (mode.is("Watchdog")) {
-            switch (watchdogMode.getMode()) {
-                case "Ground":
-                    strafe = !strafe;
-                    if (mc.thePlayer.onGround && MovementUtils.isMoving() && mc.theWorld.getBlockState(new BlockPos(mc.thePlayer.posX + e.getX(), mc.thePlayer.posY, mc.thePlayer.posZ + e.getZ())).getBlock() == Blocks.air && !mc.thePlayer.isCollidedHorizontally && !Step.isStepping) {
-                        if (strafe || groundSpeed.getValue() >= 1.6)
-                            PacketUtils.sendPacket(new C03PacketPlayer.C04PacketPlayerPosition(mc.thePlayer.posX + e.getX(), mc.thePlayer.posY, mc.thePlayer.posZ + e.getZ(), true));
-                        e.setSpeed(MovementUtils.getBaseMoveSpeed() * groundSpeed.getValue());
+        switch (mode.getMode()) {
+            case "Watchdog":
+                switch (watchdogMode.getMode()) {
+                    case "Ground":
+                        if (mc.thePlayer.onGround && MovementUtils.isMoving() && mc.theWorld.getBlockState(new BlockPos(mc.thePlayer.posX + e.getX(), mc.thePlayer.posY, mc.thePlayer.posZ + e.getZ())).getBlock() == Blocks.air && !mc.thePlayer.isCollidedHorizontally && !Step.isStepping) {
+                            e.setSpeed(MovementUtils.getBaseMoveSpeed() * groundSpeed.getValue());
+                            break;
+                        }
                         break;
-                    }
-                    break;
-                case "Low Hop":
-                    if (MovementUtils.isMoving()) {
-                        if (mc.thePlayer.onGround)
-                            inAirTicks = 0;
-                        else
-                            inAirTicks++;
-                        if (inAirTicks == 5)
-                            e.setY(mc.thePlayer.motionY = -0.19);
-                    }
-                    break;
-            }
+                    case "Low Hop":
+                        if (MovementUtils.isMoving()) {
+                            if (mc.thePlayer.onGround)
+                                inAirTicks = 0;
+                            else
+                                inAirTicks++;
+                            if (inAirTicks == 5)
+                                e.setY(mc.thePlayer.motionY = -0.19);
+                        }
+                        break;
+                }
+                break;
+            case "Bloxd":
+                switch (bloxdMode.getMode()) {
+                    case "LowHop":
+                        if (MovementUtils.isMoving() && mc.thePlayer.onGround) {
+                            bloxdPhysics.reset();
+                            bloxdPhysics.getImpulseVector().add(0, 8, 0);
+                            if (TerrainSpeed.jumpfunny < 4) {
+                                TerrainSpeed.jumpfunny++;
+                            }
+                            bloxdPhysics.getMotionForTick();
+                            e.setY(bloxdPhysics.getVelocityVector().getY() / 30.0);
+                        }
+                        break;
+                    case "Normal":
+                        break;
+                }
+                break;
         }
     }
 
     @Override
     public void onPlayerMoveUpdateEvent(PlayerMoveUpdateEvent e) {
-
-
         TargetStrafe targetStrafeModule = Tenacity.INSTANCE.getModuleCollection().getModule(TargetStrafe.class);
         boolean isTargetStrafeActive = (targetStrafeModule != null && targetStrafeModule.active);
+
         if (mode.is("Watchdog") && (watchdogMode.is("Hop") || watchdogMode.is("Dev") || watchdogMode.is("Low Hop")) && mc.thePlayer.fallDistance < 1 && !mc.thePlayer.isPotionActive(Potion.jump)) {
             if (MovementUtils.isMoving()) {
                 switch (watchdogMode.getMode()) {
@@ -342,28 +393,7 @@ public final class Speed extends Module {
         if (terrainSpeed != null && terrainSpeed.isEnabled()) {
             return false;
         }
-        return Tenacity.INSTANCE.isEnabled(Speed.class) && MovementUtils.isMoving() && !(mode.is("Watchdog") && watchdogMode.is("Ground"));
-    }
-
-    @Override
-    public void onEnable() {
-        speed = 1.5f;
-        timerUtil.reset();
-        if (mc.thePlayer != null) {
-            wasOnGround = mc.thePlayer.onGround;
-        }
-        inAirTicks = 0;
-        moveSpeed = 0;
-        stage = 0;
-        super.onEnable();
-    }
-
-    @Override
-    public void onDisable() {
-        mc.timer.timerSpeed = 1;
-        mc.thePlayer.motionX = 0;
-        mc.thePlayer.motionZ = 0;
-        super.onDisable();
+        return Tenacity.INSTANCE.isEnabled(Speed.class) && MovementUtils.isMoving() && !(mode.is("Watchdog") && watchdogMode.is("Ground")) && !(mode.is("Bloxd") && bloxdMode.is("LowHop"));
     }
 
 }

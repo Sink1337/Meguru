@@ -1,5 +1,6 @@
 package dev.tenacity.module.impl.render;
 
+import dev.tenacity.module.api.TargetManager;
 import dev.tenacity.utils.tuples.Pair;
 import dev.tenacity.Tenacity;
 import dev.tenacity.event.impl.game.WorldEvent;
@@ -14,6 +15,7 @@ import dev.tenacity.utils.animations.Animation;
 import dev.tenacity.utils.animations.impl.DecelerateAnimation;
 import dev.tenacity.utils.misc.MathUtils;
 import dev.tenacity.utils.render.*;
+import dev.tenacity.module.impl.player.ChestStealer;
 import net.minecraft.client.gui.ScaledResolution;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.shader.Framebuffer;
@@ -22,6 +24,7 @@ import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.monster.EntityMob;
 import net.minecraft.entity.passive.EntityAnimal;
 import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.tileentity.TileEntity;
 import net.minecraft.tileentity.TileEntityChest;
 import net.minecraft.util.BlockPos;
 import org.lwjgl.BufferUtils;
@@ -35,8 +38,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
-import java.util.HashSet;
 
 import static org.lwjgl.opengl.GL11.*;
 import static org.lwjgl.opengl.GL20.glUniform1;
@@ -45,12 +46,18 @@ public class GlowESP extends Module {
 
     private final BooleanSetting kawaseGlow = new BooleanSetting("Kawase Glow", false);
     private final ModeSetting colorMode = new ModeSetting("Color Mode", "Sync", "Sync", "Random", "Custom");
+
     private final MultipleBoolSetting validEntities = new MultipleBoolSetting("Entities",
             new BooleanSetting("Players", true),
+            new BooleanSetting("Self", false),
+            new BooleanSetting("Bots", false),
             new BooleanSetting("Animals", true),
             new BooleanSetting("Mobs", true),
             new BooleanSetting("Chests", true));
+
     private final ColorSetting playerColor = new ColorSetting("Player Color", Tenacity.INSTANCE.getClientColor());
+    private final ColorSetting selfColor = new ColorSetting("Self Color", Color.CYAN);
+    private final ColorSetting botColor = new ColorSetting("Bot Color", Color.MAGENTA);
     private final ColorSetting animalColor = new ColorSetting("Animal Color", Tenacity.INSTANCE.getAlternateClientColor());
     private final ColorSetting mobColor = new ColorSetting("Mob Color", Color.RED);
     private final ColorSetting chestColor = new ColorSetting("Chest Color", Color.GREEN);
@@ -62,12 +69,11 @@ public class GlowESP extends Module {
     private final NumberSetting exposure = new NumberSetting("Exposure", 2.2, 3.5, .5, .1);
     private final BooleanSetting seperate = new BooleanSetting("Seperate Texture", false);
 
-    public static final Set<BlockPos> openedChests = new HashSet<>();
-    public static final Set<BlockPos> renderableChests = new HashSet<>();
-
     public GlowESP() {
         super("GlowESP", Category.RENDER, "ESP that glows on players");
         playerColor.addParent(colorMode, modeSetting -> modeSetting.is("Custom") && validEntities.getSetting("Players").isEnabled());
+        selfColor.addParent(colorMode, modeSetting -> modeSetting.is("Custom") && validEntities.getSetting("Self").isEnabled());
+        botColor.addParent(colorMode, modeSetting -> modeSetting.is("Custom") && validEntities.getSetting("Bots").isEnabled());
         animalColor.addParent(colorMode, modeSetting -> modeSetting.is("Custom") && validEntities.getSetting("Animals").isEnabled());
         mobColor.addParent(colorMode, modeSetting -> modeSetting.is("Custom") && validEntities.getSetting("Mobs").isEnabled());
         chestColor.addParent(colorMode, modeSetting -> modeSetting.is("Custom") && validEntities.getSetting("Chests").isEnabled());
@@ -76,7 +82,7 @@ public class GlowESP extends Module {
         radius.addParent(kawaseGlow, ParentAttribute.BOOLEAN_CONDITION.negate());
         iterationsSetting.addParent(kawaseGlow, ParentAttribute.BOOLEAN_CONDITION);
         offsetSetting.addParent(kawaseGlow, ParentAttribute.BOOLEAN_CONDITION);
-        addSettings(kawaseGlow, colorMode, validEntities, playerColor, animalColor, mobColor, chestColor, openedChestColor, hurtTimeColor, iterationsSetting, offsetSetting, radius, exposure, seperate);
+        addSettings(kawaseGlow, colorMode, validEntities, playerColor, selfColor, botColor, animalColor, mobColor, chestColor, openedChestColor, hurtTimeColor, iterationsSetting, offsetSetting, radius, exposure, seperate);
     }
 
     public static boolean renderNameTags = true;
@@ -92,7 +98,8 @@ public class GlowESP extends Module {
     public Framebuffer glowFrameBuffer;
     public static boolean renderGlint = true;
 
-    private final List<Entity> entities = new ArrayList<>();
+    private final List<Entity> glowEntities = new ArrayList<>();
+    private final List<TileEntity> glowTileEntities = new ArrayList<>();
     private final Map<Object, Color> entityColorMap = new HashMap<>();
 
     public static Animation fadeIn;
@@ -104,16 +111,12 @@ public class GlowESP extends Module {
     @Override
     public void onWorldEvent(WorldEvent event) {
         entityColorMap.clear();
-        openedChests.clear();
-        renderableChests.clear();
     }
 
     @Override
     public void onEnable() {
         super.onEnable();
         entityColorMap.clear();
-        openedChests.clear();
-        renderableChests.clear();
         fadeIn = new DecelerateAnimation(250, 1);
     }
 
@@ -125,13 +128,6 @@ public class GlowESP extends Module {
     @Override
     public void onRenderChestEvent(RenderChestEvent e) {
         if (validEntities.getSetting("Chests").isEnabled() && framebuffer != null) {
-            TileEntityChest chest = (TileEntityChest) e.getEntity();
-            BlockPos chestPos = chest.getPos();
-
-            if (!openedChests.contains(chestPos)) {
-                renderableChests.add(chestPos);
-            }
-
             framebuffer.bindFramebuffer(false);
             chamsShader.init();
             chamsShader.setUniformi("textureIn", 0);
@@ -149,7 +145,8 @@ public class GlowESP extends Module {
     @Override
     public void onRenderModelEvent(RenderModelEvent e) {
         if (e.isPost() && framebuffer != null) {
-            if (!entities.contains(e.getEntity())) return;
+            if (!glowEntities.contains(e.getEntity())) return;
+
             framebuffer.bindFramebuffer(false);
             chamsShader.init();
             chamsShader.setUniformi("textureIn", 0);
@@ -177,7 +174,8 @@ public class GlowESP extends Module {
         collectEntities();
 
         ScaledResolution sr = new ScaledResolution(mc);
-        if (framebuffer != null && outlineFrameBuffer != null && (validEntities.getSetting("Chests").isEnabled() || entities.size() > 0)) {
+        if (framebuffer != null && outlineFrameBuffer != null &&
+                (validEntities.getSetting("Chests").isEnabled() && !glowTileEntities.isEmpty() || !glowEntities.isEmpty())) {
             RenderUtil.setAlphaLimit(0);
             GLUtil.startBlend();
 
@@ -196,7 +194,7 @@ public class GlowESP extends Module {
 
             if (kawaseGlow.isEnabled()) {
                 int offset = offsetSetting.getValue().intValue();
-                int iterations = 3;
+                int iterations = iterationsSetting.getValue().intValue();
 
                 if (framebufferList.isEmpty() || currentIterations != iterations || (framebuffer.framebufferWidth != mc.displayWidth || framebuffer.framebufferHeight != mc.displayHeight)) {
                     initFramebuffers(iterations);
@@ -243,13 +241,10 @@ public class GlowESP extends Module {
                 RenderUtil.resetColor();
                 mc.getFramebuffer().bindFramebuffer(true);
                 RenderUtil.bindTexture(framebufferList.get(0).framebufferTexture);
-                ShaderUtil.drawQuads();
-                RenderUtil.setAlphaLimit(0);
-                GlStateManager.bindTexture(0);
             } else {
                 if (!framebufferList.isEmpty()) {
-                    for (Framebuffer framebuffer : framebufferList) {
-                        framebuffer.deleteFramebuffer();
+                    for (Framebuffer fb : framebufferList) {
+                        fb.deleteFramebuffer();
                     }
                     glowFrameBuffer = null;
                     framebufferList.clear();
@@ -285,10 +280,12 @@ public class GlowESP extends Module {
                 framebuffer.framebufferClear();
                 mc.getFramebuffer().bindFramebuffer(false);
             }
+            RenderUtil.setAlphaLimit(0);
+            GlStateManager.bindTexture(0);
         }
     }
 
-    private void initFramebuffers(float iterations) {
+    private void initFramebuffers(int iterations) {
         for (Framebuffer framebuffer : framebufferList) {
             framebuffer.deleteFramebuffer();
         }
@@ -353,23 +350,26 @@ public class GlowESP extends Module {
         outlineShader.setUniformf("direction", dir1, dir2);
     }
 
-    private Color getColor(Object entity) {
+    private Color getColor(Object object) {
         Color color = Color.WHITE;
         switch (colorMode.getMode()) {
             case "Custom":
-                if (entity instanceof EntityPlayer) {
-                    color = playerColor.getColor();
-                }
-                if (entity instanceof EntityMob) {
+                if (object == mc.thePlayer) {
+                    color = selfColor.getColor();
+                } else if (object instanceof EntityPlayer) {
+                    if (TargetManager.isBot((Entity) object)) {
+                        color = botColor.getColor();
+                    } else {
+                        color = playerColor.getColor();
+                    }
+                } else if (object instanceof EntityMob) {
                     color = mobColor.getColor();
-                }
-                if (entity instanceof EntityAnimal) {
+                } else if (object instanceof EntityAnimal) {
                     color = animalColor.getColor();
-                }
-                if (entity instanceof TileEntityChest) {
-                    TileEntityChest chest = (TileEntityChest) entity;
+                } else if (object instanceof TileEntityChest) {
+                    TileEntityChest chest = (TileEntityChest) object;
                     BlockPos chestPos = chest.getPos();
-                    if (openedChests.contains(chestPos)) {
+                    if (ChestStealer.openedChests.contains(chestPos)) {
                         color = openedChestColor.getColor();
                     } else {
                         color = chestColor.getColor();
@@ -385,17 +385,17 @@ public class GlowESP extends Module {
                 }
                 break;
             case "Random":
-                if (entityColorMap.containsKey(entity)) {
-                    color = entityColorMap.get(entity);
+                if (entityColorMap.containsKey(object)) {
+                    color = entityColorMap.get(object);
                 } else {
                     color = ColorUtil.getRandomColor();
-                    entityColorMap.put(entity, color);
+                    entityColorMap.put(object, color);
                 }
                 break;
         }
 
-        if (entity instanceof EntityLivingBase) {
-            EntityLivingBase entityLivingBase = (EntityLivingBase) entity;
+        if (object instanceof EntityLivingBase) {
+            EntityLivingBase entityLivingBase = (EntityLivingBase) object;
             if (entityLivingBase.hurtTime > 0) {
                 color = ColorUtil.interpolateColorC(color, hurtTimeColor.getColor(), (float) Math.sin(entityLivingBase.hurtTime * (18 * Math.PI / 180)));
             }
@@ -405,20 +405,53 @@ public class GlowESP extends Module {
     }
 
     public void collectEntities() {
-        entities.clear();
+        glowEntities.clear();
+        glowTileEntities.clear();
+
         for (Entity entity : mc.theWorld.getLoadedEntityList()) {
-            if (!ESPUtil.isInView(entity)) continue;
-            if (entity == mc.thePlayer && mc.gameSettings.thirdPersonView == 0) continue;
-            if (entity instanceof EntityAnimal && validEntities.getSetting("animals").isEnabled()) {
-                entities.add(entity);
+            if (entity == null || entity.isDead || entity.isInvisible()) {
+                continue;
+            }
+            if (!ESPUtil.isInView(entity)) {
+                continue;
             }
 
-            if (entity instanceof EntityPlayer && validEntities.getSetting("players").isEnabled()) {
-                entities.add(entity);
+            if (entity instanceof EntityPlayer) {
+                if (entity == mc.thePlayer) {
+                    if (validEntities.getSetting("Self").isEnabled() && mc.gameSettings.thirdPersonView != 0) {
+                        glowEntities.add(entity);
+                    }
+                    continue;
+                }
+
+                if (TargetManager.isBot(entity)) {
+                    if (validEntities.getSetting("Bots").isEnabled()) {
+                        glowEntities.add(entity);
+                    }
+                    continue;
+                }
+
+                if (validEntities.getSetting("Players").isEnabled()) {
+                    glowEntities.add(entity);
+                }
+                continue;
             }
 
-            if (entity instanceof EntityMob && validEntities.getSetting("mobs").isEnabled()) {
-                entities.add(entity);
+            if (entity instanceof EntityAnimal && validEntities.getSetting("Animals").isEnabled()) {
+                glowEntities.add(entity);
+                continue;
+            }
+
+            if (entity instanceof EntityMob && validEntities.getSetting("Mobs").isEnabled()) {
+                glowEntities.add(entity);
+            }
+        }
+        if (validEntities.getSetting("Chests").isEnabled()) {
+            for (BlockPos pos : ChestStealer.renderableChests) {
+                TileEntity tileEntity = mc.theWorld.getTileEntity(pos);
+                if (tileEntity instanceof TileEntityChest) {
+                    glowTileEntities.add(tileEntity);
+                }
             }
         }
     }

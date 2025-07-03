@@ -8,6 +8,9 @@ import net.minecraft.util.AxisAlignedBB;
 import net.minecraft.util.BlockPos;
 import net.minecraft.util.MathHelper;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class BlockUtils implements Utils {
 
     public static boolean isValidBlock(BlockPos pos) {
@@ -41,6 +44,26 @@ public class BlockUtils implements Utils {
         }
         return (block.getMaterial().isSolid() || !block.isTranslucent() || block.isFullBlock());
     }
+
+    /**
+     * Retrieves all BlockPos within a specified AxisAlignedBB defined by two BlockPos.
+     * This method is crucial for the Breaker module to find target blocks within a range.
+     * @param minPos The minimum BlockPos (lower X, Y, Z corner).
+     * @param maxPos The maximum BlockPos (upper X, Y, Z corner).
+     * @return A List of BlockPos within the defined bounding box.
+     */
+    public static List<BlockPos> getAllBlocksInAABB(BlockPos minPos, BlockPos maxPos) {
+        List<BlockPos> blockPositions = new ArrayList<>();
+        for (int x = minPos.getX(); x <= maxPos.getX(); x++) {
+            for (int y = minPos.getY(); y <= maxPos.getY(); y++) {
+                for (int z = minPos.getZ(); z <= maxPos.getZ(); z++) {
+                    blockPositions.add(new BlockPos(x, y, z));
+                }
+            }
+        }
+        return blockPositions;
+    }
+
 
     public static boolean isInLiquid() {
         if (mc.thePlayer == null) return false;

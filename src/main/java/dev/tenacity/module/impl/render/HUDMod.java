@@ -51,16 +51,22 @@ public class HUDMod extends Module {
     public static BooleanSetting customStatsRender = null;
 
     public static final BooleanSetting specialsound = new BooleanSetting("Special Sound", true);
-    public static final NumberSetting soundVolume = new NumberSetting("Sound Volume", 0.8, 1.0, 0.1, 0.1);
+    public static final NumberSetting specicalsoundVolume = new NumberSetting("Special Sound Volume", 0.8, 1.0, 0.1, 0.1);
+    public static final BooleanSetting togglesound = new BooleanSetting("Toggle Sound", true);
+    public static final ModeSetting togglesoundmode = new ModeSetting("Toggle Sound Mode", "Click", "Click", "Sigma", "YuzuSoft");
+    public static final NumberSetting togglesoundVolume = new NumberSetting("Toggle Sound Volume", 1.0, 1.0, 0.1, 0.1);
 
     private static final MultipleBoolSetting infoCustomization = new MultipleBoolSetting("Info Options",
+            new BooleanSetting("Show FPS", true),
+            new BooleanSetting("Show Speed", true),
+            new BooleanSetting("Show XYZ", true),
             new BooleanSetting("Show Ping", false),
             new BooleanSetting("Semi-Bold Info", true),
             new BooleanSetting("White Info", false),
             new BooleanSetting("Info Shadow", true));
 
     public static final MultipleBoolSetting hudCustomization = new MultipleBoolSetting("HUD Options",
-        customStatsRender = new BooleanSetting("Stats HUD", true),
+            customStatsRender = new BooleanSetting("Stats HUD", true),
             new BooleanSetting("Radial Gradients", true),
             new BooleanSetting("Potion HUD", true),
             new BooleanSetting("Armor HUD", true),
@@ -76,8 +82,10 @@ public class HUDMod extends Module {
         super("HUD", Category.RENDER, "customizes the client's appearance");
         color1.addParent(theme, modeSetting -> modeSetting.is("Custom Theme"));
         color2.addParent(theme, modeSetting -> modeSetting.is("Custom Theme") && !color1.isRainbow());
-        soundVolume.addParent(specialsound, ParentAttribute.BOOLEAN_CONDITION);
-        this.addSettings(clientName, watermarkMode, theme, color1, color2, customFont, specialsound, soundVolume, infoCustomization, hudCustomization, disableButtons);
+        specicalsoundVolume.addParent(specialsound, ParentAttribute.BOOLEAN_CONDITION);
+        togglesoundmode.addParent(togglesound, ParentAttribute.BOOLEAN_CONDITION);
+        togglesoundVolume.addParent(togglesound, ParentAttribute.BOOLEAN_CONDITION);
+        this.addSettings(clientName, watermarkMode, theme, color1, color2, customFont, specialsound, specicalsoundVolume, togglesound, togglesoundmode, togglesoundVolume, infoCustomization, hudCustomization, disableButtons);
         if (!enabled) this.toggleSilent();
     }
 
@@ -394,10 +402,17 @@ public class HUDMod extends Module {
         String titleBold = semiBold ? "§l" : "";
         ScaledResolution sr = new ScaledResolution(mc);
 
+        bottomLeftText.clear();
 
-        bottomLeftText.put("XYZ", Math.round(mc.thePlayer.posX) + " " + Math.round(mc.thePlayer.posY) + " " + Math.round(mc.thePlayer.posZ));
-        bottomLeftText.put("Speed", String.valueOf(calculateBPS()));
-        bottomLeftText.put("FPS", String.valueOf(Minecraft.getDebugFPS()));
+        if (infoCustomization.isEnabled("Show XYZ")) {
+            bottomLeftText.put("XYZ", Math.round(mc.thePlayer.posX) + " " + Math.round(mc.thePlayer.posY) + " " + Math.round(mc.thePlayer.posZ));
+        }
+        if (infoCustomization.isEnabled("Show Speed")) {
+            bottomLeftText.put("Speed", String.valueOf(calculateBPS()));
+        }
+        if (infoCustomization.isEnabled("Show FPS")) {
+            bottomLeftText.put("FPS", String.valueOf(Minecraft.getDebugFPS()));
+        }
 
         if (infoCustomization.isEnabled("Show Ping")) {
             bottomLeftText.put("Ping", PingerUtils.getPing());
@@ -414,9 +429,25 @@ public class HUDMod extends Module {
         }
 
         if (semiBold) {
-            xOffset = nameInfoFr.getStringWidth("§lXYZ: " + bottomLeftText.get("XYZ"));
+            // This calculation needs to be dynamic based on which info is visible
+            // For now, we'll approximate with a common one or find the max width
+            float maxWidth = 0;
+            for (Map.Entry<String, String> line : bottomLeftText.entrySet()) {
+                float currentWidth = nameInfoFr.getStringWidth("§l" + line.getKey() + "§r: " + line.getValue());
+                if (currentWidth > maxWidth) {
+                    maxWidth = currentWidth;
+                }
+            }
+            xOffset = maxWidth; // Update xOffset based on actual displayed width
         } else {
-            xOffset = nameInfoFr.getStringWidth("XYZ: " + bottomLeftText.get("XYZ"));
+            float maxWidth = 0;
+            for (Map.Entry<String, String> line : bottomLeftText.entrySet()) {
+                float currentWidth = nameInfoFr.getStringWidth(line.getKey() + ": " + line.getValue());
+                if (currentWidth > maxWidth) {
+                    maxWidth = currentWidth;
+                }
+            }
+            xOffset = maxWidth; // Update xOffset based on actual displayed width
         }
 
 
@@ -435,22 +466,32 @@ public class HUDMod extends Module {
         } else {
 
             float f = nameInfoFr.getHeight() + 2 + yOffset + yMovement;
+            // Draw the value parts first for proper shadow layering
             for (Map.Entry<String, String> line : bottomLeftText.entrySet()) {
-                // Simulate a shadow
+                // Simulate a shadow for the value
                 if (shadowInfo) {
                     nameInfoFr.drawString(get(line.getValue()), 2 + f2 + nameInfoFr.getStringWidth(titleBold + line.getKey() + ":§r "), sr.getScaledHeight() - f + f2, 0xFF000000);
                 }
-
                 nameInfoFr.drawString(get(line.getValue()), 2 + nameInfoFr.getStringWidth(titleBold + line.getKey() + ":§r "), sr.getScaledHeight() - f, -1);
-
                 f += nameInfoFr.getHeight() + f3;
             }
 
+            // Reset f for drawing keys with gradient
+            f = nameInfoFr.getHeight() + 2 + yOffset + yMovement;
+            // Calculate height and max width for gradient background
+            float totalHeight = (nameInfoFr.getHeight() + f3) * bottomLeftText.size();
+            float maxWidthKey = 0;
+            for (Map.Entry<String, String> line : bottomLeftText.entrySet()) {
+                float currentKeyWidth = nameInfoFr.getStringWidth(titleBold + line.getKey() + ": ");
+                if (currentKeyWidth > maxWidthKey) {
+                    maxWidthKey = currentKeyWidth;
+                }
+            }
 
-            float height = (nameInfoFr.getHeight() + 2) * bottomLeftText.size();
-            float width = nameInfoFr.getStringWidth(titleBold + "Speed:");
+
             AbstractFontRenderer finalFr = nameInfoFr;
 
+            // Draw shadow for the keys
             if (shadowInfo) {
                 float boldFontMovement1 = finalFr.getHeight() + 2 + yOffset + yMovement;
                 for (Map.Entry<String, String> line : bottomLeftText.entrySet()) {
@@ -459,14 +500,14 @@ public class HUDMod extends Module {
                 }
             }
 
-            GradientUtil.applyGradientVertical(2, sr.getScaledHeight() - (height + yOffset + yMovement), width, height, 1, clientColors.getFirst(), clientColors.getSecond(), () -> {
+            // Draw keys with gradient
+            GradientUtil.applyGradientVertical(2, sr.getScaledHeight() - (totalHeight + yOffset + yMovement - f3), maxWidthKey, totalHeight, 1, clientColors.getFirst(), clientColors.getSecond(), () -> {
                 float boldFontMovement = finalFr.getHeight() + 2 + yOffset + yMovement;
                 for (Map.Entry<String, String> line : bottomLeftText.entrySet()) {
                     finalFr.drawString(get(titleBold + line.getKey() + ": "), 2, sr.getScaledHeight() - boldFontMovement, -1);
                     boldFontMovement += finalFr.getHeight() + f3;
                 }
             });
-
         }
     }
 

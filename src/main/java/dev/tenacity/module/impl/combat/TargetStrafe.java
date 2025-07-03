@@ -8,7 +8,6 @@ import dev.tenacity.module.Category;
 import dev.tenacity.module.Module;
 import dev.tenacity.module.api.TargetManager;
 import dev.tenacity.module.impl.movement.Flight;
-import dev.tenacity.module.impl.movement.Scaffold;
 import dev.tenacity.module.impl.movement.Speed;
 import dev.tenacity.module.impl.movement.TerrainSpeed;
 import dev.tenacity.module.settings.ParentAttribute;
@@ -196,7 +195,6 @@ public final class TargetStrafe extends Module {
         KillAura killAura = Tenacity.INSTANCE.getModuleCollection().getModule(KillAura.class);
         Speed speed = Tenacity.INSTANCE.getModuleCollection().getModule(Speed.class);
         Flight flight = Tenacity.INSTANCE.getModuleCollection().getModule(Flight.class);
-        // TerrainSpeed terrainSpeed = Tenacity.INSTANCE.getModuleCollection().getModule(TerrainSpeed.class); // 可以删除或注释掉这一行，因为它不再用于判断
 
         if (killAura == null || !killAura.isEnabled() || currentTarget == null || !killAura.isValid(currentTarget)) {
             return false;
@@ -216,10 +214,6 @@ public final class TargetStrafe extends Module {
             if (!mc.gameSettings.keyBindForward.isKeyDown()) {
                 return false;
             }
-        }
-
-        if (Tenacity.INSTANCE.isEnabled(Scaffold.class)) {
-            return false;
         }
 
         return true;

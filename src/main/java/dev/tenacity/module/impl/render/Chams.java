@@ -1,5 +1,6 @@
 package dev.tenacity.module.impl.render;
 
+import dev.tenacity.module.api.TargetManager; // 导入 TargetManager
 import dev.tenacity.utils.tuples.Pair;
 import dev.tenacity.event.impl.render.RenderChestEvent;
 import dev.tenacity.event.impl.render.RenderModelEvent;
@@ -24,8 +25,14 @@ import static org.lwjgl.opengl.GL11.*;
 
 public class Chams extends Module {
 
-
-    private final MultipleBoolSetting entities = new MultipleBoolSetting("Entities", "Players", "Animals", "Mobs", "Chests");
+    private final MultipleBoolSetting entities = new MultipleBoolSetting("Entities",
+            new BooleanSetting("Players", true),
+            new BooleanSetting("Self", false),
+            new BooleanSetting("Bots", false),
+            new BooleanSetting("Animals", false),
+            new BooleanSetting("Mobs", false),
+            new BooleanSetting("Chests", false)
+    );
 
     private final BooleanSetting lighting = new BooleanSetting("Lighting", true);
     private final BooleanSetting onlyBehindWalls = new BooleanSetting("Only behind walls", false);
@@ -46,7 +53,9 @@ public class Chams extends Module {
 
     @Override
     public void onRenderChestEvent(RenderChestEvent event) {
+        // 确保这里仍然只检查 Chests
         if (!entities.isEnabled("Chests")) return;
+
         Color behindWallsColor = Color.WHITE;
         Pair<Color, Color> colors = HUDMod.getClientColors();
         switch (behindWalls.getMode()) {
@@ -167,9 +176,7 @@ public class Chams extends Module {
                 RenderUtil.color(visibleColor.getRGB());
             }
 
-
             event.drawModel();
-
 
             glEnable(GL_TEXTURE_2D);
             glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
@@ -180,14 +187,21 @@ public class Chams extends Module {
             glDisable(GL_POLYGON_OFFSET_LINE);
             glPopMatrix();
         }
-
     }
 
     private boolean isValidEntity(Entity entity) {
+        if (entity == null) return false;
+
+        if (entity == mc.thePlayer) {
+            return entities.isEnabled("Self");
+        }
+
+        if (TargetManager.isBot(entity)) {
+            return entities.isEnabled("Bots");
+        }
+
         return entities.isEnabled("Players") && entity instanceof EntityPlayer ||
                 entities.isEnabled("Animals") && entity instanceof EntityAnimal ||
                 entities.isEnabled("Mobs") && entity instanceof EntityMob;
     }
-
-
 }

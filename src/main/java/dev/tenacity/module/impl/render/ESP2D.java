@@ -1,5 +1,6 @@
 package dev.tenacity.module.impl.render;
 
+import dev.tenacity.module.api.TargetManager;
 import dev.tenacity.utils.tuples.Pair;
 import dev.tenacity.commands.impl.FriendCommand;
 import dev.tenacity.event.impl.render.NametagRenderEvent;
@@ -36,6 +37,8 @@ public class ESP2D extends Module {
 
     private final MultipleBoolSetting validEntities = new MultipleBoolSetting("Valid Entities",
             new BooleanSetting("Players", true),
+            new BooleanSetting("Self", false),
+            new BooleanSetting("Bots", false),
             new BooleanSetting("Animals", true),
             new BooleanSetting("Mobs", true));
 
@@ -230,7 +233,7 @@ public class ESP2D extends Module {
                     RenderUtil.resetColor();
                     if (mcfont.isEnabled()) {
                         RenderUtil.resetColor();
-                        mc.fontRendererObj.drawString(StringUtils.stripControlCodes(text.toString()), middle + .5f, (float) (y - (fontHeight + 4)) + .5f, Color.BLACK);
+                        mc.fontRendererObj.drawString(StringUtils.stripControlCodes(text.toString()), middle + .5f, (float) (y - (fontHeight + 4)) + .5f, Color.BLACK.getRGB());
                         RenderUtil.resetColor();
                         mc.fontRendererObj.drawString(text.toString(), middle, (float) (y - (fontHeight + 4)), healthColor.getRGB());
                     } else {
@@ -246,7 +249,8 @@ public class ESP2D extends Module {
                         float middle = x + ((right - x) / 2);
                         float textWidth;
                         String text = renderingEntity.getHeldItem().getDisplayName();
-                        textWidth = font.getStringWidth(text);
+                        AbstractFontRenderer currentFont = mcfont.isEnabled() ? (AbstractFontRenderer) mc.fontRendererObj : tenacityBoldFont20;
+                        textWidth = currentFont.getStringWidth(text); // Use currentFont here
                         middle -= (textWidth * fontScale) / 2f;
 
                         glPushMatrix();
@@ -255,7 +259,7 @@ public class ESP2D extends Module {
                         glTranslated(-middle, -(bottom + 4), 0);
                         GlStateManager.bindTexture(0);
                         RenderUtil.resetColor();
-                        Gui.drawRect2(middle - 3, bottom + 1, font.getStringWidth(text) + 6, font.getHeight() + 5, backgroundColor.getRGB());
+                        Gui.drawRect2(middle - 3, bottom + 1, currentFont.getStringWidth(text) + 6, currentFont.getHeight() + 5, backgroundColor.getRGB());
                         if (mcfont.isEnabled()) {
                             mc.fontRendererObj.drawStringWithShadow(text, middle, bottom + 4, -1);
                         } else {
@@ -307,10 +311,13 @@ public class ESP2D extends Module {
 
                     if (healthBarText.isEnabled()) {
                         healthValue *= 100;
-                        String health = String.valueOf(MathUtils.round(healthValue, 1)).substring(0, healthValue == 100 ? 3 : 2);
-                        String text = health + "%";
+                        String healthStr = String.valueOf(MathUtils.round(healthValue, 1));
+                        String text = (healthStr.endsWith(".0") ? healthStr.substring(0, healthStr.length() - 2) : healthStr) + "%";
+
                         double fontScale = .5;
-                        float textX = x - ((font.getStringWidth(text) / 2f) + 2);
+                        AbstractFontRenderer currentFont = mcfont.isEnabled() ? (AbstractFontRenderer) mc.fontRendererObj : tenacityBoldFont20;
+                        float textWidth = currentFont.getStringWidth(text);
+                        float textX = x - ((textWidth / 2f) + 2);
                         float fontHeight = mcfont.isEnabled() ? (float) (mc.fontRendererObj.FONT_HEIGHT * fontScale) : (float) (tenacityBoldFont20.getHeight() * fontScale);
                         float newHeight = height - fontHeight;
                         float textY = y + (newHeight - (newHeight * (healthValue / 100)));
@@ -326,11 +333,7 @@ public class ESP2D extends Module {
                         }
                         glPopMatrix();
                     }
-
-
                 }
-
-
             }
 
             if (boxEsp.isEnabled()) {
@@ -380,21 +383,26 @@ public class ESP2D extends Module {
     }
 
     private boolean shouldRender(Entity entity) {
-        if (entity.isDead || entity.isInvisible()) {
+        if (entity == null || entity.isDead || entity.isInvisible()) {
             return false;
         }
-        if (validEntities.getSetting("Players").isEnabled() && entity instanceof EntityPlayer) {
+
+        if (entity instanceof EntityPlayer) {
             if (entity == mc.thePlayer) {
-                return mc.gameSettings.thirdPersonView != 0;
+                return validEntities.isEnabled("Self") && mc.gameSettings.thirdPersonView != 0;
             }
-            return !entity.getDisplayName().getUnformattedText().contains("[NPC");
+
+            if (TargetManager.isBot(entity)) {
+                return validEntities.isEnabled("Bots");
+            }
+
+            return validEntities.isEnabled("Players");
         }
-        if (validEntities.getSetting("Animals").isEnabled() && entity instanceof EntityAnimal) {
+
+        if (validEntities.isEnabled("Animals") && entity instanceof EntityAnimal) {
             return true;
         }
 
-        return validEntities.getSetting("mobs").isEnabled() && entity instanceof EntityMob;
+        return validEntities.isEnabled("Mobs") && entity instanceof EntityMob;
     }
-
-
 }

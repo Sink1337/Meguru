@@ -3,6 +3,7 @@ package dev.tenacity.module.impl.combat;
 import dev.tenacity.Tenacity;
 import dev.tenacity.event.impl.network.PacketSendEvent;
 import dev.tenacity.event.impl.player.MotionEvent;
+import dev.tenacity.event.impl.player.MoveEvent;
 import dev.tenacity.module.Category;
 import dev.tenacity.module.Module;
 import dev.tenacity.module.api.TargetManager;
@@ -18,16 +19,23 @@ import net.minecraft.network.play.client.C18PacketSpectate;
 import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
 
+// 导入 TerrainSpeed 模块中的 NoaPhysics 类及其内部类 MutableVec3d
+import dev.tenacity.module.impl.movement.TerrainSpeed;
+import dev.tenacity.module.impl.movement.TerrainSpeed.NoaPhysics;
+import dev.tenacity.module.impl.movement.TerrainSpeed.MutableVec3d;
+
+
 @SuppressWarnings("unused")
 public final class Criticals extends Module {
 
     private boolean stage;
     private double offset;
     private int groundTicks;
-    private final ModeSetting mode = new ModeSetting("Mode", "Watchdog", "Watchdog", "Packet", "Dev", "Verus");
+    private final ModeSetting mode = new ModeSetting("Mode", "Watchdog", "Watchdog", "Packet", "Dev", "Verus", "Bloxd");
     private final ModeSetting watchdogMode = new ModeSetting("Watchdog Mode", "Packet", "Packet", "Edit");
     private final NumberSetting delay = new NumberSetting("Delay", 1, 20, 0, 1);
     private final TimerUtil timer = new TimerUtil();
+    private final NoaPhysics bloxdPhysics = new NoaPhysics();
 
     public Criticals() {
         super("Criticals", Category.COMBAT, "Crit attacks");
@@ -38,6 +46,20 @@ public final class Criticals extends Module {
 
     @Override
     public void onPacketSendEvent(PacketSendEvent e) {
+    }
+
+    @Override
+    public void onMoveEvent(MoveEvent e) {
+        if (mode.is("Bloxd")) {
+            if (KillAura.attacking && mc.thePlayer.onGround && !Step.isStepping) {
+                if (TargetManager.target != null && TargetManager.target.hurtTime >= delay.getValue().intValue()) {
+                    bloxdPhysics.reset();
+                    bloxdPhysics.getImpulseVector().add(0, 8, 0);
+                    bloxdPhysics.getMotionForTick();
+                    e.setY(bloxdPhysics.getVelocityVector().getY() / 30.0);
+                }
+            }
+        }
     }
 
     @Override
@@ -101,7 +123,7 @@ public final class Criticals extends Module {
                             break;
                     }
                 }
+                break;
         }
     }
-
 }

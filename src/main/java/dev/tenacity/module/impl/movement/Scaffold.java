@@ -53,15 +53,15 @@ public class Scaffold extends Module {
     private final ModeSetting placeType = new ModeSetting("Place Type", "Post", "Pre", "Post", "Legit", "Dynamic");
     public static ModeSetting keepYMode = new ModeSetting("Keep Y Mode", "Always", "Always", "Speed toggled");
     public static ModeSetting sprintMode = new ModeSetting("Sprint Mode", "Vanilla", "Vanilla", "Watchdog", "Cancel");
-    public static ModeSetting towerMode = new ModeSetting("Tower Mode", "Watchdog", "Vanilla", "NCP", "Watchdog", "Verus");
+    public static ModeSetting towerMode = new ModeSetting("Tower Mode", "Watchdog", "Vanilla", "NCP", "Watchdog", "Verus", "Legit");
     public static ModeSetting swingMode = new ModeSetting("Swing Mode", "Client", "Client", "Silent");
+    public static final ModeSetting swapMode = new ModeSetting("Swap Mode", "Normal", "Normal", "Spoof", "Lite Spoof");
     public static NumberSetting delay = new NumberSetting("Delay", 0, 2, 0, 0.05);
     //public static NumberSetting extend = new NumberSetting("Extend", 0, 6, 0, 0.05);
     private final NumberSetting timer = new NumberSetting("Timer", 1, 5, 0.1, 0.1);
     public static final BooleanSetting auto3rdPerson = new BooleanSetting("Auto 3rd Person", false);
     public static final BooleanSetting speedSlowdown = new BooleanSetting("Speed Slowdown", true);
     public static final NumberSetting speedSlowdownAmount = new NumberSetting("Slowdown Amount", 0.1, 0.2, 0.01, 0.01);
-    public static final BooleanSetting itemSpoof = new BooleanSetting("Item Spoof", false);
     public static final BooleanSetting downwards = new BooleanSetting("Downwards", false);
     public static final BooleanSetting safewalk = new BooleanSetting("Safewalk", false);
     public static final BooleanSetting sprint = new BooleanSetting("Sprint", false);
@@ -73,6 +73,7 @@ public class Scaffold extends Module {
     private final BooleanSetting hideJump = new BooleanSetting("Hide Jump", false);
     private final BooleanSetting baseSpeed = new BooleanSetting("Base Speed", false);
     public static BooleanSetting keepY = new BooleanSetting("Keep Y", false);
+
     private ScaffoldUtils.BlockCache blockCache, lastBlockCache;
     private float y;
     private float speed;
@@ -85,7 +86,7 @@ public class Scaffold extends Module {
     private boolean firstJump;
     private boolean pre;
     private int jumpTimer;
-    private int slot;
+    private int blockPlacementSlot = -1;
     private int prevSlot;
     private float[] cachedRots = new float[2];
 
@@ -93,8 +94,8 @@ public class Scaffold extends Module {
 
     public Scaffold() {
         super("Scaffold", Category.MOVEMENT, "Automatically places blocks under you");
-        this.addSettings(countMode, rotations, rotationMode, placeType, keepYMode, sprintMode, towerMode, swingMode, delay, timer,
-                auto3rdPerson, speedSlowdown, speedSlowdownAmount, itemSpoof, downwards, safewalk, sprint, sneak, tower, towerTimer,
+        this.addSettings(countMode, rotations, rotationMode, placeType, keepYMode, sprintMode, towerMode, swingMode, swapMode, delay, timer,
+                auto3rdPerson, speedSlowdown, speedSlowdownAmount, downwards, safewalk, sprint, sneak, tower, towerTimer,
                 swing, autoJump, hideJump, baseSpeed, keepY);
         rotationMode.addParent(rotations, ParentAttribute.BOOLEAN_CONDITION);
         sprintMode.addParent(sprint, ParentAttribute.BOOLEAN_CONDITION);
@@ -243,6 +244,11 @@ public class Scaffold extends Module {
                             }
                         }
                         break;
+                    case "Legit":
+                        if (mc.thePlayer.onGround) {
+                            mc.thePlayer.jump();
+                        }
+                        break;
                 }
             }
 
@@ -264,12 +270,7 @@ public class Scaffold extends Module {
                     pre = false;
                 }
             }
-        } else {
-            // Setting Item Slot
-            if (!itemSpoof.isEnabled()) {
-                mc.thePlayer.inventory.currentItem = slot;
-            }
-
+        } else { // Post Motion
             // Placing Blocks (Post)
             if (placeType.is("Post") || (placeType.is("Dynamic") && !pre)) {
                 place();
@@ -280,19 +281,33 @@ public class Scaffold extends Module {
     }
 
     private boolean place() {
-        int slot = ScaffoldUtils.getBlockSlot();
-        if (blockCache == null || lastBlockCache == null || slot == -1) return false;
+        int blockSlot = ScaffoldUtils.getBlockSlot();
+        if (blockCache == null || lastBlockCache == null || blockSlot == -1) return false;
 
-        if (this.slot != slot) {
-            this.slot = slot;
-            PacketUtils.sendPacketNoEvent(new C09PacketHeldItemChange(this.slot));
+        if (swapMode.is("Spoof")) {
+            if (this.blockPlacementSlot != blockSlot) {
+                this.blockPlacementSlot = blockSlot;
+                PacketUtils.sendPacketNoEvent(new C09PacketHeldItemChange(this.blockPlacementSlot));
+            }
+        } else if (swapMode.is("Normal")) {
+            mc.thePlayer.inventory.currentItem = blockSlot;
+            this.blockPlacementSlot = blockSlot;
+        } else if (swapMode.is("Lite Spoof")) {
+            int currentClientSlot = mc.thePlayer.inventory.currentItem;
+
+            if (currentClientSlot != blockSlot) {
+                PacketUtils.sendPacket(new C09PacketHeldItemChange(blockSlot));
+                mc.thePlayer.inventory.currentItem = blockSlot;
+            }
+            this.blockPlacementSlot = blockSlot;
         }
+
 
         boolean placed = false;
         if (delayTimer.hasTimeElapsed(delay.getValue() * 1000)) {
             firstJump = false;
             if (mc.playerController.onPlayerRightClick(mc.thePlayer, mc.theWorld,
-                    mc.thePlayer.inventory.getStackInSlot(this.slot),
+                    mc.thePlayer.inventory.getStackInSlot(this.blockPlacementSlot),
                     lastBlockCache.getPosition(), lastBlockCache.getFacing(),
                     ScaffoldUtils.getHypixelVec3(lastBlockCache))) {
                 placed = true;
@@ -307,6 +322,13 @@ public class Scaffold extends Module {
             }
             delayTimer.reset();
             blockCache = null;
+
+            if (placed && swapMode.is("Lite Spoof")) {
+                if (mc.thePlayer.inventory.currentItem != prevSlot) {
+                    PacketUtils.sendPacket(new C09PacketHeldItemChange(prevSlot));
+                    mc.thePlayer.inventory.currentItem = prevSlot;
+                }
+            }
         }
         return placed;
     }
@@ -335,9 +357,18 @@ public class Scaffold extends Module {
     @Override
     public void onDisable() {
         if (mc.thePlayer != null) {
-            if (!itemSpoof.isEnabled()) mc.thePlayer.inventory.currentItem = prevSlot;
-            if (slot != mc.thePlayer.inventory.currentItem && itemSpoof.isEnabled())
-                PacketUtils.sendPacketNoEvent(new C09PacketHeldItemChange(mc.thePlayer.inventory.currentItem));
+            if (swapMode.is("Spoof")) {
+                if (blockPlacementSlot != prevSlot) {
+                    PacketUtils.sendPacketNoEvent(new C09PacketHeldItemChange(prevSlot));
+                }
+            } else if (swapMode.is("Normal")) {
+                mc.thePlayer.inventory.currentItem = prevSlot;
+            } else if (swapMode.is("Lite Spoof")) {
+                if (mc.thePlayer.inventory.currentItem != prevSlot) {
+                    PacketUtils.sendPacket(new C09PacketHeldItemChange(prevSlot));
+                    mc.thePlayer.inventory.currentItem = prevSlot;
+                }
+            }
 
             if (auto3rdPerson.isEnabled()) {
                 mc.gameSettings.thirdPersonView = 0;
@@ -354,7 +385,8 @@ public class Scaffold extends Module {
         lastBlockCache = null;
         if (mc.thePlayer != null) {
             prevSlot = mc.thePlayer.inventory.currentItem;
-            slot = mc.thePlayer.inventory.currentItem;
+            blockPlacementSlot = -1;
+
             if (mc.thePlayer.isSprinting() && sprint.isEnabled() && sprintMode.is("Cancel")) {
                 PacketUtils.sendPacketNoEvent(new C0BPacketEntityAction(mc.thePlayer, C0BPacketEntityAction.Action.STOP_SPRINTING));
             }
@@ -372,9 +404,15 @@ public class Scaffold extends Module {
 
     public void renderCounterBlur() {
         if (!enabled && anim.isDone()) return;
-        int slot = ScaffoldUtils.getBlockSlot();
-        ItemStack heldItem = slot == -1 ? null : mc.thePlayer.inventory.mainInventory[slot];
-        int count = slot == -1 ? 0 : ScaffoldUtils.getBlockCount();
+        int slotToDisplay;
+        if (swapMode.is("Lite Spoof") || swapMode.is("Spoof")) {
+            slotToDisplay = ScaffoldUtils.getBlockSlot();
+        } else {
+            slotToDisplay = mc.thePlayer.inventory.currentItem;
+        }
+
+        ItemStack heldItem = slotToDisplay == -1 ? null : mc.thePlayer.inventory.mainInventory[slotToDisplay];
+        int count = ScaffoldUtils.getBlockCount();
         String countStr = String.valueOf(count);
         IFontRenderer fr = mc.fontRendererObj;
         ScaledResolution sr = new ScaledResolution(mc);
@@ -437,9 +475,15 @@ public class Scaffold extends Module {
     public void renderCounter() {
         anim.setDirection(enabled ? Direction.FORWARDS : Direction.BACKWARDS);
         if (!enabled && anim.isDone()) return;
-        int slot = ScaffoldUtils.getBlockSlot();
-        ItemStack heldItem = slot == -1 ? null : mc.thePlayer.inventory.mainInventory[slot];
-        int count = slot == -1 ? 0 : ScaffoldUtils.getBlockCount();
+        int slotToDisplay;
+        if (swapMode.is("Lite Spoof") || swapMode.is("Spoof")) {
+            slotToDisplay = ScaffoldUtils.getBlockSlot();
+        } else {
+            slotToDisplay = mc.thePlayer.inventory.currentItem;
+        }
+
+        ItemStack heldItem = slotToDisplay == -1 ? null : mc.thePlayer.inventory.mainInventory[slotToDisplay];
+        int count = ScaffoldUtils.getBlockCount();
         String countStr = String.valueOf(count);
         IFontRenderer fr = mc.fontRendererObj;
         ScaledResolution sr = new ScaledResolution(mc);
@@ -515,7 +559,7 @@ public class Scaffold extends Module {
                 && sprint.isEnabled() && sprintMode.is("Cancel")) {
             e.cancel();
         }
-        if (e.getPacket() instanceof C09PacketHeldItemChange && itemSpoof.isEnabled()) {
+        if (e.getPacket() instanceof C09PacketHeldItemChange && swapMode.is("Spoof")) {
             e.cancel();
         }
     }

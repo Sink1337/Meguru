@@ -162,7 +162,7 @@ public class ProtectedLaunch {
                 new FriendCommand(), new CopyNameCommand(), new BindCommand(), new UnbindCommand(),
                 new ScriptCommand(), new SettingCommand(), new HelpCommand(),
                 new VClipCommand(), new ClearBindsCommand(), new ClearConfigCommand(),
-                new LoadCommand(), new ToggleCommand()
+                new LoadCommand(), new ToggleCommand(), new ConfigCommand()
         ));
         Tenacity.INSTANCE.setCommandHandler(commandHandler);
         Tenacity.INSTANCE.getEventProtocol().register(new BackgroundProcess());

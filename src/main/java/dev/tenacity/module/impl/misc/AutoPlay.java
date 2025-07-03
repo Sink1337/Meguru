@@ -92,7 +92,7 @@ public class AutoPlay extends Module {
                 "Sending you to a new game" + (delay > 0 ? " in " + delay + "s" : "") + "!", delay);
             Multithreading.schedule(() -> ChatUtil.send(command), (long) delay, TimeUnit.SECONDS);
         if (HUDMod.specialsound.isEnabled()) {
-            SoundUtils.playSound(sound, HUDMod.soundVolume.getValue().floatValue());
+            SoundUtils.playSound(sound, HUDMod.specicalsoundVolume.getValue().floatValue());
         }
     }
 }

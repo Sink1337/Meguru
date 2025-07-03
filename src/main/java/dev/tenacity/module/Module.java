@@ -17,6 +17,7 @@ import dev.tenacity.utils.animations.Direction;
 import dev.tenacity.utils.animations.impl.DecelerateAnimation;
 import dev.tenacity.utils.misc.Multithreading;
 import dev.tenacity.utils.misc.SoundUtils;
+import net.minecraft.client.audio.PositionedSoundRecord;
 import net.minecraft.util.ResourceLocation;
 import dev.tenacity.module.impl.render.HUDMod;
 import lombok.Getter;
@@ -57,8 +58,10 @@ public class Module extends ListenerAdapter implements Utils {
 
     private final KeybindSetting keybind = new KeybindSetting(Keyboard.KEY_NONE);
 
-    private final ResourceLocation enableSound = new ResourceLocation("Tenacity/Sounds/ciallo.wav");
-    private final ResourceLocation disableSound = new ResourceLocation("Tenacity/Sounds/boyangyang.wav");
+    private final ResourceLocation enableSound1 = new ResourceLocation("Tenacity/Sounds/enable.wav");
+    private final ResourceLocation disableSound1 = new ResourceLocation("Tenacity/Sounds/disable.wav");
+    private final ResourceLocation enableSound2 = new ResourceLocation("Tenacity/Sounds/ciallo.wav");
+    private final ResourceLocation disableSound2 = new ResourceLocation("Tenacity/Sounds/boyangyang.wav");
 
     public Module(String name, Category category, String description) {
         this.name = name;
@@ -110,13 +113,25 @@ public class Module extends ListenerAdapter implements Utils {
         toggleSilent();
 
         HUDMod hudMod = Tenacity.INSTANCE.getModuleCollection().getModule(HUDMod.class);
+        float volume = HUDMod.togglesoundVolume.getValue().floatValue();
 
-        if (hudMod != null && HUDMod.specialsound.isEnabled()) {
-            float volume = HUDMod.soundVolume.getValue().floatValue();
+        if (hudMod != null && HUDMod.togglesound.isEnabled() && HUDMod.togglesoundmode.is("Click")) {
+            mc.getSoundHandler().playSound(PositionedSoundRecord.create(new ResourceLocation("random.click"), volume));
+        }
+
+        if (hudMod != null && HUDMod.togglesound.isEnabled() && HUDMod.togglesoundmode.is("Sigma")) {
             if (enabled) {
-                SoundUtils.playSound(enableSound, volume);
+                SoundUtils.playSound(enableSound1, volume);
             } else {
-                SoundUtils.playSound(disableSound, volume);
+                SoundUtils.playSound(disableSound1, volume);
+            }
+        }
+
+        if (hudMod != null && HUDMod.togglesound.isEnabled() && HUDMod.togglesoundmode.is("YuzuSoft")) {
+            if (enabled) {
+                SoundUtils.playSound(enableSound2, volume);
+            } else {
+                SoundUtils.playSound(disableSound2, volume);
             }
         }
 
@@ -147,8 +162,13 @@ public class Module extends ListenerAdapter implements Utils {
         }
     }
 
+    @Exclude(Strategy.NAME_REMAPPING)
+    public String getSuffix() {
+        return suffix;
+    }
+
     public boolean hasMode() {
-        return suffix != null;
+        return suffix != null && !suffix.isEmpty();
     }
 
 

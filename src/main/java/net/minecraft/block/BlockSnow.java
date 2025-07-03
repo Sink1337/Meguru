@@ -35,10 +35,20 @@ public class BlockSnow extends Block {
     }
 
     public boolean isPassable(IBlockAccess worldIn, BlockPos pos) {
-        return ((Integer) worldIn.getBlockState(pos).getValue(LAYERS)).intValue() < 5;
+        IBlockState state = worldIn.getBlockState(pos);
+
+        if (state.getBlock() != this) {
+            return false;
+        }
+
+        return ((Integer) state.getValue(LAYERS)).intValue() < 5;
     }
 
     public AxisAlignedBB getCollisionBoundingBox(World worldIn, BlockPos pos, IBlockState state) {
+        if (state.getBlock() != this) {
+            return super.getCollisionBoundingBox(worldIn, pos, state);
+        }
+
         int i = ((Integer) state.getValue(LAYERS)).intValue() - 1;
         float f = 0.125F;
         return new AxisAlignedBB((double) pos.getX() + this.minX, (double) pos.getY() + this.minY, (double) pos.getZ() + this.minZ, (double) pos.getX() + this.maxX, (double) ((float) pos.getY() + (float) i * f), (double) pos.getZ() + this.maxZ);
@@ -64,7 +74,11 @@ public class BlockSnow extends Block {
 
     public void setBlockBoundsBasedOnState(IBlockAccess worldIn, BlockPos pos) {
         IBlockState iblockstate = worldIn.getBlockState(pos);
-        this.getBoundsForLayers(((Integer) iblockstate.getValue(LAYERS)).intValue());
+        if (iblockstate.getBlock() == this) {
+            this.getBoundsForLayers(((Integer) iblockstate.getValue(LAYERS)).intValue());
+        } else {
+            this.setBlockBounds(0.0F, 0.0F, 0.0F, 1.0F, 0.125F, 1.0F);
+        }
     }
 
     protected void getBoundsForLayers(int p_150154_1_) {
@@ -74,7 +88,11 @@ public class BlockSnow extends Block {
     public boolean canPlaceBlockAt(World worldIn, BlockPos pos) {
         IBlockState iblockstate = worldIn.getBlockState(pos.down());
         Block block = iblockstate.getBlock();
-        return block != Blocks.ice && block != Blocks.packed_ice ? (block.getMaterial() == Material.leaves ? true : (block == this && ((Integer) iblockstate.getValue(LAYERS)).intValue() >= 7 ? true : block.isOpaqueCube() && block.blockMaterial.blocksMovement())) : false;
+        boolean isSnowBlockBelowAndFull = block == this && iblockstate.getProperties().containsKey(LAYERS) && ((Integer) iblockstate.getValue(LAYERS)).intValue() >= 7;
+
+        return block != Blocks.ice && block != Blocks.packed_ice ?
+                (block.getMaterial() == Material.leaves ? true : (isSnowBlockBelowAndFull ? true : block.isOpaqueCube() && block.blockMaterial.blocksMovement())) :
+                false;
     }
 
     /**
@@ -95,7 +113,11 @@ public class BlockSnow extends Block {
     }
 
     public void harvestBlock(World worldIn, EntityPlayer player, BlockPos pos, IBlockState state, TileEntity te) {
-        spawnAsEntity(worldIn, pos, new ItemStack(Items.snowball, ((Integer) state.getValue(LAYERS)).intValue() + 1, 0));
+        if (state.getProperties().containsKey(LAYERS)) {
+            spawnAsEntity(worldIn, pos, new ItemStack(Items.snowball, ((Integer) state.getValue(LAYERS)).intValue() + 1, 0));
+        } else {
+            spawnAsEntity(worldIn, pos, new ItemStack(Items.snowball, 1, 0));
+        }
         worldIn.setBlockToAir(pos);
         player.triggerAchievement(StatList.mineBlockStatArray[Block.getIdFromBlock(this)]);
     }
@@ -116,13 +138,22 @@ public class BlockSnow extends Block {
 
     public void updateTick(World worldIn, BlockPos pos, IBlockState state, Random rand) {
         if (worldIn.getLightFor(EnumSkyBlock.BLOCK, pos) > 11) {
-            this.dropBlockAsItem(worldIn, pos, worldIn.getBlockState(pos), 0);
+            if (worldIn.getBlockState(pos).getBlock() == this && worldIn.getBlockState(pos).getProperties().containsKey(LAYERS)) {
+                this.dropBlockAsItem(worldIn, pos, worldIn.getBlockState(pos), 0);
+            } else {
+                worldIn.setBlockToAir(pos);
+                return;
+            }
             worldIn.setBlockToAir(pos);
         }
     }
 
     public boolean shouldSideBeRendered(IBlockAccess worldIn, BlockPos pos, EnumFacing side) {
-        return side == EnumFacing.UP ? true : super.shouldSideBeRendered(worldIn, pos, side);
+        IBlockState stateAtPos = worldIn.getBlockState(pos);
+        if (stateAtPos.getBlock() == this) {
+            return side == EnumFacing.UP ? true : super.shouldSideBeRendered(worldIn, pos, side);
+        }
+        return super.shouldSideBeRendered(worldIn, pos, side);
     }
 
     /**
@@ -136,14 +167,21 @@ public class BlockSnow extends Block {
      * Whether this Block can be replaced directly by other blocks (true for e.g. tall grass)
      */
     public boolean isReplaceable(World worldIn, BlockPos pos) {
-        return ((Integer) worldIn.getBlockState(pos).getValue(LAYERS)).intValue() == 1;
+        IBlockState state = worldIn.getBlockState(pos);
+        if (state.getBlock() == this && state.getProperties().containsKey(LAYERS)) {
+            return ((Integer) state.getValue(LAYERS)).intValue() == 1;
+        }
+        return false;
     }
 
     /**
      * Convert the BlockState into the correct metadata value
      */
     public int getMetaFromState(IBlockState state) {
-        return ((Integer) state.getValue(LAYERS)).intValue() - 1;
+        if (state.getProperties().containsKey(LAYERS)) {
+            return ((Integer) state.getValue(LAYERS)).intValue() - 1;
+        }
+        return 0;
     }
 
     protected BlockState createBlockState() {
