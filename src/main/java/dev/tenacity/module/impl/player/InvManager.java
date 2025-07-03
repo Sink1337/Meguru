@@ -250,6 +250,19 @@ public class InvManager extends Module {
                     || (item instanceof ItemPotion && isBadPotion(stack))) {
                 return true;
             } else if (!(item instanceof ItemSword) && !(item instanceof ItemTool) && !(item instanceof ItemHoe) && !(item instanceof ItemArmor)) {
+                if (!dropArchery.isEnabled() && item instanceof ItemBow) {
+                    // MODIFICATION START: Implement logic to keep only the single best bow when dropping.
+                    if (stealing) {
+                        // For stealing, keep original logic: an item is bad if it's not better than our current best.
+                        return !isBestBow(stack);
+                    } else {
+                        // For dropping, an item is bad if it is not THE single best bow.
+                        int bestBowSlot = getBestBowSlot();
+                        return bestBowSlot != -1 && slot != bestBowSlot;
+                    }
+                    // MODIFICATION END
+                }
+
                 if (dropArchery.isEnabled() && (item instanceof ItemBow || item == Items.arrow)) {
                     return true;
                 } else {
@@ -320,31 +333,67 @@ public class InvManager extends Module {
 
     private void getBestBow() {
         if (!isReady()) return;
+        // After dropping items, there should only be one "best bow" left in the inventory.
+        // This loop finds it and moves it to the hotbar.
+        int bestBowInventorySlot = getBestBowSlot();
+
+        if (bestBowInventorySlot != -1) {
+            ItemStack bestBowStack = mc.thePlayer.inventoryContainer.getSlot(bestBowInventorySlot).getStack();
+
+            // Ensure the best bow is not also considered the best weapon
+            if (isBestBow(bestBowStack) && !isBestWeapon(bestBowStack)) {
+                int desiredSlot = ItemType.BOW.getDesiredSlot();
+
+                // Don't swap if it's already in the desired slot
+                if (bestBowInventorySlot == desiredSlot) return;
+
+                Slot destinationSlot = mc.thePlayer.inventoryContainer.getSlot(desiredSlot);
+                ItemStack destinationStack = destinationSlot.getStack();
+
+                // MODIFICATION START: This condition now correctly handles occupied slots.
+                // It will swap if the destination slot is empty, contains a non-bow item,
+                // or contains a bow that is worse than our best one.
+                if (destinationStack == null || !(destinationStack.getItem() instanceof ItemBow) || getBowScore(destinationStack) < getBowScore(bestBowStack)) {
+                    swap(bestBowInventorySlot, desiredSlot - 36);
+                    timer.reset();
+                }
+                // MODIFICATION END
+            }
+        }
+    }
+
+
+    /**
+     * NEW METHOD: Finds the slot of the single best bow in the inventory.
+     * This ensures a unique best bow by returning the first slot found in case of a tie.
+     * @return The slot index (9-44) of the best bow, or -1 if no bow is found.
+     */
+    private int getBestBowSlot() {
+        int bestSlot = -1;
+        float bestScore = -1.0F;
         for (int i = 9; i < 45; i++) {
-            Slot slot = mc.thePlayer.inventoryContainer.getSlot(i);
-            if (slot.getHasStack()) {
-                ItemStack is = slot.getStack();
-                String stackName = is.getDisplayName().toLowerCase();
-                if (Arrays.stream(serverItems).anyMatch(stackName::contains) || !(is.getItem() instanceof ItemBow))
-                    continue;
-                if (isBestBow(is) && !isBestWeapon(is)) {
-                    int desiredSlot = ItemType.BOW.getDesiredSlot();
-                    if (i == desiredSlot) return;
-                    Slot slot2 = mc.thePlayer.inventoryContainer.getSlot(desiredSlot);
-                    if (!slot2.getHasStack() || !isBestBow(slot2.getStack())) {
-                        swap(i, desiredSlot - 36);
+            final Slot inventorySlot = mc.thePlayer.inventoryContainer.getSlot(i);
+            if (inventorySlot.getHasStack()) {
+                final ItemStack itemStack = inventorySlot.getStack();
+                if (itemStack.getItem() instanceof ItemBow) {
+                    final float score = getBowScore(itemStack);
+                    if (score > bestScore) {
+                        bestScore = score;
+                        bestSlot = i;
                     }
                 }
             }
         }
+        return bestSlot;
     }
+
 
     private void moveArrows() {
         if (dropArchery.isEnabled() || !moveArrows.isEnabled() || !isReady()) return;
         for (int i = 36; i < 45; i++) {
             ItemStack is = mc.thePlayer.inventoryContainer.getSlot(i).getStack();
             if (is != null && is.getItem() == Items.arrow) {
-                for (int j = 0; j < 36; j++) {
+                for (int j = 9; j < 36; j++) {
                     if (mc.thePlayer.inventoryContainer.getSlot(j).getStack() == null) {
                         fakeOpen();
                         InventoryUtils.click(i, 0, true);
@@ -486,16 +535,22 @@ public class InvManager extends Module {
             return false;
         } else {
             float value = getBowScore(stack);
+            float bestOverallScore = -1.0F;
+
             for (int i = 9; i < 45; i++) {
                 Slot slot = mc.thePlayer.inventoryContainer.getSlot(i);
                 if (slot.getHasStack()) {
-                    ItemStack is = slot.getStack();
-                    if (getBowScore(is) > value && is.getItem() instanceof ItemBow && !isBestWeapon(stack)) {
-                        return false;
+                    ItemStack currentStack = slot.getStack();
+                    if (currentStack.getItem() instanceof ItemBow) {
+                        float currentScore = getBowScore(currentStack);
+                        if (currentScore > bestOverallScore) {
+                            bestOverallScore = currentScore;
+                        }
                     }
                 }
             }
-            return true;
+
+            return value >= bestOverallScore;
         }
     }
 
@@ -506,6 +561,10 @@ public class InvManager extends Module {
             score += EnchantmentHelper.getEnchantmentLevel(Enchantment.power.effectId, stack);
             score += EnchantmentHelper.getEnchantmentLevel(Enchantment.flame.effectId, stack) * 0.5F;
             score += EnchantmentHelper.getEnchantmentLevel(Enchantment.unbreaking.effectId, stack) * 0.1F;
+            if (EnchantmentHelper.getEnchantmentLevel(Enchantment.infinity.effectId, stack) > 0) {
+                score += 2.0F;
+            }
+            score += EnchantmentHelper.getEnchantmentLevel(Enchantment.punch.effectId, stack) * 0.2F;
         }
         return score;
     }
