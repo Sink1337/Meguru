@@ -48,6 +48,7 @@ import java.util.concurrent.ThreadLocalRandom;
 public class Scaffold extends Module {
 
     private final ModeSetting countMode = new ModeSetting("Block Counter", "Tenacity", "None", "Tenacity", "Basic", "Polar");
+    private final ModeSetting animationMode = new ModeSetting("Animation Mode", "Normal", "None", "Normal");
     private final BooleanSetting rotations = new BooleanSetting("Rotations", true);
     private final ModeSetting rotationMode = new ModeSetting("Rotation Mode", "Watchdog", "Watchdog", "NCP", "Back", "45", "Enum", "Down", "0");
     private final ModeSetting placeType = new ModeSetting("Place Type", "Post", "Pre", "Post", "Legit", "Dynamic");
@@ -57,7 +58,6 @@ public class Scaffold extends Module {
     public static ModeSetting swingMode = new ModeSetting("Swing Mode", "Client", "Client", "Silent");
     public static final ModeSetting swapMode = new ModeSetting("Swap Mode", "Normal", "Normal", "Spoof", "Lite Spoof");
     public static NumberSetting delay = new NumberSetting("Delay", 0, 2, 0, 0.05);
-    //public static NumberSetting extend = new NumberSetting("Extend", 0, 6, 0, 0.05);
     private final NumberSetting timer = new NumberSetting("Timer", 1, 5, 0.1, 0.1);
     public static final BooleanSetting auto3rdPerson = new BooleanSetting("Auto 3rd Person", false);
     public static final BooleanSetting speedSlowdown = new BooleanSetting("Speed Slowdown", true);
@@ -94,7 +94,7 @@ public class Scaffold extends Module {
 
     public Scaffold() {
         super("Scaffold", Category.MOVEMENT, "Automatically places blocks under you");
-        this.addSettings(countMode, rotations, rotationMode, placeType, keepYMode, sprintMode, towerMode, swingMode, swapMode, delay, timer,
+        this.addSettings(countMode, animationMode, rotations, rotationMode, placeType, keepYMode, sprintMode, towerMode, swingMode, swapMode, delay, timer,
                 auto3rdPerson, speedSlowdown, speedSlowdownAmount, downwards, safewalk, sprint, sneak, tower, towerTimer,
                 swing, autoJump, hideJump, baseSpeed, keepY);
         rotationMode.addParent(rotations, ParentAttribute.BOOLEAN_CONDITION);
@@ -105,11 +105,11 @@ public class Scaffold extends Module {
         keepYMode.addParent(keepY, ParentAttribute.BOOLEAN_CONDITION);
         hideJump.addParent(autoJump, ParentAttribute.BOOLEAN_CONDITION);
         speedSlowdownAmount.addParent(speedSlowdown, ParentAttribute.BOOLEAN_CONDITION);
+        animationMode.addParent(countMode, modeSetting -> !modeSetting.is("None"));
     }
 
     @Override
     public void onMotionEvent(MotionEvent e) {
-        // Timer Stuff
         if (!mc.gameSettings.keyBindJump.isKeyDown()) {
             mc.timer.timerSpeed = timer.getValue().floatValue();
         } else {
@@ -117,7 +117,6 @@ public class Scaffold extends Module {
         }
 
         if (e.isPre()) {
-            // Auto Jump
             if (baseSpeed.isEnabled()) {
                 MovementUtils.setSpeed(MovementUtils.getBaseMoveSpeed() * 0.7);
             }
@@ -130,7 +129,6 @@ public class Scaffold extends Module {
                 mc.thePlayer.sendQueue.addToSendQueue(new C03PacketPlayer.C04PacketPlayerPosition(mc.thePlayer.posX - offset[0], mc.thePlayer.posY, mc.thePlayer.posZ - offset[1], true));
             }
 
-            // Rotations
             if (rotations.isEnabled()) {
                 float[] rotations = new float[]{0, 0};
                 switch (rotationMode.getMode()) {
@@ -197,14 +195,12 @@ public class Scaffold extends Module {
                 RotationUtils.setVisualRotations(e);
             }
 
-            // Speed 2 Slowdown
             if (speedSlowdown.isEnabled() && mc.thePlayer.isPotionActive(Potion.moveSpeed) && !mc.gameSettings.keyBindJump.isKeyDown() && mc.thePlayer.onGround) {
                 MovementUtils.setSpeed(speedSlowdownAmount.getValue());
             }
 
             if (sneak.isEnabled()) KeyBinding.setKeyBindState(mc.gameSettings.keyBindSneak.getKeyCode(), true);
 
-            // Save ground Y level for keep Y
             if (mc.thePlayer.onGround) {
                 keepYCoord = Math.floor(mc.thePlayer.posY - 1.0);
             }
@@ -252,7 +248,6 @@ public class Scaffold extends Module {
                 }
             }
 
-            // Setting Block Cache
             blockCache = ScaffoldUtils.getBlockInfo();
             if (blockCache != null) {
                 lastBlockCache = ScaffoldUtils.getBlockInfo();
@@ -264,14 +259,12 @@ public class Scaffold extends Module {
                 pre = true;
             }
 
-            // Placing Blocks (Pre)
             if (placeType.is("Pre") || (placeType.is("Dynamic") && pre)) {
                 if (place()) {
                     pre = false;
                 }
             }
-        } else { // Post Motion
-            // Placing Blocks (Post)
+        } else {
             if (placeType.is("Post") || (placeType.is("Dynamic") && !pre)) {
                 place();
             }
@@ -399,11 +392,18 @@ public class Scaffold extends Module {
         timerUtil.reset();
         jumpTimer = 0;
         y = 80;
+        if (animationMode.is("None")) {
+            anim.setDuration(1);
+            anim.setDirection(Direction.FORWARDS);
+        } else {
+            anim.setDuration(250);
+        }
         super.onEnable();
     }
 
     public void renderCounterBlur() {
-        if (!enabled && anim.isDone()) return;
+        if (!enabled && anim.isDone() && !animationMode.is("None")) return;
+
         int slotToDisplay;
         if (swapMode.is("Lite Spoof") || swapMode.is("Spoof")) {
             slotToDisplay = ScaffoldUtils.getBlockSlot();
@@ -416,10 +416,14 @@ public class Scaffold extends Module {
         String countStr = String.valueOf(count);
         IFontRenderer fr = mc.fontRendererObj;
         ScaledResolution sr = new ScaledResolution(mc);
-        int color;
         float x, y;
         String str = countStr + " block" + (count != 1 ? "s" : "");
-        float output = anim.getOutput().floatValue();
+
+        float animationOutput = animationMode.is("None") ? 1.0f : anim.getOutput().floatValue();
+        float alpha = 1.0f;
+        float scaleFactor = animationMode.is("Normal") ? animationOutput : 1.0f;
+
+
         switch (countMode.getMode()) {
             case "Tenacity":
                 float blockWH = heldItem != null ? 15 : -2;
@@ -427,21 +431,25 @@ public class Scaffold extends Module {
                 String text = "§l" + countStr + "§r block" + (count != 1 ? "s" : "");
                 float textWidth = tenacityFont18.getStringWidth(text);
 
-                float totalWidth = ((textWidth + blockWH + spacing) + 6) * output;
+                float totalWidth = ((textWidth + blockWH + spacing) + 6) * scaleFactor;
                 x = sr.getScaledWidth() / 2f - (totalWidth / 2f);
                 y = sr.getScaledHeight() - (sr.getScaledHeight() / 2f - 20);
                 float height = 20;
                 RenderUtil.scissorStart(x - 1.5, y - 1.5, totalWidth + 3, height + 3);
 
-                RoundedUtil.drawRound(x, y, totalWidth, height, 5, Color.BLACK);
+                RoundedUtil.drawRound(x, y, totalWidth, height, 5, new Color(ColorUtil.applyOpacity(Color.BLACK.getRGB(), alpha)));
                 RenderUtil.scissorEnd();
                 break;
             case "Basic":
                 x = sr.getScaledWidth() / 2F - fr.getStringWidth(str) / 2F + 1;
                 y = sr.getScaledHeight() / 2F + 10;
-                RenderUtil.scaleStart(sr.getScaledWidth() / 2.0F, y + fr.FONT_HEIGHT / 2.0F, output);
-                fr.drawStringWithShadow(str, x, y, 0x000000);
-                RenderUtil.scaleEnd();
+                if (animationMode.is("Normal")) {
+                    RenderUtil.scaleStart(sr.getScaledWidth() / 2.0F, y + fr.FONT_HEIGHT / 2.0F, scaleFactor);
+                }
+                fr.drawStringWithShadow(str, x, y, ColorUtil.applyOpacity(0x000000, alpha));
+                if (animationMode.is("Normal")) {
+                    RenderUtil.scaleEnd();
+                }
                 break;
             case "Polar":
                 x = sr.getScaledWidth() / 2F - fr.getStringWidth(countStr) / 2F + (heldItem != null ? 6 : 1);
@@ -450,20 +458,21 @@ public class Scaffold extends Module {
                 GlStateManager.pushMatrix();
                 RenderUtil.fixBlendIssues();
                 GL11.glTranslatef(x + (heldItem == null ? 1 : 0), y, 1);
-                GL11.glScaled(anim.getOutput().floatValue(), anim.getOutput().floatValue(), 1);
+                if (animationMode.is("Normal")) {
+                    GL11.glScaled(scaleFactor, scaleFactor, 1);
+                }
                 GL11.glTranslatef(-x - (heldItem == null ? 1 : 0), -y, 1);
 
-                fr.drawOutlinedString(countStr, x, y, ColorUtil.applyOpacity(0x000000, output), true);
+                fr.drawOutlinedString(countStr, x, y, ColorUtil.applyOpacity(0x000000, alpha), true);
 
                 if (heldItem != null) {
-                    double scale = 0.7;
-                    GlStateManager.color(1, 1, 1, 1);
-                    GlStateManager.scale(scale, scale, scale);
+                    double itemScale = 0.7;
+                    GlStateManager.scale(itemScale, itemScale, itemScale);
                     RenderHelper.enableGUIStandardItemLighting();
                     mc.getRenderItem().renderItemAndEffectIntoGUI(
                             heldItem,
-                            (int) ((sr.getScaledWidth() / 2F - fr.getStringWidth(countStr) / 2F - 7) / scale),
-                            (int) ((sr.getScaledHeight() / 2F + 8.5F) / scale)
+                            (int) ((sr.getScaledWidth() / 2F - fr.getStringWidth(countStr) / 2F - 7) / itemScale),
+                            (int) ((sr.getScaledHeight() / 2F + 8.5F) / itemScale)
                     );
                     RenderHelper.disableStandardItemLighting();
                 }
@@ -474,7 +483,15 @@ public class Scaffold extends Module {
 
     public void renderCounter() {
         anim.setDirection(enabled ? Direction.FORWARDS : Direction.BACKWARDS);
+        if (animationMode.is("None")) {
+            anim.setDuration(1);
+            anim.setDirection(enabled ? Direction.FORWARDS : Direction.BACKWARDS);
+        } else {
+            anim.setDuration(250);
+        }
+
         if (!enabled && anim.isDone()) return;
+
         int slotToDisplay;
         if (swapMode.is("Lite Spoof") || swapMode.is("Spoof")) {
             slotToDisplay = ScaffoldUtils.getBlockSlot();
@@ -490,7 +507,12 @@ public class Scaffold extends Module {
         int color;
         float x, y;
         String str = countStr + " block" + (count != 1 ? "s" : "");
-        float output = anim.getOutput().floatValue();
+
+        float animationOutput = animationMode.is("None") ? 1.0f : anim.getOutput().floatValue();
+        float alpha = 1.0f;
+        float scaleFactor = animationMode.is("Normal") ? animationOutput : 1.0f;
+
+
         switch (countMode.getMode()) {
             case "Tenacity":
                 float blockWH = heldItem != null ? 15 : -2;
@@ -498,15 +520,16 @@ public class Scaffold extends Module {
                 String text = "§l" + countStr + "§r block" + (count != 1 ? "s" : "");
                 float textWidth = tenacityFont18.getStringWidth(text);
 
-                float totalWidth = ((textWidth + blockWH + spacing) + 6) * output;
+                float totalWidth = ((textWidth + blockWH + spacing) + 6) * scaleFactor;
                 x = sr.getScaledWidth() / 2f - (totalWidth / 2f);
                 y = sr.getScaledHeight() - (sr.getScaledHeight() / 2f - 20);
                 float height = 20;
                 RenderUtil.scissorStart(x - 1.5, y - 1.5, totalWidth + 3, height + 3);
 
-                RoundedUtil.drawRound(x, y, totalWidth, height, 5, ColorUtil.tripleColor(20, .45f));
+                RoundedUtil.drawRound(x, y, totalWidth, height, 5, ColorUtil.tripleColor(20, .45f * alpha));
 
-                tenacityFont18.drawString(text, x + 3 + blockWH + spacing, y + tenacityFont18.getMiddleOfBox(height) + .5f, -1);
+
+                tenacityFont18.drawString(text, x + 3 + blockWH + spacing, y + tenacityFont18.getMiddleOfBox(height) + .5f, ColorUtil.applyOpacity(-1, alpha));
 
                 if (heldItem != null) {
                     RenderHelper.enableGUIStandardItemLighting();
@@ -518,9 +541,13 @@ public class Scaffold extends Module {
             case "Basic":
                 x = sr.getScaledWidth() / 2F - fr.getStringWidth(str) / 2F + 1;
                 y = sr.getScaledHeight() / 2F + 10;
-                RenderUtil.scaleStart(sr.getScaledWidth() / 2.0F, y + fr.FONT_HEIGHT / 2.0F, output);
-                fr.drawStringWithShadow(str, x, y, -1);
-                RenderUtil.scaleEnd();
+                if (animationMode.is("Normal")) {
+                    RenderUtil.scaleStart(sr.getScaledWidth() / 2.0F, y + fr.FONT_HEIGHT / 2.0F, scaleFactor);
+                }
+                fr.drawStringWithShadow(str, x, y, ColorUtil.applyOpacity(-1, alpha));
+                if (animationMode.is("Normal")) {
+                    RenderUtil.scaleEnd();
+                }
                 break;
             case "Polar":
                 color = count < 24 ? 0xFFFF5555 : count < 128 ? 0xFFFFFF55 : 0xFF55FF55;
@@ -530,20 +557,21 @@ public class Scaffold extends Module {
                 GlStateManager.pushMatrix();
                 RenderUtil.fixBlendIssues();
                 GL11.glTranslatef(x + (heldItem == null ? 1 : 0), y, 1);
-                GL11.glScaled(anim.getOutput().floatValue(), anim.getOutput().floatValue(), 1);
+                if (animationMode.is("Normal")) {
+                    GL11.glScaled(scaleFactor, scaleFactor, 1);
+                }
                 GL11.glTranslatef(-x - (heldItem == null ? 1 : 0), -y, 1);
 
-                fr.drawOutlinedString(countStr, x, y, ColorUtil.applyOpacity(color, output), true);
+                fr.drawOutlinedString(countStr, x, y, ColorUtil.applyOpacity(color, alpha), true);
 
                 if (heldItem != null) {
-                    double scale = 0.7;
-                    GlStateManager.color(1, 1, 1, 1);
-                    GlStateManager.scale(scale, scale, scale);
+                    double itemScale = 0.7;
+                    GlStateManager.scale(itemScale, itemScale, itemScale);
                     RenderHelper.enableGUIStandardItemLighting();
                     mc.getRenderItem().renderItemAndEffectIntoGUI(
                             heldItem,
-                            (int) ((sr.getScaledWidth() / 2F - fr.getStringWidth(countStr) / 2F - 7) / scale),
-                            (int) ((sr.getScaledHeight() / 2F + 8.5F) / scale)
+                            (int) ((sr.getScaledWidth() / 2F - fr.getStringWidth(countStr) / 2F - 7) / itemScale),
+                            (int) ((sr.getScaledHeight() / 2F + 8.5F) / itemScale)
                     );
                     RenderHelper.disableStandardItemLighting();
                 }

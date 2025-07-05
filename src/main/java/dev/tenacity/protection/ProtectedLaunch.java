@@ -122,6 +122,7 @@ public class ProtectedLaunch {
         modules.put(HUDMod.class, new HUDMod());
         modules.put(ClickGUIMod.class, new ClickGUIMod());
         modules.put(Radar.class, new Radar());
+        modules.put(ProgressBar.class, new ProgressBar());
         modules.put(Animations.class, new Animations());
         modules.put(SpotifyMod.class, new SpotifyMod());
         modules.put(Ambience.class, new Ambience());

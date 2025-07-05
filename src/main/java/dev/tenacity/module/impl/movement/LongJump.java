@@ -5,7 +5,6 @@ import dev.tenacity.event.impl.network.PacketReceiveEvent;
 import dev.tenacity.event.impl.network.PacketSendEvent;
 import dev.tenacity.event.impl.player.MotionEvent;
 import dev.tenacity.event.impl.player.MoveEvent;
-import dev.tenacity.event.impl.render.Render2DEvent;
 import dev.tenacity.module.Category;
 import dev.tenacity.module.Module;
 import dev.tenacity.module.impl.combat.TargetStrafe;
@@ -14,10 +13,8 @@ import dev.tenacity.module.settings.impl.ModeSetting;
 import dev.tenacity.module.settings.impl.NumberSetting;
 import dev.tenacity.utils.misc.MathUtils;
 import dev.tenacity.utils.player.MovementUtils;
-import dev.tenacity.utils.render.RenderUtil;
 import dev.tenacity.utils.server.PacketUtils;
 import dev.tenacity.utils.time.TimerUtil;
-import net.minecraft.client.gui.Gui;
 import net.minecraft.init.Items;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
@@ -34,31 +31,28 @@ import net.minecraft.util.Vec3;
 
 import dev.tenacity.ui.notifications.NotificationManager;
 import dev.tenacity.ui.notifications.NotificationType;
-import dev.tenacity.utils.objects.Dragging;
-import dev.tenacity.module.impl.render.HUDMod;
 
-import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 
+import dev.tenacity.event.impl.game.RenderTickEvent;
+
 public final class LongJump extends Module {
 
-    private final ModeSetting mode = new ModeSetting("Mode", "Vanilla", "Vanilla", "NCP", "AGC", "Bloxd");
+    public final ModeSetting mode = new ModeSetting("Mode", "Vanilla", "Vanilla", "NCP", "AGC", "Bloxd");
     private final ModeSetting watchdogMode = new ModeSetting("Watchdog Mode", "Damage", "Damage", "Damageless");
     private final NumberSetting damageSpeed = new NumberSetting("Damage Speed", 1, 20, 1, 0.5);
     private final BooleanSetting spoofY = new BooleanSetting("Spoof Y", false);
 
-    private final ModeSetting bloxdSubMode = new ModeSetting("Bloxd Mode", "Bow", "Bow", "FireBall");
+    public final ModeSetting bloxdSubMode = new ModeSetting("Bloxd Mode", "Bow", "Bow", "FireBall");
 
-    private final NumberSetting bloxdHorizontalSpeed = new NumberSetting("Bloxd Horizontal Speed", 0.3, 3, 0, 0.1);
+    private final NumberSetting bloxdHorizontalSpeed = new NumberSetting("Bloxd Horizontal Speed", 0.3, 5, 0, 0.1);
     private final NumberSetting bloxdVerticalSpeed = new NumberSetting("Bloxd Vertical Speed", 0, 3, -1, 0.05);
 
-    private final NumberSetting bowReleaseTime = new NumberSetting("Bow Release Time", 3, 20, 1, 1);
+    public final NumberSetting bowReleaseTime = new NumberSetting("Bow Release Time", 3, 20, 1, 1);
     private final NumberSetting explosionDetectRadius = new NumberSetting("Explosion Detect Radius", 3, 10, 1, 0.5);
 
     private final BooleanSetting stopMovement = new BooleanSetting("Stop Movement", true);
-
-    private final BooleanSetting renderProgressBar = new BooleanSetting("Render Progress Bar", true);
 
     public static boolean isBloxdFlying = false;
 
@@ -66,11 +60,11 @@ public final class LongJump extends Module {
     private double speed;
     private float pitch;
     private int prevSlot;
-    private int ticks;
+    public int ticks;
 
-    private boolean damagedItem;
+    public boolean damagedItem;
     private final TimerUtil jumpTimer = new TimerUtil();
-    private final TimerUtil flightTimer = new TimerUtil();
+    public final TimerUtil flightTimer = new TimerUtil();
 
     private boolean damaged;
     private final List<Packet> packets = new ArrayList<>();
@@ -78,11 +72,6 @@ public final class LongJump extends Module {
 
     private int currentItemSlot = -1;
     private int originalSlotId;
-
-    private final Dragging progressBarPos = Tenacity.INSTANCE.createDrag(this, "longJumpProgressBar", 500, 25);
-
-    private float currentRenderProgress = 0.0f;
-
 
     public LongJump() {
         super("LongJump", Category.MOVEMENT, "jump further");
@@ -101,12 +90,17 @@ public final class LongJump extends Module {
 
         stopMovement.addParent(mode, m -> m.is("Bloxd"));
 
-        this.addSettings(mode, watchdogMode, damageSpeed, spoofY, bloxdSubMode, bloxdHorizontalSpeed, bloxdVerticalSpeed, bowReleaseTime, explosionDetectRadius, stopMovement,
-                renderProgressBar);
+        this.addSettings(mode, watchdogMode, damageSpeed, spoofY, bloxdSubMode, bloxdHorizontalSpeed, bloxdVerticalSpeed, bowReleaseTime, explosionDetectRadius, stopMovement);
     }
 
     @Override
     public void onEnable() {
+        if (mc.thePlayer == null) {
+            NotificationManager.post(NotificationType.WARNING, "LongJump", "Player not loaded, toggling off.", 2);
+            this.toggleSilent();
+            return;
+        }
+
         ticks = 0;
         damagedItem = false;
         damaged = false;
@@ -118,7 +112,6 @@ public final class LongJump extends Module {
 
         isBloxdFlying = false;
         originalSlotId = mc.thePlayer.inventory.currentItem;
-        currentRenderProgress = 0.0f;
 
 
         switch (mode.getMode()) {
@@ -126,11 +119,11 @@ public final class LongJump extends Module {
                 prevSlot = mc.thePlayer.inventory.currentItem;
                 pitch = MathUtils.getRandomFloat(-89.99F, -89.2F);
                 if (getBowSlot() == -1) {
-                    NotificationManager.post(NotificationType.WARNING, "LongJump", "No bow found!", 2);
+                    NotificationManager.post(NotificationType.WARNING, "LongJump", "Bow not found!", 2);
                     this.toggleSilent();
                     return;
                 } else if (getItemCount(Items.arrow) == 0) {
-                    NotificationManager.post(NotificationType.WARNING, "LongJump", "No arrows found!", 2);
+                    NotificationManager.post(NotificationType.WARNING, "LongJump", "Arrows not found!", 2);
                     this.toggleSilent();
                     return;
                 }
@@ -138,10 +131,10 @@ public final class LongJump extends Module {
             case "Bloxd":
                 Item requiredItem = bloxdSubMode.is("Bow") ? Items.bow : Items.fire_charge;
                 String itemName = bloxdSubMode.is("Bow") ? "Bow" : "Fire Charge";
-                String noItemMessage = "Bloxd " + itemName + ": No " + itemName.toLowerCase() + " found" + (bloxdSubMode.is("FireBall") ? " in hotbar!" : "!");
+                String noItemMessage = "Bloxd " + itemName + ": " + itemName + " not found" + (bloxdSubMode.is("FireBall") ? " in hotbar!" : "!");
 
                 if (bloxdSubMode.is("Bow") && !mc.thePlayer.inventory.hasItem(Items.arrow)) {
-                    NotificationManager.post(NotificationType.WARNING, "LongJump", "Bloxd Bow: No arrows found!", 2);
+                    NotificationManager.post(NotificationType.WARNING, "LongJump", "Bloxd Bow: Arrows not found!", 2);
                     this.toggleSilent();
                     return;
                 }
@@ -163,7 +156,14 @@ public final class LongJump extends Module {
                     if (currentItemSlot != originalSlotId) {
                         PacketUtils.sendPacket(new C09PacketHeldItemChange(currentItemSlot));
                     }
-                    PacketUtils.sendPacketNoEvent(new C08PacketPlayerBlockPlacement(mc.thePlayer.inventory.getStackInSlot(currentItemSlot)));
+                    ItemStack stackInSlot = mc.thePlayer.inventory.getStackInSlot(currentItemSlot);
+                    if (stackInSlot != null) {
+                        PacketUtils.sendPacketNoEvent(new C08PacketPlayerBlockPlacement(stackInSlot));
+                    } else {
+                        NotificationManager.post(NotificationType.WARNING, "LongJump", "Item in slot " + currentItemSlot + " is null!", 2);
+                        this.toggleSilent();
+                        return;
+                    }
                     ticks = mc.thePlayer.ticksExisted;
                 }
                 break;
@@ -173,6 +173,10 @@ public final class LongJump extends Module {
 
     @Override
     public void onMotionEvent(MotionEvent event) {
+        if (mc.thePlayer == null || mc.theWorld == null) {
+            return;
+        }
+
         setSuffix(mode.getMode() + (mode.is("Bloxd") ? " " + bloxdSubMode.getMode() : ""));
         if (mode.is("Watchdog") && watchdogMode.is("Damage") && spoofY.isEnabled()) mc.thePlayer.posY = mc.thePlayer.lastTickPosY;
         TargetStrafe targetStrafeModule = Tenacity.INSTANCE.getModuleCollection().getModule(TargetStrafe.class);
@@ -275,7 +279,14 @@ public final class LongJump extends Module {
                         if (prevSlot != bowSlot) {
                             PacketUtils.sendPacket(new C09PacketHeldItemChange(bowSlot));
                         }
-                        PacketUtils.sendPacketNoEvent(new C08PacketPlayerBlockPlacement(mc.thePlayer.inventory.getStackInSlot(bowSlot)));
+                        ItemStack bowStack = mc.thePlayer.inventory.getStackInSlot(bowSlot);
+                        if (bowStack == null) {
+                            NotificationManager.post(NotificationType.WARNING, "LongJump", "AGC: Bow not found!", 2);
+                            toggle();
+                            return;
+                        }
+                        PacketUtils.sendPacketNoEvent(new C08PacketPlayerBlockPlacement(bowStack));
+
                         if (mc.thePlayer.ticksExisted - ticks == bowReleaseTime.getValue()) {
                             event.setPitch(-89.5F);
                             PacketUtils.sendPacketNoEvent(new C03PacketPlayer.C05PacketPlayerLook(mc.thePlayer.rotationYaw, -89.5f, true));
@@ -292,8 +303,8 @@ public final class LongJump extends Module {
                 }
                 break;
             case "Bloxd":
-                isBloxdFlying = true;
                 if (!damagedItem) {
+                    isBloxdFlying = false;
                     if (event.isPre()) {
                         float targetPitch = bloxdSubMode.is("Bow") ? -89.5F : 89.5F;
                         event.setPitch(targetPitch);
@@ -308,6 +319,7 @@ public final class LongJump extends Module {
                         }
                     }
                 } else {
+                    isBloxdFlying = true;
                     if (flightTimer.hasTimeElapsed(1000)) {
                         toggle();
                         return;
@@ -331,7 +343,22 @@ public final class LongJump extends Module {
     }
 
     @Override
+    public void onRenderTickEvent(RenderTickEvent event) {
+        if (mc.thePlayer == null || mc.theWorld == null) {
+            return;
+        }
+    }
+
+    @Override
     public void onPacketSendEvent(PacketSendEvent event) {
+        if (mc.thePlayer == null || mc.theWorld == null) {
+            return;
+        }
+
+        if (event.getPacket() == null) {
+            return;
+        }
+
         if (mode.is("Bloxd") && stopMovement.isEnabled() && !damagedItem && event.getPacket() instanceof C03PacketPlayer) {
             event.cancel();
         }
@@ -339,7 +366,11 @@ public final class LongJump extends Module {
 
     @Override
     public void onPacketReceiveEvent(PacketReceiveEvent event) {
-        if (mc.thePlayer == null || mc.thePlayer.getPositionVector() == null) {
+        if (mc.thePlayer == null || mc.theWorld == null) {
+            return;
+        }
+
+        if (event.getPacket() == null) {
             return;
         }
 
@@ -352,6 +383,10 @@ public final class LongJump extends Module {
             Vec3 explosionPos = new Vec3(packetExplosion.getX(), packetExplosion.getY(), packetExplosion.getZ());
             Vec3 playerPos = mc.thePlayer.getPositionVector();
 
+            if (playerPos == null) {
+                return;
+            }
+
             double distance = playerPos.distanceTo(explosionPos);
 
             if (distance <= explosionDetectRadius.getValue() && !damagedItem) {
@@ -362,49 +397,11 @@ public final class LongJump extends Module {
     }
 
     @Override
-    public void onRender2DEvent(Render2DEvent event) {
-        if (renderProgressBar.isEnabled() && ((mode.is("AGC") && !damagedItem) || (mode.is("Bloxd") && bloxdSubMode.is("Bow") && !damagedItem))) {
-            float targetProgress = (mc.thePlayer.ticksExisted - ticks) / bowReleaseTime.getValue().floatValue();
-            targetProgress = Math.max(0.0f, Math.min(1.0f, targetProgress));
-
-            currentRenderProgress = lerp(currentRenderProgress, targetProgress, 0.1f * mc.timer.timerSpeed);
-
-            float barWidth = 80;
-            float barHeight = 5;
-            float borderRadius = barHeight / 2.0f;
-
-            float x = progressBarPos.getX();
-            float y = progressBarPos.getY();
-
-            progressBarPos.setWidth(barWidth);
-            progressBarPos.setHeight(barHeight);
-
-            RenderUtil.renderRoundedRect(x, y, barWidth, barHeight, borderRadius, new Color(0, 0, 0, 150).getRGB());
-
-            Color startColor = HUDMod.getClientColors().getFirst();
-            Color endColor = HUDMod.getClientColors().getSecond();
-
-            float filledWidth = barWidth * currentRenderProgress;
-
-            Color fillColor = interpolateColor(startColor, endColor, currentRenderProgress);
-            RenderUtil.renderRoundedRect(x, y, filledWidth, barHeight, borderRadius, fillColor.getRGB());
-        }
-    }
-
-    private float lerp(float a, float b, float t) {
-        return a + (b - a) * t;
-    }
-
-    private Color interpolateColor(Color color1, Color color2, float factor) {
-        int r = (int) (color1.getRed() + (color2.getRed() - color1.getRed()) * factor);
-        int g = (int) (color1.getGreen() + (color2.getGreen() - color1.getGreen()) * factor);
-        int b = (int) (color1.getBlue() + (color2.getBlue() - color1.getBlue()) * factor);
-        int a = (int) (color1.getAlpha() + (color2.getAlpha() - color1.getAlpha()) * factor);
-        return new Color(r, g, b, a);
-    }
-
-    @Override
     public void onMoveEvent(MoveEvent event) {
+        if (mc.thePlayer == null || mc.theWorld == null) {
+            return;
+        }
+
         if (mode.is("Bloxd")) {
             if (!damagedItem) {
                 if (stopMovement.isEnabled()) {
@@ -423,6 +420,9 @@ public final class LongJump extends Module {
     }
 
     public int getBowSlot() {
+        if (mc.thePlayer == null || mc.thePlayer.inventory == null) {
+            return -1;
+        }
         for (int i = 0; i < 9; i++) {
             ItemStack is = mc.thePlayer.inventory.getStackInSlot(i);
             if (is != null && is.getItem() == Items.bow) {
@@ -434,10 +434,15 @@ public final class LongJump extends Module {
 
     public int getItemCount(Item item) {
         int count = 0;
+        if (mc.thePlayer == null || mc.thePlayer.inventoryContainer == null) {
+            return 0;
+        }
         for (int i = 9; i < 45; i++) {
-            ItemStack stack = mc.thePlayer.inventoryContainer.getSlot(i).getStack();
-            if (stack != null && stack.getItem() == item) {
-                count += stack.stackSize;
+            if (mc.thePlayer.inventoryContainer.getSlot(i) != null) {
+                ItemStack stack = mc.thePlayer.inventoryContainer.getSlot(i).getStack();
+                if (stack != null && stack.getItem() == item) {
+                    count += stack.stackSize;
+                }
             }
         }
         return count;
@@ -445,6 +450,11 @@ public final class LongJump extends Module {
 
     @Override
     public void onDisable() {
+        if (mc.thePlayer == null) {
+            super.onDisable();
+            return;
+        }
+
         mc.timer.timerSpeed = 1;
         packets.forEach(PacketUtils::sendPacketNoEvent);
         packets.clear();

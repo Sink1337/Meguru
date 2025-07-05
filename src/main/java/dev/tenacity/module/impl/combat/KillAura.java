@@ -42,8 +42,9 @@ public final class KillAura extends Module {
     public static final List<EntityLivingBase> targets = new ArrayList<>();
     private final TimerUtil attackTimer = new TimerUtil();
     private final TimerUtil switchTimer = new TimerUtil();
+    private int currentTargetIndex = 0;
 
-    private final ModeSetting mode = new ModeSetting("Mode", "Single", "Single", "Multi");
+    private final ModeSetting mode = new ModeSetting("Mode", "Single", "Single", "Switch", "Multi");
 
     private final NumberSetting switchDelay = new NumberSetting("Switch Delay", 50, 500, 1, 1);
     private final NumberSetting maxTargetAmount = new NumberSetting("Max Target Amount", 3, 50, 2, 1);
@@ -97,6 +98,7 @@ public final class KillAura extends Module {
             PacketUtils.sendPacketNoEvent(new C07PacketPlayerDigging(C07PacketPlayerDigging.Action.RELEASE_USE_ITEM, BlockPos.ORIGIN, EnumFacing.DOWN));
         }
         wasBlocking = false;
+        currentTargetIndex = 0;
         super.onDisable();
     }
 
@@ -108,7 +110,6 @@ public final class KillAura extends Module {
             minCPS.setValue(minCPS.getValue() - 1);
         }
 
-        // Gets all entities in specified range, sorts them using your specified sort mode, and adds them to target list
         sortTargets();
 
         if (event.isPre()) {
@@ -116,7 +117,27 @@ public final class KillAura extends Module {
             blocking = autoblock.isEnabled() && attacking && InventoryUtils.isHoldingSword();
 
             if (attacking) {
-                TargetManager.target = targets.get(0);
+                if (mode.is("Switch")) {
+                    if (switchTimer.hasTimeElapsed(switchDelay.getValue().longValue(), true)) {
+                        currentTargetIndex++;
+                        if (currentTargetIndex >= targets.size()) {
+                            currentTargetIndex = 0;
+                        }
+                    }
+                    if (!targets.isEmpty() && currentTargetIndex < targets.size()) {
+                        TargetManager.target = targets.get(currentTargetIndex);
+                    } else {
+                        TargetManager.target = null;
+                        currentTargetIndex = 0;
+                    }
+                } else {
+                    if (!targets.isEmpty()) {
+                        TargetManager.target = targets.get(0);
+                    } else {
+                        TargetManager.target = null;
+                    }
+                }
+
 
                 if (TargetManager.target != null) {
                     if (rotations.isEnabled()) {
@@ -139,12 +160,27 @@ public final class KillAura extends Module {
                     }
 
                     if (attackTimer.hasTimeElapsed(cps, true)) {
-                        final int maxValue = (int) ((minCPS.getMaxValue() - maxCPS.getValue()) * 20);
-                        final int minValue = (int) ((minCPS.getMaxValue() - minCPS.getValue()) * 20);
-                        cps = MathUtils.getRandomInRange(minValue, maxValue);
+                        final int currentMinCPS = minCPS.getValue().intValue();
+                        final int currentMaxCPS = maxCPS.getValue().intValue();
+
+                        int minDelayTicks = (int) (20.0 / Math.max(1, currentMaxCPS));
+                        int maxDelayTicks = (int) (20.0 / Math.max(1, currentMinCPS));
+
+                        if (minDelayTicks > maxDelayTicks) {
+                            int temp = minDelayTicks;
+                            minDelayTicks = maxDelayTicks;
+                            maxDelayTicks = temp;
+                        }
+
+                        int calculatedMinCPS = Math.max(1, currentMinCPS);
+                        int calculatedMaxCPS = Math.max(1, currentMaxCPS);
+
+                        cps = MathUtils.getRandomInRange(1000 / calculatedMaxCPS, 1000 / calculatedMinCPS);
+
 
                         if (mode.is("Multi")) {
-                            for (EntityLivingBase entityLivingBase : targets) {
+                            for (int i = 0; i < Math.min(targets.size(), maxTargetAmount.getValue().intValue()); i++) {
+                                EntityLivingBase entityLivingBase = targets.get(i);
                                 AttackEvent attackEvent = new AttackEvent(entityLivingBase);
                                 Tenacity.INSTANCE.getEventProtocol().handleEvent(attackEvent);
 
@@ -165,6 +201,7 @@ public final class KillAura extends Module {
             } else {
                 TargetManager.target = null;
                 switchTimer.reset();
+                currentTargetIndex = 0;
             }
         }
 
@@ -187,8 +224,10 @@ public final class KillAura extends Module {
                             PacketUtils.sendPacketNoEvent(new C07PacketPlayerDigging(C07PacketPlayerDigging.
                                     Action.RELEASE_USE_ITEM, BlockPos.ORIGIN, EnumFacing.DOWN));
                         }
-                        PacketUtils.sendPacketNoEvent(new C08PacketPlayerBlockPlacement(mc.thePlayer.getHeldItem()));
-                        wasBlocking = true;
+                        if (mc.thePlayer.getHeldItem() != null) {
+                            PacketUtils.sendPacketNoEvent(new C08PacketPlayerBlockPlacement(mc.thePlayer.getHeldItem()));
+                            wasBlocking = true;
+                        }
                     }
                     break;
                 case "Fake":
@@ -208,29 +247,31 @@ public final class KillAura extends Module {
         for (Entity entity : mc.theWorld.getLoadedEntityList()) {
             if (entity instanceof EntityLivingBase && mc.thePlayer != null && mc.thePlayer != entity) {
                 EntityLivingBase entityLivingBase = (EntityLivingBase) entity;
-                if (mc.thePlayer.getDistanceToEntity(entity) <= reach.getValue() && isValid(entity) && !FriendCommand.isFriend(entityLivingBase.getName())) {
+                if (entityLivingBase != null && mc.thePlayer.getDistanceToEntity(entity) <= reach.getValue() && isValid(entity) && !FriendCommand.isFriend(entityLivingBase.getName())) {
                     targets.add(entityLivingBase);
                 }
             }
         }
-        switch (sortMode.getMode()) {
-            case "Range":
-                targets.sort(Comparator.comparingDouble(mc.thePlayer::getDistanceToEntity));
-                break;
-            case "Hurt Time":
-                targets.sort(Comparator.comparingInt(EntityLivingBase::getHurtTime));
-                break;
-            case "Health":
-                targets.sort(Comparator.comparingDouble(EntityLivingBase::getHealth));
-                break;
-            case "Armor":
-                targets.sort(Comparator.comparingInt(EntityLivingBase::getTotalArmorValue));
-                break;
+        if (!targets.isEmpty()) {
+            switch (sortMode.getMode()) {
+                case "Range":
+                    targets.sort(Comparator.comparingDouble(mc.thePlayer::getDistanceToEntity));
+                    break;
+                case "Hurt Time":
+                    targets.sort(Comparator.comparingInt(EntityLivingBase::getHurtTime));
+                    break;
+                case "Health":
+                    targets.sort(Comparator.comparingDouble(EntityLivingBase::getHealth));
+                    break;
+                case "Armor":
+                    targets.sort(Comparator.comparingInt(EntityLivingBase::getTotalArmorValue));
+                    break;
+            }
         }
     }
 
     public boolean isValid(Entity entity) {
-        if (mc.thePlayer == null) return false;
+        if (mc.thePlayer == null || entity == null) return false;
         if (!addons.isEnabled("Through Walls") && !mc.thePlayer.canEntityBeSeen(entity)) return false;
         else return TargetManager.checkEntity(entity);
     }

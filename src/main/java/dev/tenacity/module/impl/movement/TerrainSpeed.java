@@ -4,6 +4,7 @@ import dev.tenacity.Tenacity;
 import dev.tenacity.event.impl.player.MotionEvent;
 import dev.tenacity.event.impl.player.MoveEvent;
 import dev.tenacity.event.impl.network.PacketReceiveEvent;
+import dev.tenacity.event.impl.network.PacketSendEvent;
 import dev.tenacity.event.impl.player.BoundingBoxEvent;
 import dev.tenacity.module.Category;
 import dev.tenacity.module.Module;
@@ -18,9 +19,14 @@ import net.minecraft.block.Block;
 import net.minecraft.init.Blocks;
 import net.minecraft.network.Packet;
 import net.minecraft.network.play.server.S12PacketEntityVelocity;
+import net.minecraft.network.play.server.S3FPacketCustomPayload;
 import net.minecraft.util.AxisAlignedBB;
 import net.minecraft.util.MathHelper;
 import net.minecraft.util.BlockPos;
+import net.minecraft.entity.Entity;
+
+import io.netty.buffer.ByteBuf;
+import io.netty.buffer.Unpooled;
 
 @SuppressWarnings("unused")
 public final class TerrainSpeed extends Module {
@@ -29,27 +35,27 @@ public final class TerrainSpeed extends Module {
     private static double lastMotionY;
     private static boolean wasClimbing;
     private boolean isFalling;
+    private boolean receivedS3FSinceLastFalling = false;
 
     static int jumpfunny = 0;
     private static long jumpticks = 0L;
 
-    private long damageBoostStartTime = 0L;
+    public long damageBoostStartTime = 0L;
     private boolean wasOnGroundLastTick;
-    private long damageFlightStartTime = 0L;
+    public long damageFlightStartTime = 0L;
     public boolean flying;
 
     private final ModeSetting mode = new ModeSetting("Mode", "Bloxd", "Bloxd");
     private final BooleanSetting spiderValue = new BooleanSetting("Spider", true);
     private final BooleanSetting boundingBoxFix = new BooleanSetting("Bounding Box Fix", false);
-    private final BooleanSetting damageBoost = new BooleanSetting("Damage Boost", false);
+    public final BooleanSetting damageBoost = new BooleanSetting("Damage Boost", false);
     private final NumberSetting damageSpeed = new NumberSetting("Damage Speed", 1.0, 3.0, 0.5, 0.1);
-    private final NumberSetting damageTime = new NumberSetting("Damage Time(ms)", 1000, 3000, 100, 100);
+    public final NumberSetting damageTime = new NumberSetting("Damage Time(ms)", 1000, 3000, 100, 100);
 
-    private final BooleanSetting damageFlight = new BooleanSetting("Damage Flight", false);
+    public final BooleanSetting damageFlight = new BooleanSetting("Damage Flight", false);
     private final NumberSetting damageFlightSpeed = new NumberSetting("Flight Horizontal Speed", 1.0, 3.0, 0.5, 0.1);
-    private final NumberSetting damageFlightVerticalSpeed = new NumberSetting("Flight Vertical Speed", 0.1, 3.0, 0.05, 0.1);
+    private final NumberSetting damageFlightVerticalSpeed = new NumberSetting("Flight Vertical Speed", 0.1, 3.0, 0.0, 0.1);
     private final NumberSetting damageFlightTime = new NumberSetting("Flight Time(ms)", 1000, 3000, 100, 100);
-
 
     private final NoaPhysics bloxdPhysics = new NoaPhysics();
 
@@ -68,9 +74,6 @@ public final class TerrainSpeed extends Module {
         resetModuleState();
         flying = false;
         isFalling = false;
-        if (boundingBoxFix.isEnabled()) {
-            registerEventProtocol();
-        }
         super.onEnable();
     }
 
@@ -80,7 +83,6 @@ public final class TerrainSpeed extends Module {
         mc.timer.timerSpeed = 1;
         damageBoostStartTime = 0L;
         damageFlightStartTime = 0L;
-        unregisterEventProtocol();
         flying = false;
         super.onDisable();
     }
@@ -112,30 +114,67 @@ public final class TerrainSpeed extends Module {
 
     @Override
     public void onPacketReceiveEvent(PacketReceiveEvent event) {
-        if (damageBoost.isEnabled()) {
+        if (damageBoost.isEnabled() || damageFlight.isEnabled()) {
             Packet<?> packet = event.getPacket();
             if (packet instanceof S12PacketEntityVelocity) {
                 S12PacketEntityVelocity s12 = (S12PacketEntityVelocity) packet;
                 if (mc.thePlayer != null && s12.getEntityID() == mc.thePlayer.getEntityId()) {
-                    if (damageBoostStartTime == 0L) {
+                    if (damageBoost.isEnabled() && damageBoostStartTime == 0L) {
                         damageBoostStartTime = System.currentTimeMillis();
                     }
-                }
-            }
-        }
-
-        if (damageFlight.isEnabled()) {
-            Packet<?> packet = event.getPacket();
-            if (packet instanceof S12PacketEntityVelocity) {
-                S12PacketEntityVelocity s12 = (S12PacketEntityVelocity) packet;
-                if (mc.thePlayer != null && s12.getEntityID() == mc.thePlayer.getEntityId()) {
-                    if (damageFlightStartTime == 0L) {
+                    if (damageFlight.isEnabled() && damageFlightStartTime == 0L) {
                         damageFlightStartTime = System.currentTimeMillis();
                         flying = true;
                     }
                 }
             }
         }
+
+        if (event.getPacket() instanceof S3FPacketCustomPayload) {
+            S3FPacketCustomPayload packet = (S3FPacketCustomPayload) event.getPacket();
+            String channelName = packet.getChannelName();
+
+            System.out.println("Received S3FPacketCustomPayload with Channel: " + channelName);
+            receivedS3FSinceLastFalling = true;
+
+            ByteBuf buffer = packet.getBufferData();
+            if (buffer != null) {
+                ByteBuf copiedBuffer = Unpooled.copiedBuffer(buffer);
+                try {
+                    System.out.println("S3FPacketCustomPayload Data: " + copiedBuffer.toString(io.netty.util.CharsetUtil.UTF_8));
+                } catch (Exception e) {
+                    byte[] bytes = new byte[copiedBuffer.readableBytes()];
+                    copiedBuffer.readBytes(bytes);
+                    System.out.println("S3FPacketCustomPayload Data (Bytes): " + java.util.Arrays.toString(bytes));
+                } finally {
+                    copiedBuffer.release();
+                }
+            } else {
+                System.out.println("S3FPacketCustomPayload Data: (empty)");
+            }
+
+            ByteBuf data = packet.getBufferData();
+            ByteBuf originalData = packet.getBufferData();
+            if (channelName.equals("bloxd:resyncphysics")) {
+                if (originalData != null && originalData.readableBytes() >= 12) {
+                    float receivedVelocityX = originalData.readFloat();
+                    float receivedVelocityY = originalData.readFloat();
+                    float receivedVelocityZ = originalData.readFloat();
+
+                    bloxdPhysics.impulseVector.set(0.0, 0.0, 0.0);
+                    bloxdPhysics.forceVector.set(0.0, 0.0, 0.0);
+                    bloxdPhysics.getVelocityVector().set(receivedVelocityX, receivedVelocityY, receivedVelocityZ);
+                    jumpfunny = 0;
+                }
+                damageBoostStartTime = 0L;
+                damageFlightStartTime = 0L;
+                flying = false;
+            }
+        }
+    }
+
+    @Override
+    public void onPacketSendEvent(PacketSendEvent event) {
     }
 
     @Override
@@ -154,7 +193,9 @@ public final class TerrainSpeed extends Module {
 
         if (player.onGround) {
             groundTicksLocal++;
-            if (groundTicksLocal > 5) jumpfunny = 0;
+            if (groundTicksLocal > 5) {
+                jumpfunny = 0;
+            }
             isFalling = false;
         } else {
             groundTicksLocal = 0;
@@ -218,15 +259,11 @@ public final class TerrainSpeed extends Module {
             }
 
             if (wasOnGroundLastTick && player.motionY > 0.4199 && player.motionY < 0.4201) {
-                if (jumpfunny < 4) {
+                if (jumpfunny < 4 && MovementUtils.isMoving()) {
                     jumpfunny++;
                 }
-                bloxdPhysics.getImpulseVector().add(0, 8, 0);
+                bloxdPhysics.getImpulseVector().add(0, 8.0, 0);
                 bloxdPhysics.getVelocityVector().setY(0.0);
-            }
-
-            if (isFalling) {
-                bloxdPhysics.getForceVector().add(0, -10, 0);
             }
 
             if (spiderValue.isEnabled()) {
@@ -238,6 +275,10 @@ public final class TerrainSpeed extends Module {
                     bloxdPhysics.getVelocityVector().set(0, 0, 0);
                     wasClimbing = false;
                 }
+            }
+
+            if (isFalling) {
+                bloxdPhysics.getForceVector().add(0, -9.9, 0);
             }
 
             bloxdPhysics.getMotionForTick();
@@ -302,7 +343,7 @@ public final class TerrainSpeed extends Module {
         long currentDamageFlightDuration = damageFlightTime.getValue().longValue();
 
         if (System.currentTimeMillis() < jumpticks) return 1;
-        if (player.isUsingItem()) return 0.10;
+        if (player.isUsingItem()) return 0.08;
 
         double finalSpeed = 0.26;
 

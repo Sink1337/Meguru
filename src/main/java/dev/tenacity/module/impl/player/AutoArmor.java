@@ -30,51 +30,65 @@ public class AutoArmor extends Module {
     @Override
     public void onMotionEvent(MotionEvent e) {
         if (e.isPost()) return;
+
         if ((invOnly.isEnabled() && !(mc.currentScreen instanceof GuiInventory)) || (onlyWhileNotMoving.isEnabled() && MovementUtils.isMoving())) {
             return;
         }
+
         if (mc.thePlayer.openContainer instanceof ContainerChest) {
-            // so it doesn't put on armor immediately after closing a chest
             timer.reset();
+            return;
         }
-        if (timer.hasTimeElapsed(delay.getValue().longValue())) {
+
+        if (delay.getValue().longValue() == 0 || timer.hasTimeElapsed(delay.getValue().longValue())) {
+            boolean didEquipActionThisTick = false;
+
             for (int armorSlot = 5; armorSlot < 9; armorSlot++) {
                 if (equipBest(armorSlot)) {
-                    timer.reset();
-                    break;
+                    didEquipActionThisTick = true;
+                    if (delay.getValue().longValue() != 0) {
+                        timer.reset();
+                        return;
+                    }
                 }
+            }
+
+            if (didEquipActionThisTick && delay.getValue().longValue() == 0) {
+                timer.reset();
             }
         }
     }
 
     private boolean equipBest(int armorSlot) {
-        int equipSlot = -1, currProt = -1;
+        int equipSlot = -1;
+        int currProt = -1;
         ItemArmor currItem = null;
         ItemStack slotStack = mc.thePlayer.inventoryContainer.getSlot(armorSlot).getStack();
+
         if (slotStack != null && slotStack.getItem() instanceof ItemArmor) {
             currItem = (ItemArmor) slotStack.getItem();
             currProt = currItem.damageReduceAmount
-                    + EnchantmentHelper.getEnchantmentLevel(Enchantment.protection.effectId, mc.thePlayer.inventoryContainer.getSlot(armorSlot).getStack());
+                    + EnchantmentHelper.getEnchantmentLevel(Enchantment.protection.effectId, slotStack);
         }
-        // find best piece
+
         for (int i = 9; i < 45; i++) {
             ItemStack is = mc.thePlayer.inventoryContainer.getSlot(i).getStack();
             if (is != null && is.getItem() instanceof ItemArmor) {
                 int prot = ((ItemArmor) is.getItem()).damageReduceAmount + EnchantmentHelper.getEnchantmentLevel(Enchantment.protection.effectId, is);
-                if ((currItem == null || currProt < prot) && isValidPiece(armorSlot, (ItemArmor) is.getItem())) {
+
+                if (isValidPiece(armorSlot, (ItemArmor) is.getItem()) && (currItem == null || prot > currProt)) {
                     currItem = (ItemArmor) is.getItem();
                     equipSlot = i;
                     currProt = prot;
                 }
             }
         }
-        // equip best piece (if there is a better one)
+
         if (equipSlot != -1) {
             if (slotStack != null) {
                 InventoryUtils.drop(armorSlot);
-            } else {
-                InventoryUtils.click(equipSlot, 0, true);
             }
+            InventoryUtils.click(equipSlot, 0, true);
             return true;
         }
         return false;
@@ -82,10 +96,9 @@ public class AutoArmor extends Module {
 
     private boolean isValidPiece(int armorSlot, ItemArmor item) {
         String unlocalizedName = item.getUnlocalizedName();
-        return armorSlot == 5 && unlocalizedName.startsWith("item.helmet")
-                || armorSlot == 6 && unlocalizedName.startsWith("item.chestplate")
-                || armorSlot == 7 && unlocalizedName.startsWith("item.leggings")
-                || armorSlot == 8 && unlocalizedName.startsWith("item.boots");
+        return (armorSlot == 5 && unlocalizedName.startsWith("item.helmet"))
+                || (armorSlot == 6 && unlocalizedName.startsWith("item.chestplate"))
+                || (armorSlot == 7 && unlocalizedName.startsWith("item.leggings"))
+                || (armorSlot == 8 && unlocalizedName.startsWith("item.boots"));
     }
-
 }

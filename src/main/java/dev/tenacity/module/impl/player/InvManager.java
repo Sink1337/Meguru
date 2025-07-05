@@ -37,9 +37,11 @@ import java.util.List;
 
 public class InvManager extends Module {
 
+    private BooleanSetting packetOption;
     private BooleanSetting inventoryPackets, onlyWhileNotMoving, inventoryOnly, swapBlocks, dropArchery, moveArrows, dropFood, dropShears;
     private final MultipleBoolSetting options = new MultipleBoolSetting("Options",
             inventoryPackets = new BooleanSetting("Send inventory packets", true),
+            packetOption = new BooleanSetting("Packet", true),
             onlyWhileNotMoving = new BooleanSetting("Only while not moving", false),
             inventoryOnly = new BooleanSetting("Inventory only", false),
             swapBlocks = new BooleanSetting("Swap blocks", false),
@@ -108,7 +110,7 @@ public class InvManager extends Module {
     }
 
     private boolean isReady() {
-        return timer.hasTimeElapsed(delay.getValue());
+        return delay.getValue() == 0 || timer.hasTimeElapsed(delay.getValue());
     }
 
     public static float getDamageScore(ItemStack stack) {
@@ -151,8 +153,10 @@ public class InvManager extends Module {
             ItemStack is = slot.getStack();
             if (is != null && isBadItem(is, i, false)) {
                 InventoryUtils.drop(i);
-                timer.reset();
-                break;
+                if (delay.getValue() > 0) {
+                    timer.reset();
+                    break;
+                }
             }
         }
     }
@@ -177,7 +181,9 @@ public class InvManager extends Module {
             ItemStack is = mc.thePlayer.inventoryContainer.getSlot(i).getStack();
             if (is != null && is.getItem() instanceof ItemSword && isBestWeapon(is) && getDamageScore(is) > 0) {
                 swap(i, ItemType.WEAPON.getDesiredSlot() - 36);
-                break;
+                if (delay.getValue() > 0) {
+                    break;
+                }
             }
         }
     }
@@ -251,16 +257,12 @@ public class InvManager extends Module {
                 return true;
             } else if (!(item instanceof ItemSword) && !(item instanceof ItemTool) && !(item instanceof ItemHoe) && !(item instanceof ItemArmor)) {
                 if (!dropArchery.isEnabled() && item instanceof ItemBow) {
-                    // MODIFICATION START: Implement logic to keep only the single best bow when dropping.
                     if (stealing) {
-                        // For stealing, keep original logic: an item is bad if it's not better than our current best.
                         return !isBestBow(stack);
                     } else {
-                        // For dropping, an item is bad if it is not THE single best bow.
                         int bestBowSlot = getBestBowSlot();
-                        return bestBowSlot != -1 && slot != bestBowSlot;
+                        return bestBowSlot == -1 || slot != bestBowSlot;
                     }
-                    // MODIFICATION END
                 }
 
                 if (dropArchery.isEnabled() && (item instanceof ItemBow || item == Items.arrow)) {
@@ -287,6 +289,9 @@ public class InvManager extends Module {
                     Slot slot2 = mc.thePlayer.inventoryContainer.getSlot(desiredSlot);
                     if (!slot2.getHasStack() || !isBestPickaxe(slot2.getStack())) {
                         swap(i, desiredSlot - 36);
+                        if (delay.getValue() > 0) {
+                            return;
+                        }
                     }
                 }
             }
@@ -305,7 +310,9 @@ public class InvManager extends Module {
                     Slot slot2 = mc.thePlayer.inventoryContainer.getSlot(desiredSlot);
                     if (!slot2.getHasStack() || !isBestAxe(slot2.getStack())) {
                         swap(i, desiredSlot - 36);
-                        timer.reset();
+                        if (delay.getValue() > 0) {
+                            return;
+                        }
                     }
                 }
             }
@@ -324,7 +331,9 @@ public class InvManager extends Module {
                     Slot slot2 = mc.thePlayer.inventoryContainer.getSlot(desiredSlot);
                     if (!slot2.getHasStack() || !isBestShovel(slot2.getStack())) {
                         swap(i, desiredSlot - 36);
-                        timer.reset();
+                        if (delay.getValue() > 0) {
+                            return;
+                        }
                     }
                 }
             }
@@ -333,41 +342,29 @@ public class InvManager extends Module {
 
     private void getBestBow() {
         if (!isReady()) return;
-        // After dropping items, there should only be one "best bow" left in the inventory.
-        // This loop finds it and moves it to the hotbar.
         int bestBowInventorySlot = getBestBowSlot();
 
         if (bestBowInventorySlot != -1) {
             ItemStack bestBowStack = mc.thePlayer.inventoryContainer.getSlot(bestBowInventorySlot).getStack();
 
-            // Ensure the best bow is not also considered the best weapon
-            if (isBestBow(bestBowStack) && !isBestWeapon(bestBowStack)) {
+            if (bestBowStack != null && bestBowStack.getItem() instanceof ItemBow && !isBestWeapon(bestBowStack)) {
                 int desiredSlot = ItemType.BOW.getDesiredSlot();
 
-                // Don't swap if it's already in the desired slot
                 if (bestBowInventorySlot == desiredSlot) return;
 
                 Slot destinationSlot = mc.thePlayer.inventoryContainer.getSlot(desiredSlot);
                 ItemStack destinationStack = destinationSlot.getStack();
 
-                // MODIFICATION START: This condition now correctly handles occupied slots.
-                // It will swap if the destination slot is empty, contains a non-bow item,
-                // or contains a bow that is worse than our best one.
                 if (destinationStack == null || !(destinationStack.getItem() instanceof ItemBow) || getBowScore(destinationStack) < getBowScore(bestBowStack)) {
                     swap(bestBowInventorySlot, desiredSlot - 36);
-                    timer.reset();
+                    if (delay.getValue() > 0) {
+                        return;
+                    }
                 }
-                // MODIFICATION END
             }
         }
     }
 
-
-    /**
-     * NEW METHOD: Finds the slot of the single best bow in the inventory.
-     * This ensures a unique best bow by returning the first slot found in case of a tie.
-     * @return The slot index (9-44) of the best bow, or -1 if no bow is found.
-     */
     private int getBestBowSlot() {
         int bestSlot = -1;
         float bestScore = -1.0F;
@@ -387,7 +384,6 @@ public class InvManager extends Module {
         return bestSlot;
     }
 
-
     private void moveArrows() {
         if (dropArchery.isEnabled() || !moveArrows.isEnabled() || !isReady()) return;
         for (int i = 36; i < 45; i++) {
@@ -397,9 +393,12 @@ public class InvManager extends Module {
                     if (mc.thePlayer.inventoryContainer.getSlot(j).getStack() == null) {
                         fakeOpen();
                         InventoryUtils.click(i, 0, true);
+                        InventoryUtils.click(j, 0, true);
                         fakeClose();
-                        timer.reset();
-                        break;
+                        if (delay.getValue() > 0) {
+                            timer.reset();
+                            return;
+                        }
                     }
                 }
             }
@@ -418,6 +417,9 @@ public class InvManager extends Module {
                     Slot slot2 = mc.thePlayer.inventoryContainer.getSlot(desiredSlot);
                     if (!slot2.getHasStack() || !hasMostGapples(slot2.getStack())) {
                         swap(i, desiredSlot - 36);
+                        if (delay.getValue() > 0) {
+                            break;
+                        }
                     }
                 }
             }
@@ -463,7 +465,6 @@ public class InvManager extends Module {
         int mostBlocksSlot = getMostBlocks();
         int desiredSlot = ItemType.BLOCK.getDesiredSlot();
         if (mostBlocksSlot != -1 && mostBlocksSlot != desiredSlot) {
-            // only switch if the hotbar slot doesn't already have blocks of the same quantity to prevent an inf loop
             Slot dss = mc.thePlayer.inventoryContainer.getSlot(desiredSlot);
             ItemStack dsis = dss.getStack();
             if (!(dsis != null && dsis.getItem() instanceof ItemBlock && dsis.stackSize >= mc.thePlayer.inventoryContainer.getSlot(mostBlocksSlot).getStack().stackSize && Arrays.stream(serverItems).noneMatch(dsis.getDisplayName().toLowerCase()::contains))) {
@@ -535,22 +536,16 @@ public class InvManager extends Module {
             return false;
         } else {
             float value = getBowScore(stack);
-            float bestOverallScore = -1.0F;
-
             for (int i = 9; i < 45; i++) {
                 Slot slot = mc.thePlayer.inventoryContainer.getSlot(i);
                 if (slot.getHasStack()) {
                     ItemStack currentStack = slot.getStack();
-                    if (currentStack.getItem() instanceof ItemBow) {
-                        float currentScore = getBowScore(currentStack);
-                        if (currentScore > bestOverallScore) {
-                            bestOverallScore = currentScore;
-                        }
+                    if (currentStack.getItem() instanceof ItemBow && getBowScore(currentStack) > value) {
+                        return false;
                     }
                 }
             }
-
-            return value >= bestOverallScore;
+            return true;
         }
     }
 
@@ -658,7 +653,9 @@ public class InvManager extends Module {
         fakeOpen();
         InventoryUtils.swap(slot, hSlot);
         fakeClose();
-        timer.reset();
+        if (delay.getValue() > 0) {
+            timer.reset();
+        }
     }
 
     private boolean canContinue() {

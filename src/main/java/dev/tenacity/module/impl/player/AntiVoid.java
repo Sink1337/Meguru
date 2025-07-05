@@ -1,16 +1,21 @@
 package dev.tenacity.module.impl.player;
 
 import dev.tenacity.Tenacity;
+import dev.tenacity.event.impl.game.TickEvent;
+import dev.tenacity.event.impl.network.PacketReceiveEvent;
 import dev.tenacity.event.impl.network.PacketSendEvent;
 import dev.tenacity.module.Category;
 import dev.tenacity.module.Module;
+import dev.tenacity.module.impl.movement.LongJump;
 import dev.tenacity.module.impl.movement.Speed;
+import dev.tenacity.module.impl.movement.TerrainSpeed;
 import dev.tenacity.module.settings.impl.ModeSetting;
 import dev.tenacity.module.settings.impl.NumberSetting;
 import dev.tenacity.utils.server.PacketUtils;
 import dev.tenacity.utils.time.TimerUtil;
 import net.minecraft.network.Packet;
 import net.minecraft.network.play.client.C03PacketPlayer;
+import net.minecraft.network.play.server.S02PacketChat;
 import net.minecraft.util.AxisAlignedBB;
 
 import java.util.ArrayList;
@@ -18,13 +23,20 @@ import java.util.List;
 
 public class AntiVoid extends Module {
 
-    private final ModeSetting mode = new ModeSetting("Mode", "Watchdog", "Watchdog");
+    private final ModeSetting mode = new ModeSetting("Mode", "Bloxd", "Bloxd");
     private final NumberSetting fallDist = new NumberSetting("Fall Distance", 3, 20, 1, 0.5);
     private final TimerUtil timer = new TimerUtil();
     private boolean reset;
     private double lastGroundY;
+    private double lastGroundX;
+    private double lastGroundZ;
+    private int gameStartDelayTicks;
+    private static final int REQUIRED_GAME_START_TICKS = 60;
 
     private final List<Packet> packets = new ArrayList<>();
+
+    private boolean hasEnteredDelayState;
+    private boolean canAntiVoidActivate;
 
     public AntiVoid() {
         super("AntiVoid", Category.PLAYER, "saves you from the void");
@@ -32,8 +44,48 @@ public class AntiVoid extends Module {
     }
 
     @Override
+    public void onPacketReceiveEvent(PacketReceiveEvent event) {
+        if (event.getPacket() instanceof S02PacketChat) {
+            S02PacketChat chatPacket = (S02PacketChat) event.getPacket();
+            if (chatPacket.getChatComponent() == null) return;
+
+            String message = chatPacket.getChatComponent().getUnformattedText();
+            if (message == null) return;
+
+            if (!hasEnteredDelayState &&
+                    (message.contains("Default starter kit selected. Open the shop to select a different kit!") ||
+                            message.contains("Starting game."))) {
+
+                hasEnteredDelayState = true;
+                gameStartDelayTicks = 0;
+                canAntiVoidActivate = false;
+            }
+        }
+    }
+
+    @Override
+    public void onTickEvent(TickEvent event) {
+        if (hasEnteredDelayState) {
+            gameStartDelayTicks++;
+            if (gameStartDelayTicks >= REQUIRED_GAME_START_TICKS) {
+                canAntiVoidActivate = true;
+                hasEnteredDelayState = false;
+            }
+        }
+    }
+
+    @Override
     public void onPacketSendEvent(PacketSendEvent event) {
-        if (mode.is("Watchdog") && !Tenacity.INSTANCE.getModuleCollection().getModule(Speed.class).isEnabled()) {
+        if (!canAntiVoidActivate) {
+            return;
+        }
+
+        TerrainSpeed terrainSpeed = Tenacity.INSTANCE.getModuleCollection().getModule(TerrainSpeed.class);
+        if (terrainSpeed != null && terrainSpeed.flying && terrainSpeed.isEnabled() || LongJump.isBloxdFlying) {
+            return;
+        }
+
+        if (mode.is("Bloxd")) {
             if (event.getPacket() instanceof C03PacketPlayer) {
                 if (!isBlockUnder()) {
                     if (mc.thePlayer.fallDistance < fallDist.getValue()) {
@@ -44,6 +96,8 @@ public class AntiVoid extends Module {
                             for (Packet packet : packets) {
                                 final C03PacketPlayer c03 = (C03PacketPlayer) packet;
                                 c03.setY(lastGroundY);
+                                c03.setX(lastGroundX);
+                                c03.setZ(lastGroundZ);
                                 PacketUtils.sendPacketNoEvent(packet);
                             }
                             packets.clear();
@@ -51,6 +105,8 @@ public class AntiVoid extends Module {
                     }
                 } else {
                     lastGroundY = mc.thePlayer.posY;
+                    lastGroundX = mc.thePlayer.posX;
+                    lastGroundZ = mc.thePlayer.posZ;
                     if (!packets.isEmpty()) {
                         packets.forEach(PacketUtils::sendPacketNoEvent);
                         packets.clear();

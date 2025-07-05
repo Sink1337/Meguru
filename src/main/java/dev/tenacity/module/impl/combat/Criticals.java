@@ -19,10 +19,7 @@ import net.minecraft.network.play.client.C18PacketSpectate;
 import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
 
-// 导入 TerrainSpeed 模块中的 NoaPhysics 类及其内部类 MutableVec3d
-import dev.tenacity.module.impl.movement.TerrainSpeed;
 import dev.tenacity.module.impl.movement.TerrainSpeed.NoaPhysics;
-import dev.tenacity.module.impl.movement.TerrainSpeed.MutableVec3d;
 
 
 @SuppressWarnings("unused")
@@ -33,6 +30,7 @@ public final class Criticals extends Module {
     private int groundTicks;
     private final ModeSetting mode = new ModeSetting("Mode", "Watchdog", "Watchdog", "Packet", "Dev", "Verus", "Bloxd");
     private final ModeSetting watchdogMode = new ModeSetting("Watchdog Mode", "Packet", "Packet", "Edit");
+    private final ModeSetting bloxdMode = new ModeSetting("Bloxd Mode", "LowHop", "LowHop", "Packet");
     private final NumberSetting delay = new NumberSetting("Delay", 1, 20, 0, 1);
     private final TimerUtil timer = new TimerUtil();
     private final NoaPhysics bloxdPhysics = new NoaPhysics();
@@ -41,7 +39,8 @@ public final class Criticals extends Module {
         super("Criticals", Category.COMBAT, "Crit attacks");
         delay.addParent(mode, m -> !(m.is("Verus") || (m.is("Watchdog") && watchdogMode.is("Edit"))));
         watchdogMode.addParent(mode, m -> m.is("Watchdog"));
-        this.addSettings(mode, watchdogMode, delay);
+        bloxdMode.addParent(mode, m -> m.is("Bloxd"));
+        this.addSettings(mode, watchdogMode, bloxdMode, delay);
     }
 
     @Override
@@ -53,10 +52,14 @@ public final class Criticals extends Module {
         if (mode.is("Bloxd")) {
             if (KillAura.attacking && mc.thePlayer.onGround && !Step.isStepping) {
                 if (TargetManager.target != null && TargetManager.target.hurtTime >= delay.getValue().intValue()) {
-                    bloxdPhysics.reset();
-                    bloxdPhysics.getImpulseVector().add(0, 8, 0);
-                    bloxdPhysics.getMotionForTick();
-                    e.setY(bloxdPhysics.getVelocityVector().getY() / 30.0);
+                    switch (bloxdMode.getMode()) {
+                        case "LowHop":
+                            bloxdPhysics.reset();
+                            bloxdPhysics.getImpulseVector().add(0, 8, 0);
+                            bloxdPhysics.getMotionForTick();
+                            e.setY(bloxdPhysics.getVelocityVector().getY() / 30.0);
+                            break;
+                    }
                 }
             }
         }
@@ -121,6 +124,17 @@ public final class Criticals extends Module {
                             e.setOnGround(false);
                             e.setY(e.getY() + 0.03 + ThreadLocalRandom.current().nextDouble(0.001, 0.0011));
                             break;
+                    }
+                }
+                break;
+            case "Bloxd":
+                if (KillAura.attacking && mc.thePlayer.onGround && !Step.isStepping) {
+                    if (TargetManager.target != null && TargetManager.target.hurtTime >= delay.getValue().intValue()) {
+                        if (bloxdMode.is("Packet")) {
+                            for (double offset : new double[]{0.000005}) {
+                                mc.thePlayer.sendQueue.addToSendQueue(new C03PacketPlayer.C04PacketPlayerPosition(mc.thePlayer.posX, mc.thePlayer.posY + offset, mc.thePlayer.posZ, false));
+                            }
+                        }
                     }
                 }
                 break;

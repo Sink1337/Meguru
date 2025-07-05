@@ -20,27 +20,25 @@ import dev.tenacity.utils.animations.impl.DecelerateAnimation;
 import dev.tenacity.utils.player.MovementUtils;
 import dev.tenacity.utils.player.RotationUtils;
 import dev.tenacity.utils.render.RenderUtil;
-import dev.tenacity.utils.server.ServerUtils;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
+import net.minecraft.block.Block;
 import net.minecraft.block.BlockAir;
 import net.minecraft.block.BlockLiquid;
+import net.minecraft.block.material.Material;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityLivingBase;
-import net.minecraft.potion.Potion;
 import net.minecraft.util.BlockPos;
 import net.minecraft.util.MathHelper;
 import net.minecraft.util.Vec3;
+import net.minecraft.client.Minecraft;
 import org.lwjgl.input.Keyboard;
 
 import java.awt.*;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
 
 import static org.lwjgl.opengl.GL11.*;
 
 public final class TargetStrafe extends Module {
+
+    private static final Minecraft mc = Minecraft.getMinecraft();
 
     private static final MultipleBoolSetting adaptiveSettings = new MultipleBoolSetting("Adaptive",
             new BooleanSetting("Edges", false),
@@ -56,6 +54,12 @@ public final class TargetStrafe extends Module {
     private final BooleanSetting render = new BooleanSetting("Render", true);
     private final ColorSetting color = new ColorSetting("Color", new Color(-16711712));
 
+    private final NumberSetting voidDetectionRadius = new NumberSetting("Void Check Radius", 4, 10, 2, 1);
+    private final NumberSetting voidMinMotion = new NumberSetting("Void Min Motion", 0.05, 0.3, 0.01, 0.01);
+    private final NumberSetting voidGroundReqMultiplier = new NumberSetting("Void Ground Req Multiplier", 1.5, 3.0, 0.1, 0.1);
+    private final NumberSetting voidMinGroundReq = new NumberSetting("Void Min Ground Req", 4, 10, 1, 1);
+
+
     public float strafeYaw;
     private boolean leftDirection;
     private boolean isColliding;
@@ -67,7 +71,8 @@ public final class TargetStrafe extends Module {
 
     public TargetStrafe() {
         super("TargetStrafe", Category.COMBAT, "strafe around targets");
-        addSettings(adaptiveSettings, radius, points, manualMode, space, auto3rdPerson, render, color);
+        addSettings(adaptiveSettings, radius, points, manualMode, space, auto3rdPerson, render, color,
+                voidDetectionRadius, voidMinMotion, voidGroundReqMultiplier, voidMinGroundReq);
         color.addParent(render, ParentAttribute.BOOLEAN_CONDITION);
     }
 
@@ -77,6 +82,7 @@ public final class TargetStrafe extends Module {
         leftDirection = false;
         isColliding = false;
         active = false;
+        animation.setDirection(Direction.BACKWARDS);
     }
 
     @Override
@@ -88,6 +94,7 @@ public final class TargetStrafe extends Module {
         }
         active = false;
         currentTarget = null;
+        animation.setDirection(Direction.BACKWARDS);
     }
 
     @Override
@@ -131,7 +138,7 @@ public final class TargetStrafe extends Module {
             }
         }
 
-        if (adaptiveSettings.getSetting("Edges").isEnabled() && isInVoid()) {
+        if (adaptiveSettings.getSetting("Edges").isEnabled() && isPlayerInVoidDangerForStrafe()) {
             leftDirection = !leftDirection;
         }
         if (adaptiveSettings.getSetting("Liquids").isEnabled() && isInLiquid()) {
@@ -163,10 +170,8 @@ public final class TargetStrafe extends Module {
             if (terrainSpeed != null && terrainSpeed.isEnabled()) {
                 double bloxdSpeed = terrainSpeed.getBloxdSpeed();
                 TerrainSpeed.MutableVec3d moveDir = terrainSpeed.getBloxdMoveVec(e.getStrafe(), e.getForward(), bloxdSpeed, strafeYaw);
-
                 e.setX(moveDir.getX());
                 e.setZ(moveDir.getZ());
-
             } else {
                 MovementUtils.setMoveEventSpeed(e, MovementUtils.getSpeed(), strafeYaw);
 
@@ -192,11 +197,10 @@ public final class TargetStrafe extends Module {
     }
 
     public boolean shouldBeActive() {
-        KillAura killAura = Tenacity.INSTANCE.getModuleCollection().getModule(KillAura.class);
-        Speed speed = Tenacity.INSTANCE.getModuleCollection().getModule(Speed.class);
-        Flight flight = Tenacity.INSTANCE.getModuleCollection().getModule(Flight.class);
+        if (TargetManager.target == null) return false;
 
-        if (killAura == null || !killAura.isEnabled() || currentTarget == null || !killAura.isValid(currentTarget)) {
+        KillAura killAura = Tenacity.INSTANCE.getModuleCollection().getModule(KillAura.class);
+        if (killAura == null || !killAura.isEnabled() || !killAura.isValid(TargetManager.target)) {
             return false;
         }
 
@@ -204,11 +208,12 @@ public final class TargetStrafe extends Module {
             return false;
         }
 
+        Speed speed = Tenacity.INSTANCE.getModuleCollection().getModule(Speed.class);
+        Flight flight = Tenacity.INSTANCE.getModuleCollection().getModule(Flight.class);
+
         if (!manualMode.isEnabled()) {
-            if (!mc.gameSettings.keyBindForward.isKeyDown() || (speed == null || !speed.isEnabled())) {
-                if (flight == null || !flight.isEnabled()) {
-                    return false;
-                }
+            if (!mc.gameSettings.keyBindForward.isKeyDown() || (!((speed != null && speed.isEnabled()) || (flight != null && flight.isEnabled())))) {
+                return false;
             }
         } else {
             if (!mc.gameSettings.keyBindForward.isKeyDown()) {
@@ -234,8 +239,8 @@ public final class TargetStrafe extends Module {
 
         glBegin(GL_LINE_STRIP);
         float partialTicks = mc.timer.elapsedPartialTicks;
-        double rad = radius.getValue();
-        double d = (Math.PI * 2.0) / 60.0;
+        double rad = animation.getOutput();
+        double d = (Math.PI * 2.0) / points.getValue();
 
         double posX = entity.lastTickPosX + (entity.posX - entity.lastTickPosX) * partialTicks;
         double posY = entity.lastTickPosY + (entity.posY - entity.lastTickPosY) * partialTicks;
@@ -265,31 +270,76 @@ public final class TargetStrafe extends Module {
         glPopMatrix();
     }
 
-    private boolean isInVoid() {
-        if (currentTarget == null) return false;
-        double yawToTarget = RotationUtils.getYaw(currentTarget.getPositionVector());
-        double xValue = -Math.sin(Math.toRadians(yawToTarget)) * 2;
-        double zValue = Math.cos(Math.toRadians(yawToTarget)) * 2;
-        for (int i = 0; i < 256; i++) {
-            BlockPos b = new BlockPos(mc.thePlayer.posX + xValue, mc.thePlayer.posY - i, mc.thePlayer.posZ + zValue);
-            if (mc.theWorld.getBlockState(b).getBlock() instanceof BlockAir) {
-                if (b.getY() <= 0) {
+    private boolean isMotionTowardsVoid(int offsetX, int offsetZ, double minMotion) {
+        boolean motionXMatches = false;
+        if (offsetX > 0) {
+            motionXMatches = mc.thePlayer.motionX >= minMotion;
+        } else if (offsetX < 0) {
+            motionXMatches = mc.thePlayer.motionX <= -minMotion;
+        } else {
+            motionXMatches = true;
+        }
+
+        boolean motionZMatches = false;
+        if (offsetZ > 0) {
+            motionZMatches = mc.thePlayer.motionZ >= minMotion;
+        } else if (offsetZ < 0) {
+            motionZMatches = mc.thePlayer.motionZ <= -minMotion;
+        } else {
+            motionZMatches = true;
+        }
+
+        return motionXMatches && motionZMatches;
+    }
+
+    private boolean isPlayerInVoidDangerForStrafe() {
+        if (mc.thePlayer == null || mc.theWorld == null) return false;
+
+        if (mc.thePlayer.onGround || mc.thePlayer.motionY > 0.0 || mc.thePlayer.isCollidedHorizontally) {
+            return false;
+        }
+
+        if (mc.thePlayer.isInWater() || mc.thePlayer.isInLava() || mc.thePlayer.capabilities.isFlying) {
+            return false;
+        }
+
+        int maxRadius = voidDetectionRadius.getValue().intValue();
+        double minMotion = voidMinMotion.getValue();
+        double minGroundReq = voidMinGroundReq.getValue();
+        double groundReqMultiplier = voidGroundReqMultiplier.getValue();
+
+        for (int x = -maxRadius; x <= maxRadius; x++) {
+            for (int z = -maxRadius; z <= maxRadius; z++) {
+                double horizontalDistance = Math.sqrt(x * x + z * z);
+                int requiredGroundDistance = (int) Math.ceil(minGroundReq + horizontalDistance * groundReqMultiplier);
+                requiredGroundDistance = Math.max(requiredGroundDistance, (int)minGroundReq);
+
+                double currentGroundDistance = MovementUtils.distanceToGround(mc.thePlayer, mc.thePlayer.posX + x, mc.thePlayer.posZ + z);
+
+                if (currentGroundDistance != -1 && currentGroundDistance > requiredGroundDistance) {
+                    if (isMotionTowardsVoid(x, z, minMotion)) {
+                        return true;
+                    }
+                } else if (currentGroundDistance == -1 && mc.thePlayer.motionY < 0) {
                     return true;
                 }
-            } else {
-                return false;
             }
         }
-        return !mc.thePlayer.onGround && mc.thePlayer.fallDistance > 0 && !mc.thePlayer.isInWater() && !mc.thePlayer.capabilities.isFlying;
+        return false;
     }
 
     private boolean isInLiquid() {
         if (currentTarget == null) return false;
+
+        if (mc.theWorld.getBlockState(new BlockPos(mc.thePlayer.posX, mc.thePlayer.posY, mc.thePlayer.posZ)).getBlock() instanceof BlockLiquid ||
+                mc.theWorld.getBlockState(new BlockPos(mc.thePlayer.posX, mc.thePlayer.posY - 0.1, mc.thePlayer.posZ)).getBlock() instanceof BlockLiquid) {
+            return true;
+        }
+
         double yawToTarget = RotationUtils.getYaw(currentTarget.getPositionVector());
-        double xValue = -Math.sin(Math.toRadians(yawToTarget)) * 2;
-        double zValue = Math.cos(Math.toRadians(yawToTarget)) * 2;
+        double xValue = -Math.sin(Math.toRadians(yawToTarget)) * (radius.getValue() / 2.0);
+        double zValue = Math.cos(Math.toRadians(yawToTarget)) * (radius.getValue() / 2.0);
         BlockPos b = new BlockPos(mc.thePlayer.posX + xValue, mc.thePlayer.posY, mc.thePlayer.posZ + zValue);
         return mc.theWorld.getBlockState(b).getBlock() instanceof BlockLiquid;
     }
-
 }

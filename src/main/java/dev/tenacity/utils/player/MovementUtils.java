@@ -4,6 +4,8 @@ import dev.tenacity.event.impl.player.MoveEvent;
 import dev.tenacity.event.impl.player.PlayerMoveUpdateEvent;
 import dev.tenacity.utils.Utils;
 import dev.tenacity.utils.server.PacketUtils;
+import net.minecraft.block.BlockAir;
+import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.PlayerCapabilities;
 import net.minecraft.network.play.client.C13PacketPlayerAbilities;
 import net.minecraft.potion.Potion;
@@ -102,12 +104,6 @@ public class MovementUtils implements Utils {
         setSpeed(moveEvent, moveSpeed, mc.thePlayer.rotationYaw, mc.thePlayer.movementInput.moveStrafe, mc.thePlayer.movementInput.moveForward);
     }
 
-    /**
-     * 设置 MoveEvent 的速度和方向。此方法主要用于 TargetStrafe 模块。
-     * @param moveEvent 要修改的 MoveEvent 实例。
-     * @param speed 移动速度。
-     * @param yaw 移动的 yaw 方向（角度）。
-     */
     public static void setMoveEventSpeed(MoveEvent moveEvent, double speed, float yaw) {
         double forward = 1.0;
         double strafe = 0.0;
@@ -167,6 +163,34 @@ public class MovementUtils implements Utils {
     public static float getSpeed() {
         if (mc.thePlayer == null || mc.theWorld == null) return 0;
         return (float) Math.sqrt(mc.thePlayer.motionX * mc.thePlayer.motionX + mc.thePlayer.motionZ * mc.thePlayer.motionZ);
+    }
+
+    public static boolean isPlaceable(BlockPos blockPos) {
+        return BlockUtils.replaceable(blockPos) || BlockUtils.isFluid(BlockUtils.getBlockAtPos(blockPos));
+    }
+
+    public static double distanceToGround(Entity entity, double x, double z) {
+        if (mc.theWorld == null) return -1;
+        if (entity != null && entity.onGround) {
+            return 0;
+        }
+
+        double startY = entity != null ? entity.posY : mc.thePlayer.posY;
+        for (int i = (int) Math.floor(startY); i >= -1; i--) {
+            if (isPlaceable(new BlockPos(x, i, z))) {
+                return startY - (i + 1);
+            }
+        }
+        return -1;
+    }
+
+    public static boolean overVoid() {
+        for (int i = (int) mc.thePlayer.posY; i > -1; i--) {
+            if (!(mc.theWorld.getBlockState(new BlockPos(mc.thePlayer.posX, i, mc.thePlayer.posZ)).getBlock() instanceof BlockAir)) {
+                return false;
+            }
+        }
+        return true;
     }
 
     public static float getMaxFallDist() {
