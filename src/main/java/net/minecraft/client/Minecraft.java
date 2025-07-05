@@ -123,6 +123,7 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Queue;
 import java.util.*;
@@ -529,7 +530,11 @@ public class Minecraft implements IThreadListener, IPlayerUsage {
         SplashScreen.continueCount(false);
 
         this.gameSettings.guiScale = 2;
-        SoundUtils.playSound(new ResourceLocation("Tenacity/Sounds/opening.wav"), .8f);
+        if (LocalDate.now().equals(LocalDate.of(LocalDate.now().getYear(), 7, 21))) {
+            SoundUtils.playSound(new ResourceLocation("Tenacity/Sounds/goodday.wav"), .9f);
+        } else {
+            SoundUtils.playSound(new ResourceLocation("Tenacity/Sounds/opening.wav"), .8f);
+        }
         SplashScreen.drawScreen();
 
 
