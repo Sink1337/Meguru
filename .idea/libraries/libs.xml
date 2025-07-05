@@ -58,16 +58,14 @@
       <root url="jar://$PROJECT_DIR$/libs/twitch-platform-6.5-natives-windows-32.jar!/" />
       <root url="jar://$PROJECT_DIR$/libs/twitch-platform-6.5-natives-windows-64.jar!/" />
       <root url="jar://$PROJECT_DIR$/libs/IntentGuard-Annotations-1.0.jar!/" />
-      <root url="jar://$PROJECT_DIR$/libs/lombok.jar!/" />
       <root url="jar://$PROJECT_DIR$/libs/fastjson-1.2.83.jar!/" />
       <root url="jar://$PROJECT_DIR$/libs/slf4j-simple-1.7.25.jar!/" />
       <root url="jar://$PROJECT_DIR$/libs/viarewind-core-2.0.3-SNAPSHOT.jar!/" />
       <root url="jar://$PROJECT_DIR$/libs/viaversion-4.4.2.jar!/" />
       <root url="jar://$PROJECT_DIR$/libs/viabackwards-4.4.2.jar!/" />
+      <root url="jar://$PROJECT_DIR$/libs/lombok-1.18.38.jar!/" />
     </CLASSES>
     <JAVADOC />
-    <SOURCES>
-      <root url="jar://$PROJECT_DIR$/libs/IntentGuard-Annotations-1.0.jar!/" />
-    </SOURCES>
+    <SOURCES />
   </library>
 </component>
