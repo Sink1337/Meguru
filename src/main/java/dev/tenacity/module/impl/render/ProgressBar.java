@@ -86,29 +86,17 @@ public class ProgressBar extends Module {
         }
 
         if (!shouldRender && showLongJumpDamage.isEnabled() && longJumpModule != null && longJumpModule.isEnabled() &&
-                longJumpModule.damagedItem && longJumpModule.mode != null && longJumpModule.flightTimer != null) {
-            float totalDuration = 0.0f;
-            String longJumpMode = longJumpModule.mode.getMode();
-            switch (longJumpMode) {
-                case "Bloxd":
-                    totalDuration = 1000.0f;
-                    break;
-                case "AGC":
-                    totalDuration = 3000.0f;
-                    break;
-                default:
-                    totalDuration = 0.0f;
-                    break;
-            }
+                longJumpModule.damagedItem && longJumpModule.mode != null && longJumpModule.mode.is("Bloxd")) {
 
-            if (totalDuration > 0) {
-                float elapsedTime = (float) longJumpModule.flightTimer.getTime();
-                if (elapsedTime >= 0 && elapsedTime <= totalDuration) {
-                    targetProgress = elapsedTime / totalDuration;
-                    shouldRender = true;
-                }
+            float totalDuration = longJumpModule.damageTime.getValue().floatValue();
+            float elapsedTime = (float) longJumpModule.damageFlightTimer.getTime();
+
+            if (totalDuration > 0 && elapsedTime >= 0 && elapsedTime <= totalDuration) {
+                targetProgress = elapsedTime / totalDuration;
+                shouldRender = true;
             }
         }
+
 
         if (!shouldRender && showTerrainSpeedDamageBoost.isEnabled() && terrainSpeedModule != null && terrainSpeedModule.isEnabled() &&
                 terrainSpeedModule.damageBoost != null && terrainSpeedModule.damageBoost.isEnabled() &&

@@ -28,24 +28,22 @@ import net.minecraft.network.play.server.S27PacketExplosion;
 import net.minecraft.util.BlockPos;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.Vec3;
-
 import dev.tenacity.ui.notifications.NotificationManager;
 import dev.tenacity.ui.notifications.NotificationType;
-
 import java.util.ArrayList;
 import java.util.List;
-
 import dev.tenacity.event.impl.game.RenderTickEvent;
 
 public final class LongJump extends Module {
 
-    public final ModeSetting mode = new ModeSetting("Mode", "Vanilla", "Vanilla", "NCP", "AGC", "Bloxd");
+    public final ModeSetting mode = new ModeSetting("Mode", "Vanilla", "Vanilla", "NCP", "AGC", "Bloxd", "Watchdog");
     private final ModeSetting watchdogMode = new ModeSetting("Watchdog Mode", "Damage", "Damage", "Damageless");
-    private final NumberSetting damageSpeed = new NumberSetting("Damage Speed", 1, 20, 1, 0.5);
+    public final ModeSetting bloxdSubMode = new ModeSetting("Bloxd Mode", "Bow", "Bow", "FireBall");
     private final BooleanSetting spoofY = new BooleanSetting("Spoof Y", false);
 
-    public final ModeSetting bloxdSubMode = new ModeSetting("Bloxd Mode", "Bow", "Bow", "FireBall");
-
+    private final NumberSetting damageSpeed = new NumberSetting("Damage Speed", 1, 20, 1, 0.5);
+    private final NumberSetting damageTimerSpeed = new NumberSetting("Damage Timer Speed", 1, 10, 1, 0.1);
+    public final NumberSetting damageTime = new NumberSetting("Damage Time", 1000, 3000, 100, 50);
     private final NumberSetting bloxdHorizontalSpeed = new NumberSetting("Bloxd Horizontal Speed", 0.3, 5, 0, 0.1);
     private final NumberSetting bloxdVerticalSpeed = new NumberSetting("Bloxd Vertical Speed", 0, 3, -1, 0.05);
 
@@ -65,6 +63,7 @@ public final class LongJump extends Module {
     public boolean damagedItem;
     private final TimerUtil jumpTimer = new TimerUtil();
     public final TimerUtil flightTimer = new TimerUtil();
+    public final TimerUtil damageFlightTimer = new TimerUtil();
 
     private boolean damaged;
     private final List<Packet> packets = new ArrayList<>();
@@ -79,18 +78,15 @@ public final class LongJump extends Module {
         damageSpeed.addParent(mode, m -> m.is("Watchdog") && watchdogMode.is("Damage"));
         spoofY.addParent(mode, m -> m.is("Watchdog") && watchdogMode.is("Damage"));
 
+        damageTimerSpeed.addParent(mode, m -> m.is("Bloxd"));
+        damageTime.addParent(mode, m -> m.is("Bloxd"));
         bloxdSubMode.addParent(mode, m -> m.is("Bloxd"));
-
         bloxdHorizontalSpeed.addParent(mode, m -> m.is("Bloxd"));
         bloxdVerticalSpeed.addParent(mode, m -> m.is("Bloxd"));
-
         bowReleaseTime.addParent(mode, m -> m.is("AGC") || (m.is("Bloxd") && bloxdSubMode.is("Bow")));
-
         explosionDetectRadius.addParent(mode, m -> m.is("Bloxd") && bloxdSubMode.is("FireBall"));
-
         stopMovement.addParent(mode, m -> m.is("Bloxd"));
-
-        this.addSettings(mode, watchdogMode, damageSpeed, spoofY, bloxdSubMode, bloxdHorizontalSpeed, bloxdVerticalSpeed, bowReleaseTime, explosionDetectRadius, stopMovement);
+        this.addSettings(mode, watchdogMode, bloxdSubMode,  damageSpeed, damageTimerSpeed, damageTime, spoofY, bloxdHorizontalSpeed, bloxdVerticalSpeed, bowReleaseTime, explosionDetectRadius, stopMovement);
     }
 
     @Override
@@ -106,6 +102,7 @@ public final class LongJump extends Module {
         damaged = false;
         jumpTimer.reset();
         flightTimer.reset();
+        damageFlightTimer.reset();
         packets.clear();
         stage = 0;
         speed = 1.4f;
@@ -315,12 +312,13 @@ public final class LongJump extends Module {
                         }
                         if (mc.thePlayer.hurtTime > 0) {
                             damagedItem = true;
-                            flightTimer.reset();
+                            damageFlightTimer.reset();
+                            mc.timer.timerSpeed = damageTimerSpeed.getValue().floatValue();
                         }
                     }
                 } else {
                     isBloxdFlying = true;
-                    if (flightTimer.hasTimeElapsed(1000)) {
+                    if (damageFlightTimer.hasTimeElapsed(damageTime.getValue().longValue())) {
                         toggle();
                         return;
                     }
@@ -391,7 +389,8 @@ public final class LongJump extends Module {
 
             if (distance <= explosionDetectRadius.getValue() && !damagedItem) {
                 damagedItem = true;
-                flightTimer.reset();
+                damageFlightTimer.reset();
+                mc.timer.timerSpeed = damageTimerSpeed.getValue().floatValue();
             }
         }
     }
