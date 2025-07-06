@@ -31,7 +31,7 @@ public class AntiVoid extends Module {
     private double lastGroundX;
     private double lastGroundZ;
     private int gameStartDelayTicks;
-    private static final int REQUIRED_GAME_START_TICKS = 60;
+    private static final int REQUIRED_GAME_START_TICKS = 100;
 
     private final List<Packet> packets = new ArrayList<>();
 
@@ -54,6 +54,7 @@ public class AntiVoid extends Module {
 
             if (!hasEnteredDelayState &&
                     (message.contains("Default starter kit selected. Open the shop to select a different kit!") ||
+                            message.contains("Click here to play again!") ||
                             message.contains("Starting game."))) {
 
                 hasEnteredDelayState = true;
