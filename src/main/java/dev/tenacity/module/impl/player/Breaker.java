@@ -126,15 +126,12 @@ public class Breaker extends Module {
 
         if (targetBlockPos != null) {
             if (rotation.isEnabled()) {
-                if (rotate) {
-                    float[] rot = RotationUtils.getRotations(targetBlockPos.getX() + 0.5, targetBlockPos.getY() + 0.5, targetBlockPos.getZ() + 0.5);
-
-                    if (event.isPre()) {
-                        event.setYaw(rot[0]);
-                        event.setPitch(rot[1]);
-                    }
-                    rotate = false;
+                float[] rot = RotationUtils.getRotations(targetBlockPos.getX() + 0.5, targetBlockPos.getY() + 0.5, targetBlockPos.getZ() + 0.5);
+                if (event.isPre()) {
+                    event.setYaw(rot[0]);
+                    event.setPitch(rot[1]);
                 }
+                RotationUtils.setVisualRotations(event);
             }
             mine(targetBlockPos);
         } else {
