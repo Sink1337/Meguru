@@ -12,7 +12,6 @@ import dev.tenacity.utils.animations.Direction;
 import dev.tenacity.utils.animations.impl.DecelerateAnimation;
 import dev.tenacity.utils.animations.impl.EaseInOutQuad;
 import dev.tenacity.utils.animations.impl.EaseOutSine;
-import dev.tenacity.utils.font.FontUtil;
 import dev.tenacity.utils.misc.HoveringUtil;
 import dev.tenacity.utils.render.ColorUtil;
 import dev.tenacity.utils.render.RenderUtil;

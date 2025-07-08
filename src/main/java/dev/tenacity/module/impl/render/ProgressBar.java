@@ -4,15 +4,14 @@ import dev.tenacity.Tenacity;
 import dev.tenacity.event.impl.render.Render2DEvent;
 import dev.tenacity.module.Category;
 import dev.tenacity.module.Module;
+import dev.tenacity.module.impl.movement.LongJump;
+import dev.tenacity.module.impl.movement.TerrainSpeed;
 import dev.tenacity.module.settings.impl.BooleanSetting;
 import dev.tenacity.utils.animations.Animation;
 import dev.tenacity.utils.animations.Direction;
 import dev.tenacity.utils.animations.impl.DecelerateAnimation;
 import dev.tenacity.utils.objects.Dragging;
 import dev.tenacity.utils.render.RenderUtil;
-import dev.tenacity.module.impl.movement.LongJump;
-import dev.tenacity.module.impl.movement.TerrainSpeed;
-import dev.tenacity.module.impl.render.HUDMod;
 
 import java.awt.*;
 

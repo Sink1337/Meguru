@@ -1,6 +1,5 @@
 package dev.tenacity.ui.clickguis.dropdown;
 
-import dev.tenacity.utils.tuples.Pair;
 import dev.tenacity.Tenacity;
 import dev.tenacity.module.Category;
 import dev.tenacity.module.impl.movement.InventoryMove;
@@ -12,6 +11,7 @@ import dev.tenacity.utils.animations.Direction;
 import dev.tenacity.utils.animations.impl.EaseBackIn;
 import dev.tenacity.utils.render.RenderUtil;
 import dev.tenacity.utils.render.Theme;
+import dev.tenacity.utils.tuples.Pair;
 import net.minecraft.client.gui.GuiScreen;
 import net.minecraft.client.gui.ScaledResolution;
 import org.lwjgl.input.Keyboard;

@@ -1,10 +1,10 @@
 package dev.tenacity.ui.clickguis.dropdown.components;
 
-import dev.tenacity.utils.tuples.Pair;
 import dev.tenacity.module.Module;
 import dev.tenacity.module.settings.Setting;
 import dev.tenacity.ui.Screen;
 import dev.tenacity.utils.misc.HoveringUtil;
+import dev.tenacity.utils.tuples.Pair;
 import lombok.Getter;
 
 import java.awt.*;

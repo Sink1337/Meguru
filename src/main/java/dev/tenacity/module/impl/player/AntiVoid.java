@@ -7,7 +7,6 @@ import dev.tenacity.event.impl.network.PacketSendEvent;
 import dev.tenacity.module.Category;
 import dev.tenacity.module.Module;
 import dev.tenacity.module.impl.movement.LongJump;
-import dev.tenacity.module.impl.movement.Speed;
 import dev.tenacity.module.impl.movement.TerrainSpeed;
 import dev.tenacity.module.settings.impl.ModeSetting;
 import dev.tenacity.module.settings.impl.NumberSetting;
@@ -30,17 +29,26 @@ public class AntiVoid extends Module {
     private double lastGroundY;
     private double lastGroundX;
     private double lastGroundZ;
+
     private int gameStartDelayTicks;
     private static final int REQUIRED_GAME_START_TICKS = 100;
+    private boolean gameInProgress = false;
 
     private final List<Packet> packets = new ArrayList<>();
-
-    private boolean hasEnteredDelayState;
-    private boolean canAntiVoidActivate;
 
     public AntiVoid() {
         super("AntiVoid", Category.PLAYER, "saves you from the void");
         this.addSettings(mode, fallDist);
+        this.gameInProgress = false;
+        this.gameStartDelayTicks = 0;
+    }
+
+    @Override
+    public void onEnable() {
+        super.onEnable();
+        this.gameInProgress = false;
+        this.gameStartDelayTicks = 0;
+        packets.clear();
     }
 
     @Override
@@ -52,32 +60,37 @@ public class AntiVoid extends Module {
             String message = chatPacket.getChatComponent().getUnformattedText();
             if (message == null) return;
 
-            if (!hasEnteredDelayState &&
-                    (message.contains("Default starter kit selected. Open the shop to select a different kit!") ||
-                            message.contains("Click here to play again!") ||
-                            message.contains("Starting game."))) {
-
-                hasEnteredDelayState = true;
-                gameStartDelayTicks = 0;
-                canAntiVoidActivate = false;
+            if (message.contains("Starting game.")) {
+                this.gameStartDelayTicks = 0;
+                this.gameInProgress = false;
+            }
+            else if (message.contains("Click here to play again!") ||
+                    message.contains("Default starter kit selected. Open the shop to select a different kit!")) {
+                this.gameInProgress = false;
+                this.gameStartDelayTicks = 0;
+                packets.clear();
             }
         }
     }
 
     @Override
     public void onTickEvent(TickEvent event) {
-        if (hasEnteredDelayState) {
+        if (gameInProgress) {
+            return;
+        }
+
+        if (gameStartDelayTicks >= 0 && gameStartDelayTicks < REQUIRED_GAME_START_TICKS) {
             gameStartDelayTicks++;
             if (gameStartDelayTicks >= REQUIRED_GAME_START_TICKS) {
-                canAntiVoidActivate = true;
-                hasEnteredDelayState = false;
+                gameInProgress = true;
+                gameStartDelayTicks = -1;
             }
         }
     }
 
     @Override
     public void onPacketSendEvent(PacketSendEvent event) {
-        if (!canAntiVoidActivate) {
+        if (!gameInProgress) {
             return;
         }
 

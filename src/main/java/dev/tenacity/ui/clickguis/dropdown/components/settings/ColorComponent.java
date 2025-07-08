@@ -1,6 +1,5 @@
 package dev.tenacity.ui.clickguis.dropdown.components.settings;
 
-import dev.tenacity.utils.tuples.Pair;
 import dev.tenacity.module.settings.impl.ColorSetting;
 import dev.tenacity.module.settings.impl.NumberSetting;
 import dev.tenacity.ui.clickguis.dropdown.components.SettingComponent;
@@ -15,6 +14,7 @@ import dev.tenacity.utils.render.ColorUtil;
 import dev.tenacity.utils.render.GLUtil;
 import dev.tenacity.utils.render.RenderUtil;
 import dev.tenacity.utils.render.RoundedUtil;
+import dev.tenacity.utils.tuples.Pair;
 import net.minecraft.util.ResourceLocation;
 import org.lwjgl.input.Keyboard;
 

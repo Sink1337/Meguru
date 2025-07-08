@@ -1,10 +1,10 @@
 package dev.tenacity.utils.objects;
 
-import dev.tenacity.utils.tuples.Pair;
 import dev.tenacity.module.impl.render.HUDMod;
 import dev.tenacity.module.settings.impl.ColorSetting;
 import dev.tenacity.module.settings.impl.ModeSetting;
 import dev.tenacity.utils.render.ColorUtil;
+import dev.tenacity.utils.tuples.Pair;
 import lombok.Getter;
 
 import java.awt.*;

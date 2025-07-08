@@ -1,11 +1,10 @@
 package dev.tenacity.module.impl.render;
 
-import dev.tenacity.module.api.TargetManager; // 导入 TargetManager
-import dev.tenacity.utils.tuples.Pair;
 import dev.tenacity.event.impl.render.RenderChestEvent;
 import dev.tenacity.event.impl.render.RenderModelEvent;
 import dev.tenacity.module.Category;
 import dev.tenacity.module.Module;
+import dev.tenacity.module.api.TargetManager;
 import dev.tenacity.module.settings.ParentAttribute;
 import dev.tenacity.module.settings.impl.BooleanSetting;
 import dev.tenacity.module.settings.impl.ColorSetting;
@@ -13,6 +12,7 @@ import dev.tenacity.module.settings.impl.ModeSetting;
 import dev.tenacity.module.settings.impl.MultipleBoolSetting;
 import dev.tenacity.utils.render.ColorUtil;
 import dev.tenacity.utils.render.RenderUtil;
+import dev.tenacity.utils.tuples.Pair;
 import net.minecraft.client.renderer.OpenGlHelper;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.monster.EntityMob;

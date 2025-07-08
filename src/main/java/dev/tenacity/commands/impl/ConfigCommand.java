@@ -1,11 +1,12 @@
 package dev.tenacity.commands.impl;
 
-import dev.tenacity.Tenacity; // 假设 Tenacity 类是存在的，并且包含 getConfigManager() 方法
+import dev.tenacity.Tenacity;
 import dev.tenacity.commands.Command;
-import dev.tenacity.utils.misc.Multithreading; // 引入 Multithreading 以便在异步线程中执行操作
-import dev.tenacity.config.DragManager; // 引入 DragManager
-import java.util.List; // 用于处理配置列表
-import java.util.stream.Collectors; // 用于流操作
+import dev.tenacity.config.DragManager;
+import dev.tenacity.utils.misc.Multithreading;
+
+import java.util.List;
+import java.util.stream.Collectors;
 
 public class ConfigCommand extends Command {
 

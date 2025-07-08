@@ -1,10 +1,10 @@
 package net.minecraft.block;
 
 import dev.tenacity.Tenacity;
+import dev.tenacity.event.impl.player.BoundingBoxEvent;
 import dev.tenacity.module.impl.movement.Flight;
 import dev.tenacity.module.impl.render.XRay;
 import dev.tenacity.utils.player.BlockUtils;
-import dev.tenacity.event.impl.player.BoundingBoxEvent;
 import net.minecraft.block.material.MapColor;
 import net.minecraft.block.material.Material;
 import net.minecraft.block.properties.IProperty;

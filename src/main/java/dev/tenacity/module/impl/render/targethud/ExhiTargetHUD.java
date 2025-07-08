@@ -41,7 +41,7 @@ public class ExhiTargetHUD extends TargetHUD {
 
         int alphaInt = (int) (255 * alpha);
 
-        tahomaFont.boldSize(16).drawString(target.getName(), x + 8 + size, y + 6, textColor.getRGB());
+        interFont.boldSize(18).drawString(target.getName(), x + 8 + size, y + 6, textColor.getRGB());
         float healthValue = (target.getHealth() + target.getAbsorptionAmount()) / (target.getMaxHealth() + target.getAbsorptionAmount());
 
         Color healthColor = healthValue > .5f ? ColorUtil.interpolateColorC(new Color(255, 255, 10), new Color(10, 255, 10), (healthValue - .5f) / .5f) :
@@ -61,7 +61,7 @@ public class ExhiTargetHUD extends TargetHUD {
             Gui.drawRect2(x + 8 + size + (increment * i), y + 15.5F, .5f, 4, darkest.getRGB());
         }
 
-        tahomaFont.size(12).drawString("HP: " + MathUtils.round(target.getHealth() + target.getAbsorptionAmount(), 1) + " | Dist: " + MathUtils.round(mc.thePlayer.getDistanceToEntity(target), 1),
+        interFont.size(12).drawString("HP: " + MathUtils.round(target.getHealth() + target.getAbsorptionAmount(), 1) + " | Dist: " + MathUtils.round(mc.thePlayer.getDistanceToEntity(target), 1),
                 x + 8 + size, y + 25, textColor.getRGB());
 
 

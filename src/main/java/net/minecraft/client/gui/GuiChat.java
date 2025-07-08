@@ -1,28 +1,23 @@
 package net.minecraft.client.gui;
 
 import com.google.common.collect.Lists;
-import dev.tenacity.utils.tuples.Pair;
-import dev.tenacity.utils.tuples.mutable.MutablePair;
 import dev.tenacity.Tenacity;
 import dev.tenacity.config.DragManager;
 import dev.tenacity.module.impl.render.ArrayListMod;
 import dev.tenacity.module.impl.render.HUDMod;
 import dev.tenacity.module.impl.render.SpotifyMod;
-import dev.tenacity.ui.Screen;
-import dev.tenacity.utils.misc.HoveringUtil;
-import dev.tenacity.utils.misc.MathUtils;
-import dev.tenacity.utils.misc.Multithreading;
-import dev.tenacity.utils.objects.Dragging;
-import dev.tenacity.utils.render.ColorUtil;
-import dev.tenacity.utils.render.RoundedUtil;
 import dev.tenacity.utils.animations.Animation;
 import dev.tenacity.utils.animations.Direction;
 import dev.tenacity.utils.animations.impl.DecelerateAnimation;
 import dev.tenacity.utils.font.AbstractFontRenderer;
 import dev.tenacity.utils.font.CustomFont;
 import dev.tenacity.utils.font.FontUtil;
-import lombok.Getter;
-import lombok.Setter;
+import dev.tenacity.utils.misc.HoveringUtil;
+import dev.tenacity.utils.misc.Multithreading;
+import dev.tenacity.utils.objects.Dragging;
+import dev.tenacity.utils.render.ColorUtil;
+import dev.tenacity.utils.render.RoundedUtil;
+import dev.tenacity.utils.tuples.Pair;
 import net.minecraft.network.play.client.C14PacketTabComplete;
 import net.minecraft.util.*;
 import org.apache.commons.lang3.StringUtils;
@@ -196,13 +191,7 @@ public class GuiChat extends GuiScreen {
 
         Gui.drawRect2(2, this.height - (14 * openingAnimation.getOutput().floatValue()), this.width - 4, 12, Integer.MIN_VALUE);
 
-        AbstractFontRenderer abstractFontRenderer = this.mc2.fontRendererObj;
-        if (HUDMod.customFont.isEnabled()) {
-            abstractFontRenderer = FontUtil.tenacityFont20;
-        }
-        inputField.font = abstractFontRenderer;
-
-        inputField.yPosition = (float) (this.height - (12 * openingAnimation.getOutput().floatValue()));
+        inputField.yPosition = (this.height - (12 * openingAnimation.getOutput().floatValue()));
         this.inputField.drawTextBox();
         IChatComponent ichatcomponent = this.mc2.ingameGUI.getChatGUI().getChatComponent(Mouse.getX(), Mouse.getY());
 

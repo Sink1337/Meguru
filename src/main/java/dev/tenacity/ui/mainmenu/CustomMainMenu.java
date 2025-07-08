@@ -1,16 +1,17 @@
 package dev.tenacity.ui.mainmenu;
 
 import dev.tenacity.Tenacity;
-import dev.tenacity.intent.api.account.IntentAccount;
 import dev.tenacity.intent.cloud.Cloud;
 import dev.tenacity.ui.Screen;
-import dev.tenacity.ui.altmanager.helpers.Alt;
 import dev.tenacity.ui.altmanager.panels.LoginPanel;
 import dev.tenacity.ui.mainmenu.particles.ParticleEngine;
 import dev.tenacity.utils.animations.Animation;
 import dev.tenacity.utils.animations.Direction;
 import dev.tenacity.utils.animations.impl.DecelerateAnimation;
-import dev.tenacity.utils.misc.*;
+import dev.tenacity.utils.misc.DiscordRPC;
+import dev.tenacity.utils.misc.HoveringUtil;
+import dev.tenacity.utils.misc.IOUtils;
+import dev.tenacity.utils.misc.NetworkingUtils;
 import dev.tenacity.utils.render.GLUtil;
 import dev.tenacity.utils.render.RenderUtil;
 import dev.tenacity.utils.render.RoundedUtil;
@@ -24,7 +25,6 @@ import org.lwjgl.opengl.GL11;
 
 import java.awt.*;
 import java.util.ArrayList;
-import java.util.Base64;
 import java.util.List;
 
 public class CustomMainMenu extends GuiScreen {

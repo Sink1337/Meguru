@@ -1,8 +1,8 @@
 package dev.tenacity.ui.altmanager.panels;
 
-import dev.tenacity.utils.tuples.Pair;
 import dev.tenacity.ui.altmanager.Panel;
 import dev.tenacity.utils.render.ColorUtil;
+import dev.tenacity.utils.tuples.Pair;
 
 import java.util.ArrayList;
 import java.util.List;

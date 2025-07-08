@@ -2,8 +2,8 @@ package net.minecraft.client.gui;
 
 import com.google.common.collect.Lists;
 import dev.tenacity.module.impl.render.HUDMod;
-import dev.tenacity.utils.render.ColorUtil;
 import dev.tenacity.utils.font.AbstractFontRenderer;
+import dev.tenacity.utils.render.ColorUtil;
 import dev.tenacity.utils.render.GLUtil;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.GlStateManager;
@@ -122,7 +122,7 @@ public class GuiNewChat extends Gui {
 
                                 drawRect(i2, j2 - 9, i2 + l + 4, j2, ColorUtil.applyOpacity(Color.BLACK, Math.max(1, l1 / (255 * .5f)) - 1).getRGB());
                                 String s = chatline.getChatComponent().getFormattedText();
-                                // fr.drawStringWithShadow(s, (float) i2, (float) (j2 - (HUDMod.customFont.isEnabled() ? 8.5f : 8)), 16777215 + (l1 << 24));
+                                // fr.drawStringWithShadow(s, (float) i2, (float) (j2 - (HUDMod.fontChat.isEnabled() ? (HUDMod.getCustomFontMode().is("Inter") ? 8.0f : 8.5f) : 8)), 16777215 + (l1 << 24));
                             }
                         }
                     }
@@ -233,7 +233,7 @@ public class GuiNewChat extends Gui {
                                 drawRect(i2, j2 - 9, i2 + l + 4, j2, l1 / 2 << 24);
                                 String s = chatline.getChatComponent().getFormattedText();
                                 GLUtil.startBlend();
-                                fr.drawStringWithShadow(s, (float) i2, (float) (j2 - (HUDMod.customFont.isEnabled() ? 8.5f : 8)), 16777215 + (l1 << 24));
+                                fr.drawStringWithShadow(s, (float) i2, (float) (j2 - (HUDMod.fontChat.isEnabled() ? (HUDMod.getCustomFontMode().is("Inter") ? 7.0f : 8.5f) : 8)), 16777215 + (l1 << 24));
                                 GLUtil.endBlend();
                             }
                         }
@@ -474,6 +474,4 @@ public class GuiNewChat extends Gui {
     public int getLineCount() {
         return this.getChatHeight() / 9;
     }
-
-
 }

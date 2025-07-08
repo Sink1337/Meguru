@@ -1,7 +1,5 @@
 package dev.tenacity.module.impl.render;
 
-import dev.tenacity.module.api.TargetManager;
-import dev.tenacity.utils.tuples.Pair;
 import dev.tenacity.Tenacity;
 import dev.tenacity.event.impl.render.PreRenderEvent;
 import dev.tenacity.event.impl.render.Render2DEvent;
@@ -9,6 +7,7 @@ import dev.tenacity.event.impl.render.Render3DEvent;
 import dev.tenacity.event.impl.render.ShaderEvent;
 import dev.tenacity.module.Category;
 import dev.tenacity.module.Module;
+import dev.tenacity.module.api.TargetManager;
 import dev.tenacity.module.impl.combat.KillAura;
 import dev.tenacity.module.impl.render.targethud.AutoDoxTargetHUD;
 import dev.tenacity.module.impl.render.targethud.RiseTargetHUD;
@@ -25,6 +24,7 @@ import dev.tenacity.utils.objects.PlayerDox;
 import dev.tenacity.utils.render.ColorUtil;
 import dev.tenacity.utils.render.ESPUtil;
 import dev.tenacity.utils.render.RenderUtil;
+import dev.tenacity.utils.tuples.Pair;
 import net.minecraft.client.gui.GuiChat;
 import net.minecraft.client.gui.ScaledResolution;
 import net.minecraft.entity.Entity;

@@ -1,12 +1,12 @@
 package dev.tenacity.scripting.api.bindings;
 
-import dev.tenacity.module.api.TargetManager;
-import dev.tenacity.utils.tuples.Pair;
 import dev.tenacity.Tenacity;
 import dev.tenacity.module.Module;
+import dev.tenacity.module.api.TargetManager;
 import dev.tenacity.module.impl.render.HUDMod;
 import dev.tenacity.utils.player.ChatUtil;
 import dev.tenacity.utils.time.TimerUtil;
+import dev.tenacity.utils.tuples.Pair;
 import net.minecraft.client.Minecraft;
 import net.minecraft.entity.EntityLivingBase;
 import org.lwjgl.input.Keyboard;

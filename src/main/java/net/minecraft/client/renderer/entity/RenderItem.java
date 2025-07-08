@@ -4,7 +4,6 @@ import dev.tenacity.Tenacity;
 import dev.tenacity.module.impl.combat.KillAura;
 import dev.tenacity.module.impl.render.Glint;
 import dev.tenacity.module.impl.render.GlowESP;
-import dev.tenacity.utils.render.GLUtil;
 import net.minecraft.block.*;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.entity.EntityPlayerSP;

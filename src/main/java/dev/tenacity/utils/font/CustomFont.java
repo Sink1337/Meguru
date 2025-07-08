@@ -1,16 +1,15 @@
 package dev.tenacity.utils.font;
 
-import dev.tenacity.utils.tuples.mutable.MutablePair;
 import dev.tenacity.module.impl.render.Streamer;
 import dev.tenacity.utils.misc.MathUtils;
 import dev.tenacity.utils.render.GLUtil;
 import dev.tenacity.utils.render.RenderUtil;
+import dev.tenacity.utils.tuples.mutable.MutablePair;
 import lombok.Getter;
 import lombok.Setter;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.renderer.texture.DynamicTexture;
 import org.lwjgl.opengl.GL11;
-import org.w3c.dom.CharacterData;
 
 import java.awt.*;
 import java.awt.geom.Rectangle2D;

@@ -1,7 +1,5 @@
 package dev.tenacity.module.impl.render;
 
-import dev.tenacity.module.api.TargetManager;
-import dev.tenacity.utils.tuples.Pair;
 import dev.tenacity.Tenacity;
 import dev.tenacity.event.impl.game.WorldEvent;
 import dev.tenacity.event.impl.render.Render2DEvent;
@@ -9,13 +7,15 @@ import dev.tenacity.event.impl.render.RenderChestEvent;
 import dev.tenacity.event.impl.render.RenderModelEvent;
 import dev.tenacity.module.Category;
 import dev.tenacity.module.Module;
+import dev.tenacity.module.api.TargetManager;
+import dev.tenacity.module.impl.player.ChestStealer;
 import dev.tenacity.module.settings.ParentAttribute;
 import dev.tenacity.module.settings.impl.*;
 import dev.tenacity.utils.animations.Animation;
 import dev.tenacity.utils.animations.impl.DecelerateAnimation;
 import dev.tenacity.utils.misc.MathUtils;
 import dev.tenacity.utils.render.*;
-import dev.tenacity.module.impl.player.ChestStealer;
+import dev.tenacity.utils.tuples.Pair;
 import net.minecraft.client.gui.ScaledResolution;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.shader.Framebuffer;

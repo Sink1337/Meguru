@@ -13,9 +13,7 @@ import net.minecraft.network.play.client.C03PacketPlayer;
 public final class Step extends Module {
 
     private final ModeSetting mode = new ModeSetting("Mode", "Vanilla", "Vanilla", "NCP", "Full Jump Packets");
-
     private final NumberSetting height = new NumberSetting("Height", 1, 10, 1, 0.5);
-
     private final NumberSetting timer = new NumberSetting("Timer", 1, 2, 0.1, 0.1);
 
     private boolean hasStepped;

@@ -1,12 +1,12 @@
 package dev.tenacity.ui.sidegui.forms;
 
-import dev.tenacity.utils.tuples.Triplet;
 import dev.tenacity.Tenacity;
 import dev.tenacity.module.impl.render.HUDMod;
 import dev.tenacity.ui.Screen;
 import dev.tenacity.utils.misc.HoveringUtil;
 import dev.tenacity.utils.render.ColorUtil;
 import dev.tenacity.utils.render.RoundedUtil;
+import dev.tenacity.utils.tuples.Triplet;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;

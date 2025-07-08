@@ -9,6 +9,7 @@ import dev.tenacity.module.Module;
 import dev.tenacity.module.api.TargetManager;
 import dev.tenacity.module.impl.movement.Flight;
 import dev.tenacity.module.impl.movement.Step;
+import dev.tenacity.module.impl.movement.TerrainSpeed.NoaPhysics;
 import dev.tenacity.module.settings.impl.ModeSetting;
 import dev.tenacity.module.settings.impl.NumberSetting;
 import dev.tenacity.utils.server.PacketUtils;
@@ -18,8 +19,6 @@ import net.minecraft.network.play.client.C18PacketSpectate;
 
 import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
-
-import dev.tenacity.module.impl.movement.TerrainSpeed.NoaPhysics;
 
 
 @SuppressWarnings("unused")

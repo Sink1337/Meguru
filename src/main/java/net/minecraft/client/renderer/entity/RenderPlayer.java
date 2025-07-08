@@ -4,7 +4,6 @@ import dev.tenacity.Tenacity;
 import dev.tenacity.module.impl.combat.KillAura;
 import dev.tenacity.module.impl.render.BrightPlayers;
 import dev.tenacity.module.impl.render.CustomModel;
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.entity.AbstractClientPlayer;
 import net.minecraft.client.entity.EntityPlayerSP;
 import net.minecraft.client.model.ModelPlayer;

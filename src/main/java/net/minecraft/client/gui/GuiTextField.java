@@ -2,7 +2,9 @@ package net.minecraft.client.gui;
 
 import com.google.common.base.Predicate;
 import com.google.common.base.Predicates;
+import dev.tenacity.module.impl.render.HUDMod;
 import dev.tenacity.utils.font.AbstractFontRenderer;
+import dev.tenacity.utils.font.FontUtil;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.renderer.Tessellator;
@@ -16,7 +18,6 @@ import java.awt.*;
 public class GuiTextField extends Gui {
 
     private final int id;
-    public AbstractFontRenderer font;
     public int xPosition;
     public float yPosition;
 
@@ -71,7 +72,6 @@ public class GuiTextField extends Gui {
 
     public GuiTextField(int componentId, AbstractFontRenderer fontrendererObj, int x, int y, int par5Width, int par6Height) {
         this.id = componentId;
-        this.font = fontrendererObj;
         this.xPosition = x;
         this.yPosition = y;
         this.width = par5Width;
@@ -81,6 +81,19 @@ public class GuiTextField extends Gui {
     public void func_175207_a(GuiPageButtonList.GuiResponder p_175207_1_) {
         this.field_175210_x = p_175207_1_;
     }
+
+    protected AbstractFontRenderer getFont() {
+        HUDMod hudMod = dev.tenacity.Tenacity.INSTANCE.getModuleCollection().getModule(HUDMod.class);
+        if (hudMod != null && hudMod.fontChat.isEnabled()) {
+            if (hudMod.customFontMode.is("Inter")) {
+                return FontUtil.interFont18;
+            } else {
+                return FontUtil.tenacityFont20;
+            }
+        }
+        return Minecraft.getMinecraft().fontRendererObj;
+    }
+
 
     /**
      * Increments the cursor counter
@@ -421,8 +434,8 @@ public class GuiTextField extends Gui {
                 i -= 4;
             }
 
-            String s = this.font.trimStringToWidth(this.text.substring(this.lineScrollOffset), this.getWidth());
-            this.setCursorPosition(this.font.trimStringToWidth(s, i).length() + this.lineScrollOffset);
+            String s = getFont().trimStringToWidth(this.text.substring(this.lineScrollOffset), this.getWidth());
+            this.setCursorPosition(getFont().trimStringToWidth(s, i).length() + this.lineScrollOffset);
         }
     }
 
@@ -430,6 +443,8 @@ public class GuiTextField extends Gui {
      * Draws the textbox
      */
     public void drawTextBox() {
+        AbstractFontRenderer currentFont = getFont();
+
         if (this.getVisible()) {
             if (this.getEnableBackgroundDrawing()) {
                 drawRect(this.xPosition - 1, this.yPosition - 1, this.xPosition + this.width + 1, this.yPosition + this.height + 1, -6250336);
@@ -439,11 +454,13 @@ public class GuiTextField extends Gui {
             int i = this.isEnabled ? this.enabledColor : this.disabledColor;
             int j = this.cursorPosition - this.lineScrollOffset;
             int k = this.selectionEnd - this.lineScrollOffset;
-            String s = this.font.trimStringToWidth(this.text.substring(this.lineScrollOffset), this.getWidth());
+            String s = currentFont.trimStringToWidth(this.text.substring(this.lineScrollOffset), this.getWidth());
             boolean flag = j >= 0 && j <= s.length();
             boolean flag1 = this.isFocused && this.cursorCounter / 6 % 2 == 0 && flag;
             int l = this.enableBackgroundDrawing ? this.xPosition + 4 : this.xPosition;
-            float i1 = this.enableBackgroundDrawing ? this.yPosition + (this.height - 8) / 2f : this.yPosition;
+
+            float i1 = this.enableBackgroundDrawing ? this.yPosition + (this.height - currentFont.getHeight()) / 2f : this.yPosition;
+
             int j1 = l;
 
             if (k > s.length()) {
@@ -452,7 +469,7 @@ public class GuiTextField extends Gui {
 
             if (s.length() > 0) {
                 String s1 = flag ? s.substring(0, j) : s;
-                j1 = this.font.drawStringWithShadow(s1, (float) l, (float) i1, i);
+                j1 = currentFont.drawStringWithShadow(s1, (float) l, (float) i1, i);
             }
 
             boolean flag2 = this.cursorPosition < this.text.length() || this.text.length() >= this.getMaxStringLength();
@@ -462,26 +479,23 @@ public class GuiTextField extends Gui {
                 k1 = j > 0 ? l + this.width : l;
             } else if (flag2) {
                 k1 = j1 + 2;
-                if (font != Minecraft.getMinecraft().fontRendererObj) {
-                    j1 += 3.5f;
-                }
             }
 
             if (s.length() > 0 && flag && j < s.length()) {
-                j1 = this.font.drawStringWithShadow(s.substring(j), (float) j1, (float) i1, i);
+                j1 = currentFont.drawStringWithShadow(s.substring(j), (float) j1, (float) i1, i);
             }
 
             if (flag1) {
                 if (flag2) {
-                    Gui.drawRect(k1, i1 - 1, k1 + 1, i1 + 1 + this.font.getHeight(), -3092272);
+                    Gui.drawRect(k1, i1 - 1, k1 + 1, i1 + 1 + currentFont.getHeight(), -3092272);
                 } else {
-                    this.font.drawStringWithShadow("_", (float) k1, (float) i1, i);
+                    currentFont.drawStringWithShadow("_", (float) k1, (float) i1, i);
                 }
             }
 
             if (k != j) {
-                int l1 = (int) (l + this.font.getStringWidth(s.substring(0, k)));
-                this.drawCursorVertical(k1, i1 - 1, l1 - 1, i1 + 1 + this.font.getHeight());
+                int l1 = (int) (l + currentFont.getStringWidth(s.substring(0, k)));
+                this.drawCursorVertical(k1, i1 - 1, l1 - 1, i1 + 1 + currentFont.getHeight());
             }
         }
     }
@@ -625,27 +639,27 @@ public class GuiTextField extends Gui {
 
         this.selectionEnd = p_146199_1_;
 
-        if (this.font != null) {
-            if (this.lineScrollOffset > i) {
-                this.lineScrollOffset = i;
-            }
+        AbstractFontRenderer currentFont = getFont(); // 获取当前字体
 
-            int j = this.getWidth();
-            String s = this.font.trimStringToWidth(this.text.substring(this.lineScrollOffset), j);
-            int k = s.length() + this.lineScrollOffset;
-
-            if (p_146199_1_ == this.lineScrollOffset) {
-                this.lineScrollOffset -= this.font.trimStringToWidth(this.text, j, true).length();
-            }
-
-            if (p_146199_1_ > k) {
-                this.lineScrollOffset += p_146199_1_ - k;
-            } else if (p_146199_1_ <= this.lineScrollOffset) {
-                this.lineScrollOffset -= this.lineScrollOffset - p_146199_1_;
-            }
-
-            this.lineScrollOffset = MathHelper.clamp_int(this.lineScrollOffset, 0, i);
+        if (this.lineScrollOffset > i) {
+            this.lineScrollOffset = i;
         }
+
+        int j = this.getWidth();
+        String s = currentFont.trimStringToWidth(this.text.substring(this.lineScrollOffset), j);
+        int k = s.length() + this.lineScrollOffset;
+
+        if (p_146199_1_ == this.lineScrollOffset) {
+            this.lineScrollOffset -= currentFont.trimStringToWidth(this.text, j, true).length();
+        }
+
+        if (p_146199_1_ > k) {
+            this.lineScrollOffset += p_146199_1_ - k;
+        } else if (p_146199_1_ <= this.lineScrollOffset) {
+            this.lineScrollOffset -= this.lineScrollOffset - p_146199_1_;
+        }
+
+        this.lineScrollOffset = MathHelper.clamp_int(this.lineScrollOffset, 0, i);
     }
 
     /**
@@ -668,5 +682,4 @@ public class GuiTextField extends Gui {
     public void setVisible(boolean visible) {
         this.visible = visible;
     }
-
 }

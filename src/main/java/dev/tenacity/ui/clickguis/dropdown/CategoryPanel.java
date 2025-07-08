@@ -1,6 +1,5 @@
 package dev.tenacity.ui.clickguis.dropdown;
 
-import dev.tenacity.utils.tuples.Pair;
 import dev.tenacity.Tenacity;
 import dev.tenacity.module.Category;
 import dev.tenacity.module.Module;
@@ -15,6 +14,7 @@ import dev.tenacity.utils.animations.Animation;
 import dev.tenacity.utils.misc.HoveringUtil;
 import dev.tenacity.utils.misc.MathUtils;
 import dev.tenacity.utils.render.*;
+import dev.tenacity.utils.tuples.Pair;
 import lombok.Getter;
 import me.xdrop.fuzzywuzzy.FuzzySearch;
 import net.minecraft.client.gui.Gui;

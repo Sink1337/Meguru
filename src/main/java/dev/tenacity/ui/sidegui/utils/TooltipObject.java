@@ -1,6 +1,5 @@
 package dev.tenacity.ui.sidegui.utils;
 
-import dev.tenacity.utils.tuples.mutable.MutablePair;
 import dev.tenacity.ui.Screen;
 import dev.tenacity.utils.animations.Animation;
 import dev.tenacity.utils.animations.Direction;
@@ -8,6 +7,7 @@ import dev.tenacity.utils.animations.impl.DecelerateAnimation;
 import dev.tenacity.utils.render.ColorUtil;
 import dev.tenacity.utils.render.RenderUtil;
 import dev.tenacity.utils.render.RoundedUtil;
+import dev.tenacity.utils.tuples.mutable.MutablePair;
 import lombok.Getter;
 import lombok.Setter;
 

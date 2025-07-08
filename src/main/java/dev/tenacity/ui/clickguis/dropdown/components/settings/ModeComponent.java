@@ -1,6 +1,5 @@
 package dev.tenacity.ui.clickguis.dropdown.components.settings;
 
-import dev.tenacity.utils.tuples.mutable.MutablePair;
 import dev.tenacity.module.settings.impl.ModeSetting;
 import dev.tenacity.ui.clickguis.dropdown.components.SettingComponent;
 import dev.tenacity.utils.animations.Animation;
@@ -13,6 +12,7 @@ import dev.tenacity.utils.render.ColorUtil;
 import dev.tenacity.utils.render.RenderUtil;
 import dev.tenacity.utils.render.RoundedUtil;
 import dev.tenacity.utils.render.Theme;
+import dev.tenacity.utils.tuples.mutable.MutablePair;
 
 import java.awt.*;
 

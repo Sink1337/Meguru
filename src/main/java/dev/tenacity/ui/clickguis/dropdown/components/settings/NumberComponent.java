@@ -1,6 +1,5 @@
 package dev.tenacity.ui.clickguis.dropdown.components.settings;
 
-import dev.tenacity.utils.tuples.Pair;
 import dev.tenacity.module.settings.impl.NumberSetting;
 import dev.tenacity.ui.clickguis.dropdown.components.SettingComponent;
 import dev.tenacity.utils.animations.Animation;
@@ -11,6 +10,7 @@ import dev.tenacity.utils.misc.HoveringUtil;
 import dev.tenacity.utils.misc.MathUtils;
 import dev.tenacity.utils.render.ColorUtil;
 import dev.tenacity.utils.render.RoundedUtil;
+import dev.tenacity.utils.tuples.Pair;
 import org.lwjgl.input.Keyboard;
 
 public class NumberComponent extends SettingComponent<NumberSetting> {

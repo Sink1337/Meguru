@@ -1,6 +1,5 @@
 package dev.tenacity.ui.sidegui;
 
-import dev.tenacity.utils.tuples.Pair;
 import dev.tenacity.Tenacity;
 import dev.tenacity.module.impl.render.HUDMod;
 import dev.tenacity.ui.Screen;
@@ -23,6 +22,7 @@ import dev.tenacity.utils.objects.Drag;
 import dev.tenacity.utils.render.ColorUtil;
 import dev.tenacity.utils.render.RoundedUtil;
 import dev.tenacity.utils.time.TimerUtil;
+import dev.tenacity.utils.tuples.Pair;
 import lombok.Getter;
 import lombok.Setter;
 import net.minecraft.client.gui.ScaledResolution;

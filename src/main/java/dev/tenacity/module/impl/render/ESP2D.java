@@ -1,7 +1,5 @@
 package dev.tenacity.module.impl.render;
 
-import dev.tenacity.module.api.TargetManager;
-import dev.tenacity.utils.tuples.Pair;
 import dev.tenacity.commands.impl.FriendCommand;
 import dev.tenacity.event.impl.render.NametagRenderEvent;
 import dev.tenacity.event.impl.render.Render2DEvent;
@@ -9,11 +7,13 @@ import dev.tenacity.event.impl.render.Render3DEvent;
 import dev.tenacity.event.impl.render.ShaderEvent;
 import dev.tenacity.module.Category;
 import dev.tenacity.module.Module;
+import dev.tenacity.module.api.TargetManager;
 import dev.tenacity.module.settings.ParentAttribute;
 import dev.tenacity.module.settings.impl.*;
 import dev.tenacity.utils.font.AbstractFontRenderer;
 import dev.tenacity.utils.misc.MathUtils;
 import dev.tenacity.utils.render.*;
+import dev.tenacity.utils.tuples.Pair;
 import net.minecraft.client.gui.Gui;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.renderer.RenderHelper;
@@ -43,7 +43,7 @@ public class ESP2D extends Module {
             new BooleanSetting("Mobs", true));
 
 
-    private final BooleanSetting mcfont = new BooleanSetting("Minecraft Font", true);
+    private final ModeSetting fontMode = new ModeSetting("Font Mode", "Minecraft", "Minecraft", "Tenacity", "Inter");
     public final BooleanSetting boxEsp = new BooleanSetting("Box", true);
     private final ModeSetting boxColorMode = new ModeSetting("Box Mode", "Sync", "Sync", "Custom");
     private final ColorSetting boxColor = new ColorSetting("Box Color", Color.PINK);
@@ -79,7 +79,7 @@ public class ESP2D extends Module {
         healthBarText.addParent(healthBar, ParentAttribute.BOOLEAN_CONDITION);
 
 
-        addSettings(validEntities, mcfont, boxEsp, boxColorMode, boxColor, itemHeld, healthBar, healthBarMode, healthBarText,
+        addSettings(validEntities, fontMode, boxEsp, boxColorMode, boxColor, itemHeld, healthBar, healthBarMode, healthBarText,
                 equipmentVisual, nametags, scale, nametagSettings);
     }
 
@@ -110,10 +110,22 @@ public class ESP2D extends Module {
                 float x = pos.getX(), y = pos.getY(), right = pos.getZ(), bottom = pos.getW();
 
                 if (entity instanceof EntityLivingBase) {
-                    AbstractFontRenderer font = tenacityBoldFont20;
-                    if (mcfont.isEnabled()) {
-                        font = mc.fontRendererObj;
+                    AbstractFontRenderer font;
+                    switch (fontMode.getMode()) {
+                        case "Minecraft":
+                            font = mc.fontRendererObj;
+                            break;
+                        case "Tenacity":
+                            font = tenacityBoldFont20;
+                            break;
+                        case "Inter":
+                            font = interFont18;
+                            break;
+                        default:
+                            font = mc.fontRendererObj;
+                            break;
                     }
+
                     EntityLivingBase renderingEntity = (EntityLivingBase) entity;
                     String name = (nametagSettings.getSetting("Formatted Tags").isEnabled() ? renderingEntity.getDisplayName().getFormattedText() : StringUtils.stripControlCodes(renderingEntity.getDisplayName().getUnformattedText()));
                     StringBuilder text = new StringBuilder(
@@ -191,10 +203,22 @@ public class ESP2D extends Module {
                     bottom = pos.getW();
 
             if (entity instanceof EntityLivingBase) {
-                AbstractFontRenderer font = tenacityBoldFont20;
-                if (mcfont.isEnabled()) {
-                    font = mc.fontRendererObj;
+                AbstractFontRenderer font;
+                switch (fontMode.getMode()) {
+                    case "Minecraft":
+                        font = mc.fontRendererObj;
+                        break;
+                    case "Tenacity":
+                        font = tenacityBoldFont20;
+                        break;
+                    case "Inter":
+                        font = interFont18;
+                        break;
+                    default:
+                        font = mc.fontRendererObj;
+                        break;
                 }
+
                 EntityLivingBase renderingEntity = (EntityLivingBase) entity;
                 if (nametags.isEnabled()) {
                     float healthValue = renderingEntity.getHealth() / renderingEntity.getMaxHealth();
@@ -229,15 +253,16 @@ public class ESP2D extends Module {
                         }
                     }
 
-
                     RenderUtil.resetColor();
-                    if (mcfont.isEnabled()) {
+                    if (fontMode.is("Minecraft")) {
                         RenderUtil.resetColor();
                         mc.fontRendererObj.drawString(StringUtils.stripControlCodes(text.toString()), middle + .5f, (float) (y - (fontHeight + 4)) + .5f, Color.BLACK.getRGB());
                         RenderUtil.resetColor();
                         mc.fontRendererObj.drawString(text.toString(), middle, (float) (y - (fontHeight + 4)), healthColor.getRGB());
-                    } else {
+                    } else if (fontMode.is("Tenacity")) {
                         tenacityBoldFont20.drawSmoothStringWithShadow(text.toString(), middle, (float) (y - (fontHeight + 5)), healthColor.getRGB());
+                    } else if (fontMode.is("Inter")) {
+                        interFont18.drawSmoothStringWithShadow(text.toString(), middle, (float) (y - (fontHeight + 5)), healthColor.getRGB());
                     }
                     glPopMatrix();
                 }
@@ -249,7 +274,22 @@ public class ESP2D extends Module {
                         float middle = x + ((right - x) / 2);
                         float textWidth;
                         String text = renderingEntity.getHeldItem().getDisplayName();
-                        AbstractFontRenderer currentFont = mcfont.isEnabled() ? (AbstractFontRenderer) mc.fontRendererObj : tenacityBoldFont20;
+                        AbstractFontRenderer currentFont;
+                        switch (fontMode.getMode()) {
+                            case "Minecraft":
+                                currentFont = mc.fontRendererObj;
+                                break;
+                            case "Tenacity":
+                                currentFont = tenacityBoldFont20;
+                                break;
+                            case "Inter":
+                                currentFont = interFont18;
+                                break;
+                            default:
+                                currentFont = mc.fontRendererObj;
+                                break;
+                        }
+
                         textWidth = currentFont.getStringWidth(text); // Use currentFont here
                         middle -= (textWidth * fontScale) / 2f;
 
@@ -260,10 +300,13 @@ public class ESP2D extends Module {
                         GlStateManager.bindTexture(0);
                         RenderUtil.resetColor();
                         Gui.drawRect2(middle - 3, bottom + 1, currentFont.getStringWidth(text) + 6, currentFont.getHeight() + 5, backgroundColor.getRGB());
-                        if (mcfont.isEnabled()) {
+
+                        if (fontMode.is("Minecraft")) {
                             mc.fontRendererObj.drawStringWithShadow(text, middle, bottom + 4, -1);
-                        } else {
+                        } else if (fontMode.is("Tenacity")) {
                             tenacityBoldFont20.drawSmoothStringWithShadow(text, middle, bottom + 4, -1);
+                        } else if (fontMode.is("Inter")) {
+                            interFont18.drawSmoothStringWithShadow(text, middle, bottom + 4, -1);
                         }
                         glPopMatrix();
                     }
@@ -315,10 +358,25 @@ public class ESP2D extends Module {
                         String text = (healthStr.endsWith(".0") ? healthStr.substring(0, healthStr.length() - 2) : healthStr) + "%";
 
                         double fontScale = .5;
-                        AbstractFontRenderer currentFont = mcfont.isEnabled() ? (AbstractFontRenderer) mc.fontRendererObj : tenacityBoldFont20;
+                        AbstractFontRenderer currentFont;
+                        switch (fontMode.getMode()) {
+                            case "Minecraft":
+                                currentFont = mc.fontRendererObj;
+                                break;
+                            case "Tenacity":
+                                currentFont = tenacityBoldFont20;
+                                break;
+                            case "Inter":
+                                currentFont = interFont18;
+                                break;
+                            default:
+                                currentFont = mc.fontRendererObj;
+                                break;
+                        }
+
                         float textWidth = currentFont.getStringWidth(text);
                         float textX = x - ((textWidth / 2f) + 2);
-                        float fontHeight = mcfont.isEnabled() ? (float) (mc.fontRendererObj.FONT_HEIGHT * fontScale) : (float) (tenacityBoldFont20.getHeight() * fontScale);
+                        float fontHeight = (fontMode.is("Minecraft") ? (float) (mc.fontRendererObj.FONT_HEIGHT * fontScale) : (float) (currentFont.getHeight() * fontScale));
                         float newHeight = height - fontHeight;
                         float textY = y + (newHeight - (newHeight * (healthValue / 100)));
 
@@ -326,10 +384,13 @@ public class ESP2D extends Module {
                         glTranslated(textX - 5, textY, 1);
                         glScaled(fontScale, fontScale, 1);
                         glTranslated(-(textX - 5), -textY, 1);
-                        if (mcfont.isEnabled()) {
+
+                        if (fontMode.is("Minecraft")) {
                             mc.fontRendererObj.drawStringWithShadow(text, textX, textY, -1);
-                        } else {
+                        } else if (fontMode.is("Tenacity")) {
                             tenacityBoldFont20.drawSmoothStringWithShadow(text, textX, textY, -1);
+                        } else if (fontMode.is("Inter")) {
+                            interFont18.drawSmoothStringWithShadow(text, textX, textY, -1);
                         }
                         glPopMatrix();
                     }

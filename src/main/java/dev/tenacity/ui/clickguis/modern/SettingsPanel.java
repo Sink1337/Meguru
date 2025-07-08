@@ -1,6 +1,5 @@
 package dev.tenacity.ui.clickguis.modern;
 
-import dev.tenacity.utils.tuples.Pair;
 import dev.tenacity.module.Module;
 import dev.tenacity.module.impl.render.HUDMod;
 import dev.tenacity.module.settings.Setting;
@@ -16,6 +15,7 @@ import dev.tenacity.utils.objects.TextField;
 import dev.tenacity.utils.render.ColorUtil;
 import dev.tenacity.utils.render.RenderUtil;
 import dev.tenacity.utils.render.RoundedUtil;
+import dev.tenacity.utils.tuples.Pair;
 import net.minecraft.client.gui.Gui;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.util.ResourceLocation;

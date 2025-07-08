@@ -1,6 +1,5 @@
 package dev.tenacity.module.impl.render;
 
-import dev.tenacity.utils.tuples.Pair;
 import dev.tenacity.Tenacity;
 import dev.tenacity.event.impl.render.Render2DEvent;
 import dev.tenacity.event.impl.render.ShaderEvent;
@@ -18,6 +17,7 @@ import dev.tenacity.utils.font.AbstractFontRenderer;
 import dev.tenacity.utils.objects.Dragging;
 import dev.tenacity.utils.render.ColorUtil;
 import dev.tenacity.utils.render.RenderUtil;
+import dev.tenacity.utils.tuples.Pair;
 import net.minecraft.client.gui.Gui;
 import net.minecraft.client.gui.ScaledResolution;
 import net.minecraft.util.StringUtils;
@@ -32,10 +32,10 @@ public class ArrayListMod extends Module {
     private final ModeSetting textShadow = new ModeSetting("Text Shadow", "Black", "Colored", "Black", "None");
     private final ModeSetting rectangle = new ModeSetting("Rectangle", "Top", "None", "Top", "Side", "Outline");
     private final BooleanSetting partialGlow = new BooleanSetting("Partial Glow", true);
-    private final BooleanSetting minecraftFont = new BooleanSetting("Minecraft Font", false);
+    private final ModeSetting fontMode = new ModeSetting("Font Mode", "Tenacity", "Tenacity", "Inter", "Minecraft");
     private final MultipleBoolSetting fontSettings = new MultipleBoolSetting("Font Settings",
             new BooleanSetting("Bold", false),
-            new BooleanSetting("Small Font", false), minecraftFont);
+            new BooleanSetting("Small Font", false));
     public final NumberSetting height = new NumberSetting("Height", 11, 20, 9, .5f);
     private final ModeSetting animation = new ModeSetting("Animation", "Scale in", "Move in", "Scale in", "None");
     private final NumberSetting colorIndex = new NumberSetting("Color Seperation", 20, 100, 5, 1);
@@ -49,11 +49,15 @@ public class ArrayListMod extends Module {
 
     public ArrayListMod() {
         super("ArrayList", Category.RENDER, "Displays your active modules");
-        addSettings(importantModules, rectangle, partialGlow, textShadow, fontSettings, height, animation,
+        addSettings(importantModules, rectangle, partialGlow, textShadow, fontMode, fontSettings, height, animation,
                 colorIndex, colorSpeed, background, backgroundColor, backgroundAlpha);
         backgroundAlpha.addParent(background, ParentAttribute.BOOLEAN_CONDITION);
         backgroundColor.addParent(background, ParentAttribute.BOOLEAN_CONDITION);
         partialGlow.addParent(rectangle, modeSetting -> !modeSetting.is("None"));
+
+        fontSettings.getSetting("Bold").addParent(fontMode, modeSetting -> !modeSetting.is("Minecraft"));
+        fontSettings.getSetting("Small Font").addParent(fontMode, modeSetting -> !modeSetting.is("Minecraft"));
+
         if (!enabled) this.toggleSilent();
     }
 
@@ -80,6 +84,7 @@ public class ArrayListMod extends Module {
         float yOffset = 0;
         ScaledResolution sr = new ScaledResolution(mc);
         int count = 0;
+        boolean isMinecraftFont = fontMode.is("Minecraft");
         for (Module module : modules) {
             if (importantModules.isEnabled() && module.getCategory() == Category.RENDER) continue;
             final Animation moduleAnimation = module.getAnimation();
@@ -132,7 +137,7 @@ public class ArrayListMod extends Module {
             }
 
             if (background.isEnabled()) {
-                float offset = minecraftFont.isEnabled() ? 4 : 5;
+                float offset = isMinecraftFont ? 4 : 5;
                 int rectColor = e.getBloomOptions().getSetting("Arraylist").isEnabled() ? textcolor.getRGB() : (rectangle.getMode().equals("Outline") && partialGlow.isEnabled() ? textcolor.getRGB() : Color.BLACK.getRGB());
 
                 if(animation.is("None")) {
@@ -142,7 +147,7 @@ public class ArrayListMod extends Module {
                             scaleIn ? ColorUtil.applyOpacity(rectColor, moduleAnimation.getOutput().floatValue()) : rectColor);
                 }
 
-                float offset2 = minecraftFont.isEnabled() ? 1 : 0;
+                float offset2 = isMinecraftFont ? 1 : 0;
 
                 int rectangleColor = partialGlow.isEnabled() ? textcolor.getRGB() : Color.BLACK.getRGB();
 
@@ -200,6 +205,7 @@ public class ArrayListMod extends Module {
         double yOffset = 0;
         ScaledResolution sr = new ScaledResolution(mc);
         int count = 0;
+        boolean isMinecraftFont = fontMode.is("Minecraft");
         for (Module module : modules) {
             if (importantModules.isEnabled() && module.getCategory() == Category.RENDER) continue;
             final Animation moduleAnimation = module.getAnimation();
@@ -265,13 +271,13 @@ public class ArrayListMod extends Module {
 
 
             if (background.isEnabled()) {
-                float offset = minecraftFont.isEnabled() ? 4 : 5;
+                float offset = isMinecraftFont ? 4 : 5;
                 Color color = backgroundColor.isEnabled() ? textcolor : new Color(10, 10, 10);
                 Gui.drawRect2(x - 2, y, font.getStringWidth(displayText) + offset, heightVal,
                         ColorUtil.applyOpacity(color, backgroundAlpha.getValue().floatValue() * alphaAnimation).getRGB());
             }
 
-            float offset = minecraftFont.isEnabled() ? 1 : 0;
+            float offset = isMinecraftFont ? 1 : 0;
             switch (rectangle.getMode()) {
                 default:
                     break;
@@ -325,7 +331,7 @@ public class ArrayListMod extends Module {
             }
 
 
-            float textYOffset = minecraftFont.isEnabled() ? .5f : 0;
+            float textYOffset = isMinecraftFont ? .5f : 0;
             y += textYOffset;
             Color color = ColorUtil.applyOpacity(textcolor, alphaAnimation);
             switch (textShadow.getMode()) {
@@ -340,11 +346,15 @@ public class ArrayListMod extends Module {
                     break;
                 case "Black":
                     RenderUtil.resetColor();
-                    float f = minecraftFont.isEnabled() ? 1 : .5f;
-                    font.drawString(StringUtils.stripColorCodes(displayText), x + f, y + font.getMiddleOfBox(heightVal) + f,
-                            ColorUtil.applyOpacity(Color.BLACK, alphaAnimation));
-                    RenderUtil.resetColor();
-                    font.drawString(displayText, x, y + font.getMiddleOfBox(heightVal), color.getRGB());
+                    if (isMinecraftFont) {
+                        mc.fontRendererObj.drawStringWithShadow(displayText, x, y + font.getMiddleOfBox(heightVal), color.getRGB());
+                    } else {
+                        float f = .5f;
+                        font.drawString(StringUtils.stripColorCodes(displayText), x + f, y + font.getMiddleOfBox(heightVal) + f,
+                                ColorUtil.applyOpacity(Color.BLACK, alphaAnimation));
+                        RenderUtil.resetColor();
+                        font.drawString(displayText, x, y + font.getMiddleOfBox(heightVal), color.getRGB());
+                    }
                     break;
             }
 
@@ -369,7 +379,7 @@ public class ArrayListMod extends Module {
     }
 
     private String applyText(String text) {
-        if (minecraftFont.isEnabled() && fontSettings.getSetting("Bold").isEnabled()) {
+        if (fontMode.is("Minecraft") && fontSettings.getSetting("Bold").isEnabled()) {
             return "§l" + text.replace("§7", "§7§l");
         }
         return text;
@@ -377,19 +387,31 @@ public class ArrayListMod extends Module {
 
 
     private AbstractFontRenderer getFont() {
-        boolean smallFont = fontSettings.getSetting("Small Font").isEnabled();
-        if (minecraftFont.isEnabled()) {
+        if (fontMode.is("Minecraft")) {
             return mc.fontRendererObj;
         }
 
-        if (fontSettings.getSetting("Bold").isEnabled()) {
-            if (smallFont) {
-                return tenacityBoldFont18;
-            }
-            return tenacityBoldFont20;
+        boolean smallFont = fontSettings.getSetting("Small Font").isEnabled();
+        switch (fontMode.getMode()) {
+            case "Tenacity":
+                if (fontSettings.getSetting("Bold").isEnabled()) {
+                    if (smallFont) {
+                        return tenacityBoldFont18;
+                    }
+                    return tenacityBoldFont20;
+                }
+                return smallFont ? tenacityFont18 : tenacityFont20;
+            case "Inter":
+                if (fontSettings.getSetting("Bold").isEnabled()) {
+                    if (smallFont) {
+                        return interBoldFont18;
+                    }
+                    return interBoldFont20;
+                }
+                return smallFont ? interFont18 : interFont20;
+            default:
+                return smallFont ? tenacityFont18 : tenacityFont20;
         }
-
-        return smallFont ? tenacityFont18 : tenacityFont20;
     }
 
 }

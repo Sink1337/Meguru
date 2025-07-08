@@ -2,12 +2,12 @@ package net.minecraft.client.renderer.entity;
 
 import com.google.common.collect.Lists;
 import dev.tenacity.Tenacity;
-import dev.tenacity.module.impl.render.CustomModel;
-import dev.tenacity.module.impl.render.ESP2D;
-import dev.tenacity.module.impl.render.TargetHUDMod;
 import dev.tenacity.event.impl.render.NametagRenderEvent;
 import dev.tenacity.event.impl.render.RenderModelEvent;
 import dev.tenacity.event.impl.render.RendererLivingEntityEvent;
+import dev.tenacity.module.impl.render.CustomModel;
+import dev.tenacity.module.impl.render.ESP2D;
+import dev.tenacity.module.impl.render.TargetHUDMod;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.entity.EntityPlayerSP;
 import net.minecraft.client.gui.IFontRenderer;

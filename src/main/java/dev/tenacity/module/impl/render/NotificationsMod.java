@@ -79,7 +79,7 @@ public class NotificationsMod extends Module {
                     animation.setDuration(125);
                     actualOffset = 3;
                     notificationHeight = 25;
-                    notificationWidth = (int) Math.max(tahomaFont.size(18).getStringWidth(notification.getTitle()), tahomaFont.size(14).getStringWidth(notification.getDescription())) + 30;
+                    notificationWidth = (int) Math.max(interFont18.getStringWidth(notification.getTitle()), interFont14.getStringWidth(notification.getDescription())) + 30;
 
                     x = sr.getScaledWidth() - ((sr.getScaledWidth() / 2f + notificationWidth / 2f) * (float) animation.getOutput().floatValue());
                     y = sr.getScaledHeight() / 2f - notificationHeight / 2f + 40 + yOffset;

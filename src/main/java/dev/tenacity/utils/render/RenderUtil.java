@@ -4,9 +4,8 @@ import dev.tenacity.utils.Utils;
 import dev.tenacity.utils.animations.Animation;
 import net.minecraft.client.gui.Gui;
 import net.minecraft.client.gui.ScaledResolution;
-import net.minecraft.client.renderer.GlStateManager;
-import net.minecraft.client.renderer.RenderGlobal;
-import net.minecraft.client.renderer.RenderHelper;
+import net.minecraft.client.renderer.*;
+import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 import net.minecraft.client.shader.Framebuffer;
 import net.minecraft.enchantment.Enchantment;
 import net.minecraft.enchantment.EnchantmentHelper;
@@ -17,8 +16,10 @@ import net.minecraft.item.ItemBow;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.ItemSword;
 import net.minecraft.util.AxisAlignedBB;
+import net.minecraft.util.BlockPos;
 import net.minecraft.util.MathHelper;
 import net.minecraft.util.ResourceLocation;
+import org.lwjgl.opengl.GL11;
 
 import java.awt.*;
 
@@ -589,6 +590,128 @@ public class RenderUtil implements Utils {
         RenderHelper.enableGUIStandardItemLighting();
     }
 
+    public static void renderBlock(BlockPos blockPos, int filledColor, int outlineColor, boolean outline, boolean filled) {
+        renderBox(blockPos.getX(), blockPos.getY(), blockPos.getZ(), 1, 1, 1, filledColor, outlineColor, outline, filled);
+    }
+
+    public static void renderBox(double x, double y, double z, double width, double height, double depth, int filledColor, int outlineColor, boolean outline, boolean filled) {
+        double xPos = x - mc.getRenderManager().viewerPosX;
+        double yPos = y - mc.getRenderManager().viewerPosY;
+        double zPos = z - mc.getRenderManager().viewerPosZ;
+        AxisAlignedBB axisAlignedBB = new AxisAlignedBB(xPos, yPos, zPos, xPos + width, yPos + height, zPos + depth);
+        drawAxisAlignedBB(axisAlignedBB, filled, outline, filledColor, outlineColor);
+    }
+
+    public static void drawAxisAlignedBB(AxisAlignedBB axisAlignedBB, boolean filled, boolean outline, int filledColor, int outlineColor) {
+        drawSelectionBoundingBox(axisAlignedBB, outline, filled, filledColor, outlineColor);
+    }
+
+    public static void drawSelectionBoundingBox(final AxisAlignedBB bb, final boolean outline, final boolean filled, int filledColor, int outlineColor) {
+        GlStateManager.enableBlend();
+        GlStateManager.blendFunc(770, 771);
+        GL11.glLineWidth(2.0F);
+        GlStateManager.disableTexture2D();
+        GL11.glDisable(2929);
+        GlStateManager.depthMask(false);
+        GlStateManager.pushMatrix();
+
+        if (outline) {
+            glEnable(GL_LINE_SMOOTH);
+            drawOutlineBoundingBox(bb, new Color(outlineColor, true));
+            glDisable(GL_LINE_SMOOTH);
+        }
+        if (filled) {
+            drawFilledBoundingBox(bb, new Color(filledColor, true));
+        }
+
+        GlStateManager.popMatrix();
+        GlStateManager.depthMask(true);
+        GL11.glEnable(2929); // GL_DEPTH_TEST
+        GlStateManager.enableTexture2D();
+        GlStateManager.disableBlend();
+    }
+
+    public static void drawOutlineBoundingBox(final AxisAlignedBB bb, Color color) {
+        RenderGlobal.drawOutlinedBoundingBox(bb, color.getRed(), color.getGreen(), color.getBlue(), color.getAlpha());
+    }
+
+    public static void drawFilledBoundingBox(final AxisAlignedBB bb, Color color) {
+        Tessellator tessellator = Tessellator.getInstance();
+        WorldRenderer worldrenderer = tessellator.getWorldRenderer();
+
+        float r = color.getRed() / 255F;
+        float g = color.getGreen() / 255F;
+        float b = color.getBlue() / 255F;
+        float a = color.getAlpha() / 255F;
+
+        // 绘制第一个面（6个面，每面2个三角形，共12个三角形，你这里是8个顶点，看起来是Cube的绘制逻辑）
+        // 我将你原有的 int 颜色参数改为 float，与 GlStateManager.color() 保持一致，并正确应用 alpha
+        worldrenderer.begin(GL11.GL_QUADS, DefaultVertexFormats.POSITION_COLOR);
+        worldrenderer.pos(bb.minX, bb.minY, bb.minZ).color(r, g, b, a).endVertex();
+        worldrenderer.pos(bb.minX, bb.maxY, bb.minZ).color(r, g, b, a).endVertex();
+        worldrenderer.pos(bb.maxX, bb.minY, bb.minZ).color(r, g, b, a).endVertex();
+        worldrenderer.pos(bb.maxX, bb.maxY, bb.minZ).color(r, g, b, a).endVertex();
+        worldrenderer.pos(bb.maxX, bb.minY, bb.maxZ).color(r, g, b, a).endVertex();
+        worldrenderer.pos(bb.maxX, bb.maxY, bb.maxZ).color(r, g, b, a).endVertex();
+        worldrenderer.pos(bb.minX, bb.minY, bb.maxZ).color(r, g, b, a).endVertex();
+        worldrenderer.pos(bb.minX, bb.maxY, bb.maxZ).color(r, g, b, a).endVertex();
+        tessellator.draw();
+
+        worldrenderer.begin(GL11.GL_QUADS, DefaultVertexFormats.POSITION_COLOR);
+        worldrenderer.pos(bb.maxX, bb.maxY, bb.minZ).color(r, g, b, a).endVertex();
+        worldrenderer.pos(bb.maxX, bb.minY, bb.minZ).color(r, g, b, a).endVertex();
+        worldrenderer.pos(bb.minX, bb.maxY, bb.minZ).color(r, g, b, a).endVertex();
+        worldrenderer.pos(bb.minX, bb.minY, bb.minZ).color(r, g, b, a).endVertex();
+        worldrenderer.pos(bb.minX, bb.maxY, bb.maxZ).color(r, g, b, a).endVertex();
+        worldrenderer.pos(bb.minX, bb.minY, bb.maxZ).color(r, g, b, a).endVertex();
+        worldrenderer.pos(bb.maxX, bb.maxY, bb.maxZ).color(r, g, b, a).endVertex();
+        worldrenderer.pos(bb.maxX, bb.minY, bb.maxZ).color(r, g, b, a).endVertex();
+        tessellator.draw();
+
+        worldrenderer.begin(GL11.GL_QUADS, DefaultVertexFormats.POSITION_COLOR);
+        worldrenderer.pos(bb.minX, bb.maxY, bb.minZ).color(r, g, b, a).endVertex();
+        worldrenderer.pos(bb.maxX, bb.maxY, bb.minZ).color(r, g, b, a).endVertex();
+        worldrenderer.pos(bb.maxX, bb.maxY, bb.maxZ).color(r, g, b, a).endVertex();
+        worldrenderer.pos(bb.minX, bb.maxY, bb.maxZ).color(r, g, b, a).endVertex();
+        worldrenderer.pos(bb.minX, bb.maxY, bb.minZ).color(r, g, b, a).endVertex();
+        worldrenderer.pos(bb.minX, bb.maxY, bb.maxZ).color(r, g, b, a).endVertex();
+        worldrenderer.pos(bb.maxX, bb.maxY, bb.maxZ).color(r, g, b, a).endVertex();
+        worldrenderer.pos(bb.maxX, bb.maxY, bb.minZ).color(r, g, b, a).endVertex();
+        tessellator.draw();
+
+        worldrenderer.begin(GL11.GL_QUADS, DefaultVertexFormats.POSITION_COLOR);
+        worldrenderer.pos(bb.minX, bb.minY, bb.minZ).color(r, g, b, a).endVertex();
+        worldrenderer.pos(bb.maxX, bb.minY, bb.minZ).color(r, g, b, a).endVertex();
+        worldrenderer.pos(bb.maxX, bb.minY, bb.maxZ).color(r, g, b, a).endVertex();
+        worldrenderer.pos(bb.minX, bb.minY, bb.maxZ).color(r, g, b, a).endVertex();
+        worldrenderer.pos(bb.minX, bb.minY, bb.minZ).color(r, g, b, a).endVertex();
+        worldrenderer.pos(bb.minX, bb.minY, bb.maxZ).color(r, g, b, a).endVertex();
+        worldrenderer.pos(bb.maxX, bb.minY, bb.maxZ).color(r, g, b, a).endVertex();
+        worldrenderer.pos(bb.maxX, bb.minY, bb.minZ).color(r, g, b, a).endVertex();
+        tessellator.draw();
+
+        worldrenderer.begin(GL11.GL_QUADS, DefaultVertexFormats.POSITION_COLOR);
+        worldrenderer.pos(bb.minX, bb.minY, bb.minZ).color(r, g, b, a).endVertex();
+        worldrenderer.pos(bb.minX, bb.maxY, bb.minZ).color(r, g, b, a).endVertex();
+        worldrenderer.pos(bb.minX, bb.minY, bb.maxZ).color(r, g, b, a).endVertex();
+        worldrenderer.pos(bb.minX, bb.maxY, bb.maxZ).color(r, g, b, a).endVertex();
+        worldrenderer.pos(bb.maxX, bb.minY, bb.maxZ).color(r, g, b, a).endVertex();
+        worldrenderer.pos(bb.maxX, bb.maxY, bb.maxZ).color(r, g, b, a).endVertex();
+        worldrenderer.pos(bb.maxX, bb.minY, bb.minZ).color(r, g, b, a).endVertex();
+        worldrenderer.pos(bb.maxX, bb.maxY, bb.minZ).color(r, g, b, a).endVertex();
+        tessellator.draw();
+
+        worldrenderer.begin(GL11.GL_QUADS, DefaultVertexFormats.POSITION_COLOR);
+        worldrenderer.pos(bb.minX, bb.maxY, bb.maxZ).color(r, g, b, a).endVertex();
+        worldrenderer.pos(bb.minX, bb.minY, bb.maxZ).color(r, g, b, a).endVertex();
+        worldrenderer.pos(bb.minX, bb.maxY, bb.minZ).color(r, g, b, a).endVertex();
+        worldrenderer.pos(bb.minX, bb.minY, bb.minZ).color(r, g, b, a).endVertex();
+        worldrenderer.pos(bb.maxX, bb.maxY, bb.minZ).color(r, g, b, a).endVertex();
+        worldrenderer.pos(bb.maxX, bb.minY, bb.minZ).color(r, g, b, a).endVertex();
+        worldrenderer.pos(bb.maxX, bb.maxY, bb.maxZ).color(r, g, b, a).endVertex();
+        worldrenderer.pos(bb.maxX, bb.minY, bb.maxZ).color(r, g, b, a).endVertex();
+        tessellator.draw();
+    }
 
     private static int getMainColor(int level) {
         if (level == 4)

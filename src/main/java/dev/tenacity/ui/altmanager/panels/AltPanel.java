@@ -1,6 +1,5 @@
 package dev.tenacity.ui.altmanager.panels;
 
-import dev.tenacity.utils.tuples.Pair;
 import dev.tenacity.Tenacity;
 import dev.tenacity.ui.Screen;
 import dev.tenacity.ui.altmanager.Panel;
@@ -21,6 +20,7 @@ import dev.tenacity.utils.objects.TextField;
 import dev.tenacity.utils.render.*;
 import dev.tenacity.utils.server.ban.HypixelBan;
 import dev.tenacity.utils.time.TimerUtil;
+import dev.tenacity.utils.tuples.Pair;
 import lombok.Getter;
 import lombok.Setter;
 import net.minecraft.client.gui.Gui;

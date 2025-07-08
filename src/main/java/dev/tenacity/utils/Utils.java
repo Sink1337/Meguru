@@ -18,7 +18,8 @@ public interface Utils {
             iconFont = FontUtil.FontType.ICON,
             neverloseFont = FontUtil.FontType.NEVERLOSE,
             tahomaFont = FontUtil.FontType.TAHOMA,
-            rubikFont = FontUtil.FontType.RUBIK;
+            rubikFont = FontUtil.FontType.RUBIK,
+            interFont = FontUtil.FontType.INTER;
 
 
     //Regular Fonts
@@ -58,6 +59,21 @@ public interface Utils {
 
     //Enchant Font
     CustomFont enchantFont14 = tahomaFont.size(14),
-    enchantFont12 = tahomaFont.size(12);
+            enchantFont12 = tahomaFont.size(12);
 
+    //INTER Regular Font
+    CustomFont interFont12 = interFont.size(12),
+            interFont14 = interFont.size(14),
+            interFont16 = interFont.size(16),
+            interFont18 = interFont.size(18),
+            interFont20 = interFont.size(20),
+            interFont24 = interFont.size(24),
+            interFont28 = interFont.size(28);
+
+    //INTER Bold Font
+    CustomFont interBoldFont16 = interFont16.getBoldFont(),
+            interBoldFont18 = interFont18.getBoldFont(),
+            interBoldFont20 = interFont20.getBoldFont(),
+            interBoldFont24 = interFont24.getBoldFont(),
+            interBoldFont28 = interFont28.getBoldFont();
 }

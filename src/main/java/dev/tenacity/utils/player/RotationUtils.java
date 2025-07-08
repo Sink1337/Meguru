@@ -149,6 +149,7 @@ public class RotationUtils implements Utils {
         return rotationYaw + MathHelper.wrapAngleTo180_float(var1 - rotationYaw);
     }
 
+    // Tenacity original getVecRotations (keeping for reference, but not used by Breaker)
     public static Vec3 getVecRotations(float yaw, float pitch) {
         double d = Math.cos(Math.toRadians(-yaw) - Math.PI);
         double d1 = Math.sin(Math.toRadians(-yaw) - Math.PI);
@@ -156,6 +157,15 @@ public class RotationUtils implements Utils {
         double d3 = Math.sin(Math.toRadians(-pitch));
         return new Vec3(d1 * d2, d3, d * d2);
     }
+
+    public static Vec3 getVectorForRotation(float pitch, float yaw) {
+        float f = MathHelper.cos(-yaw * 0.017453292F - (float)Math.PI);
+        float f1 = MathHelper.sin(-yaw * 0.017453292F - (float)Math.PI);
+        float f2 = -MathHelper.cos(-pitch * 0.017453292F);
+        float f3 = MathHelper.sin(-pitch * 0.017453292F);
+        return new Vec3((double)(f1 * f2), (double)f3, (double)(f * f2));
+    }
+
 
     public static float[] getRotations(double posX, double posY, double posZ) {
         double x = posX - mc.thePlayer.posX, z = posZ - mc.thePlayer.posZ, y = posY - (mc.thePlayer.getEyeHeight() + mc.thePlayer.posY);
@@ -170,7 +180,7 @@ public class RotationUtils implements Utils {
         float fac = f1 * f1 * f1 * 256.0F;
 
         double x = entity.posX - mc.thePlayer.posX;
-        double z = entity.posZ - mc.thePlayer.posZ;
+        double z = entity.posZ - entity.posZ;
         double y = entity.posY + entity.getEyeHeight()
                 - (mc.thePlayer.getEntityBoundingBox().minY
                 + (mc.thePlayer.getEntityBoundingBox().maxY
@@ -204,7 +214,7 @@ public class RotationUtils implements Utils {
                 d1 = objectMouseOver.hitVec.distanceTo(vec3);
             }
 
-            final Vec3 vec31 = mc.thePlayer.getVectorForRotation(pitch, yaw);
+            final Vec3 vec31 = getVectorForRotation(pitch, yaw);
             final Vec3 vec32 = vec3.addVector(vec31.xCoord * d0, vec31.yCoord * d0, vec31.zCoord * d0);
             Entity pointedEntity = null;
             Vec3 vec33 = null;

@@ -14,9 +14,9 @@ import dev.tenacity.ui.notifications.NotificationType;
 import dev.tenacity.utils.misc.Multithreading;
 import dev.tenacity.utils.misc.SoundUtils;
 import dev.tenacity.utils.player.ChatUtil;
-import net.minecraft.util.IChatComponent;
-import net.minecraft.util.ChatStyle;
 import net.minecraft.event.ClickEvent;
+import net.minecraft.util.ChatStyle;
+import net.minecraft.util.IChatComponent;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.StringUtils;
 

@@ -106,6 +106,7 @@ public class ProtectedLaunch {
         modules.put(SpeedMine.class, new SpeedMine());
         modules.put(Blink.class, new Blink());
         modules.put(NoFall.class, new NoFall());
+        modules.put(Breaker.class, new Breaker());
         modules.put(Timer.class, new Timer());
         modules.put(Freecam.class, new Freecam());
         modules.put(FastPlace.class, new FastPlace());
@@ -120,6 +121,7 @@ public class ProtectedLaunch {
         modules.put(NotificationsMod.class, new NotificationsMod());
         modules.put(ScoreboardMod.class, new ScoreboardMod());
         modules.put(HUDMod.class, new HUDMod());
+        modules.put(ChestESP.class, new ChestESP());
         modules.put(ClickGUIMod.class, new ClickGUIMod());
         modules.put(Radar.class, new Radar());
         modules.put(ProgressBar.class, new ProgressBar());

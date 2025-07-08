@@ -1,6 +1,7 @@
 package dev.tenacity.module.impl.movement;
 
 import dev.tenacity.Tenacity;
+import dev.tenacity.event.impl.game.RenderTickEvent;
 import dev.tenacity.event.impl.network.PacketReceiveEvent;
 import dev.tenacity.event.impl.network.PacketSendEvent;
 import dev.tenacity.event.impl.player.MotionEvent;
@@ -11,14 +12,16 @@ import dev.tenacity.module.impl.combat.TargetStrafe;
 import dev.tenacity.module.settings.impl.BooleanSetting;
 import dev.tenacity.module.settings.impl.ModeSetting;
 import dev.tenacity.module.settings.impl.NumberSetting;
+import dev.tenacity.ui.notifications.NotificationManager;
+import dev.tenacity.ui.notifications.NotificationType;
 import dev.tenacity.utils.misc.MathUtils;
 import dev.tenacity.utils.player.MovementUtils;
 import dev.tenacity.utils.server.PacketUtils;
 import dev.tenacity.utils.time.TimerUtil;
 import net.minecraft.init.Items;
 import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
 import net.minecraft.item.ItemBow;
+import net.minecraft.item.ItemStack;
 import net.minecraft.network.Packet;
 import net.minecraft.network.play.client.C03PacketPlayer;
 import net.minecraft.network.play.client.C07PacketPlayerDigging;
@@ -28,11 +31,9 @@ import net.minecraft.network.play.server.S27PacketExplosion;
 import net.minecraft.util.BlockPos;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.Vec3;
-import dev.tenacity.ui.notifications.NotificationManager;
-import dev.tenacity.ui.notifications.NotificationType;
+
 import java.util.ArrayList;
 import java.util.List;
-import dev.tenacity.event.impl.game.RenderTickEvent;
 
 public final class LongJump extends Module {
 
@@ -86,7 +87,7 @@ public final class LongJump extends Module {
         bowReleaseTime.addParent(mode, m -> m.is("AGC") || (m.is("Bloxd") && bloxdSubMode.is("Bow")));
         explosionDetectRadius.addParent(mode, m -> m.is("Bloxd") && bloxdSubMode.is("FireBall"));
         stopMovement.addParent(mode, m -> m.is("Bloxd"));
-        this.addSettings(mode, watchdogMode, bloxdSubMode,  damageSpeed, damageTimerSpeed, damageTime, spoofY, bloxdHorizontalSpeed, bloxdVerticalSpeed, bowReleaseTime, explosionDetectRadius, stopMovement);
+        this.addSettings(mode, watchdogMode, bloxdSubMode, damageSpeed, damageTimerSpeed, damageTime, spoofY, bloxdHorizontalSpeed, bloxdVerticalSpeed, bowReleaseTime, explosionDetectRadius, stopMovement);
     }
 
     @Override

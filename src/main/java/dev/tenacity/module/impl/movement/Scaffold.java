@@ -15,7 +15,6 @@ import dev.tenacity.utils.animations.Animation;
 import dev.tenacity.utils.animations.Direction;
 import dev.tenacity.utils.animations.impl.DecelerateAnimation;
 import dev.tenacity.utils.misc.MathUtils;
-import dev.tenacity.utils.player.ChatUtil;
 import dev.tenacity.utils.player.MovementUtils;
 import dev.tenacity.utils.player.RotationUtils;
 import dev.tenacity.utils.player.ScaffoldUtils;
@@ -43,11 +42,10 @@ import net.minecraft.util.MouseFilter;
 import org.lwjgl.opengl.GL11;
 
 import java.awt.*;
-import java.util.concurrent.ThreadLocalRandom;
 
 public class Scaffold extends Module {
 
-    private final ModeSetting countMode = new ModeSetting("Block Counter", "Tenacity", "None", "Tenacity", "Basic", "Polar");
+    private final ModeSetting countMode = new ModeSetting("Block Counter", "Tenacity", "None", "Tenacity", "Basic", "Polar", "Exhibition");
     private final ModeSetting animationMode = new ModeSetting("Animation Mode", "Normal", "None", "Normal");
     private final BooleanSetting rotations = new BooleanSetting("Rotations", true);
     private final ModeSetting rotationMode = new ModeSetting("Rotation Mode", "Watchdog", "Watchdog", "NCP", "Back", "45", "Enum", "Down", "0");
@@ -576,6 +574,22 @@ public class Scaffold extends Module {
                     RenderHelper.disableStandardItemLighting();
                 }
                 GlStateManager.popMatrix();
+                break;
+            case "Exhibition":
+                if (!enabled) return;
+
+                int c = ColorUtil.getColor(255, 0, 0, 150);
+                if (count >= 64 && 128 > count) {
+                    c = ColorUtil.getColor(255, 255, 0, 150);
+                } else if (count >= 128) {
+                    c = ColorUtil.getColor(0, 255, 0, 150);
+                }
+
+                fr.drawString(String.valueOf(count), sr.getScaledWidth() / 2f - (fr.getStringWidth(String.valueOf(count)) / 2f) - 1, sr.getScaledHeight() / 2f - 36, 0xff000000, false);
+                fr.drawString(String.valueOf(count), sr.getScaledWidth() / 2f - (fr.getStringWidth(String.valueOf(count)) / 2f) + 1, sr.getScaledHeight() / 2f - 36, 0xff000000, false);
+                fr.drawString(String.valueOf(count), sr.getScaledWidth() / 2f - (fr.getStringWidth(String.valueOf(count)) / 2f), sr.getScaledHeight() / 2f - 35, 0xff000000, false);
+                fr.drawString(String.valueOf(count), sr.getScaledWidth() / 2f - (fr.getStringWidth(String.valueOf(count)) / 2f), sr.getScaledHeight() / 2f - 37, 0xff000000, false);
+                fr.drawString(String.valueOf(count), sr.getScaledWidth() / 2f - (fr.getStringWidth(String.valueOf(count)) / 2f), sr.getScaledHeight() / 2f - 36, c, false);
                 break;
         }
     }

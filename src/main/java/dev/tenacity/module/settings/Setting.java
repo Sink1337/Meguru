@@ -2,7 +2,7 @@ package dev.tenacity.module.settings;
 
 import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;
-import jdk.nashorn.api.scripting  .JSObject;
+import jdk.nashorn.api.scripting.JSObject;
 import store.intent.intentguard.annotation.Exclude;
 import store.intent.intentguard.annotation.Strategy;
 

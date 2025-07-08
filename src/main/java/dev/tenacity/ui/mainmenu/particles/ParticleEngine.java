@@ -1,8 +1,8 @@
 package dev.tenacity.ui.mainmenu.particles;
 
+import dev.tenacity.utils.Utils;
 import dev.tenacity.utils.tuples.Pair;
 import dev.tenacity.utils.tuples.mutable.MutablePair;
-import dev.tenacity.utils.Utils;
 import net.minecraft.client.gui.ScaledResolution;
 
 import java.util.ArrayList;

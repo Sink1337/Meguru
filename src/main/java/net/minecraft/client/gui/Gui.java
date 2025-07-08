@@ -1,10 +1,10 @@
 package net.minecraft.client.gui;
 
 import dev.tenacity.module.impl.render.HUDMod;
-import dev.tenacity.utils.render.RenderUtil;
 import dev.tenacity.utils.font.AbstractFontRenderer;
 import dev.tenacity.utils.font.FontUtil;
 import dev.tenacity.utils.render.GLUtil;
+import dev.tenacity.utils.render.RenderUtil;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.renderer.Tessellator;
@@ -12,7 +12,6 @@ import net.minecraft.client.renderer.WorldRenderer;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 import net.minecraft.util.ResourceLocation;
-import org.lwjgl.opengl.GL11;
 
 import static org.lwjgl.opengl.GL11.*;
 
@@ -24,7 +23,15 @@ public class Gui {
 
 
     protected AbstractFontRenderer getFont() {
-        return HUDMod.customFont.isEnabled() ? FontUtil.tenacityFont20 : Minecraft.getMinecraft().fontRendererObj;
+        if (HUDMod.fontChat.isEnabled()) {
+            if (HUDMod.getCustomFontMode().is("Inter")) {
+                return FontUtil.interFont18;
+            } else {
+                return FontUtil.tenacityFont20;
+            }
+        } else {
+            return Minecraft.getMinecraft().fontRendererObj;
+        }
     }
 
     /**

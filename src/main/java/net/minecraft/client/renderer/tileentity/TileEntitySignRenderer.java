@@ -2,8 +2,8 @@ package net.minecraft.client.renderer.tileentity;
 
 import net.minecraft.block.Block;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.IFontRenderer;
 import net.minecraft.client.gui.GuiUtilRenderComponents;
+import net.minecraft.client.gui.IFontRenderer;
 import net.minecraft.client.gui.inventory.GuiEditSign;
 import net.minecraft.client.model.ModelSign;
 import net.minecraft.client.renderer.GlStateManager;

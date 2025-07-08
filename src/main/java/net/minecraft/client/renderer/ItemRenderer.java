@@ -285,11 +285,28 @@ public class ItemRenderer {
      */
     private void transformFirstPersonItem(float equipProgress, float swingProgress) {
         boolean animations = Tenacity.INSTANCE.isEnabled(Animations.class);
-        double x = animations ? .56 + (Animations.x.getValue() * .01) : .56;
-        double y = animations ? .52 - (Animations.y.getValue() * .01) : .52;
-        double size = animations ? .40 + (Animations.size.getValue() * .01) : .40;
 
-        GlStateManager.translate(x, -y, -0.71999997F);
+        double x = .56;
+        double y = .52;
+        double size = .40;
+
+        if (animations) {
+            x = .56 + (Animations.x.getValue() * .01);
+            y = .52 - (Animations.y.getValue() * .01);
+            size = .40 + (Animations.size.getValue() * .01);
+        }
+
+        if (animations && (mc.thePlayer.isBlocking() || (KillAura.blocking && InventoryUtils.getHeldItem() instanceof ItemSword))) {
+            x = .56 + (Animations.blockingX.getValue() * .01);
+            y = .52 - (Animations.blockingY.getValue() * .01);
+            double z_block = -0.71999997F + (Animations.blockingZ.getValue() * .01);
+            size = .40 + (Animations.blockingSize.getValue() * .01);
+            GlStateManager.translate(x, -y, z_block);
+        } else {
+            GlStateManager.translate(x, -y, -0.71999997F);
+        }
+
+
         GlStateManager.translate(0.0F, equipProgress * -0.6F, 0.0F);
         GlStateManager.rotate(45.0F, 0.0F, 1.0F, 0.0F);
         float f = MathHelper.sin(swingProgress * swingProgress * (float) Math.PI);
@@ -361,6 +378,9 @@ public class ItemRenderer {
                     this.renderItemMap(abstractclientplayer, f2, f, swingProgress);
                 } else if (abstractclientplayer.getItemInUseCount() > 0 || (KillAura.blocking && InventoryUtils.getHeldItem() instanceof ItemSword)) {
                     EnumAction enumaction = this.itemToRender.getItemUseAction();
+                    float f1 = abstractclientplayer.getSwingProgress(partialTicks);
+                    float var9 = MathHelper.sin(MathHelper.sqrt_float(f1) * MathHelper.PI);
+                    float var151 = MathHelper.sin((float) (MathHelper.sqrt_float(f1) * Math.PI));
                     float var15 = MathHelper.sin(swingProgress * swingProgress * 3.1415927F);
                     float var16 = MathHelper.sin(MathHelper.sqrt_float(swingProgress) * 3.1415927F);
                     switch (enumaction) {
@@ -397,10 +417,35 @@ public class ItemRenderer {
                                         GlStateManager.translate(0, 0.3, 0);
                                         this.doBlockTransformations();
                                         break;
+                                    case "Punch":
+                                        transformFirstPersonItem(f, 0.0f);
+                                        doBlockTransformations();
+                                        GlStateManager.translate(0.1f, 0.2f, 0.3f);
+                                        GlStateManager.rotate(-var9 * 30.0f, -5.0f, 0.0f, 9.0f);
+                                        GlStateManager.rotate(-var9 * 10.0f, 1.0f, -0.4f, -0.5f);
+                                        break;
                                     case "Smooth":
                                         this.transformFirstPersonItem(swingProgress / 5, swingProgress);
                                         GlStateManager.translate(0, 0.2, 0);
                                         GlStateManager.rotate(-var15, 4, -0.8F, -1F);
+                                        this.doBlockTransformations();
+                                        break;
+                                    case "Old Exhibition":
+                                        GL11.glTranslated(-0.04D, 0.13D, 0.0D);
+                                        transformFirstPersonItem(f / 2.5F, 0.0f);
+                                        GlStateManager.rotate(-var9 * 40.0F / 2.0F, var9 / 2.0F, 1.0F, 4.0F);
+                                        GlStateManager.rotate(-var9 * 30.0F, 1.0F, var9 / 3.0F, -0.0F);
+                                        doBlockTransformations();
+                                        break;
+                                    case "Exhibition":
+                                        GL11.glTranslated(-0.03, var151 * 0.062f, var151 * 0);
+                                        GL11.glTranslated(0.025D, 0.09615D, 0.0D);
+                                        transformFirstPersonItem(f / 3, 0.0F);
+                                        GlStateManager.rotate(-var151 * 9f, -var151 / 20F, -var151 / 20F, 1);
+                                        GlStateManager.rotate(-var151 * 55F, 1.2F, var151 / 4F, 0.36F);
+                                        if (mc.thePlayer.isSneaking()) {
+                                            GlStateManager.translate(-0.05, -0.05, 0);
+                                        }
                                         this.doBlockTransformations();
                                         break;
                                     case "Exhi":

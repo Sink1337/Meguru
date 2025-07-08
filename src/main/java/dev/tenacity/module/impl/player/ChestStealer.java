@@ -2,24 +2,27 @@ package dev.tenacity.module.impl.player;
 
 import dev.tenacity.Tenacity;
 import dev.tenacity.event.impl.game.WorldEvent;
+import dev.tenacity.event.impl.network.PacketReceiveEvent;
 import dev.tenacity.event.impl.player.MotionEvent;
 import dev.tenacity.event.impl.render.Render2DEvent;
 import dev.tenacity.event.impl.render.RenderChestEvent;
 import dev.tenacity.module.Category;
 import dev.tenacity.module.Module;
+import dev.tenacity.module.impl.combat.KillAura;
+import dev.tenacity.module.impl.movement.Scaffold;
 import dev.tenacity.module.impl.render.HUDMod;
 import dev.tenacity.module.settings.ParentAttribute;
 import dev.tenacity.module.settings.impl.BooleanSetting;
 import dev.tenacity.module.settings.impl.NumberSetting;
 import dev.tenacity.utils.font.AbstractFontRenderer;
+import dev.tenacity.utils.font.FontUtil;
 import dev.tenacity.utils.player.RotationUtils;
 import dev.tenacity.utils.server.PacketUtils;
 import dev.tenacity.utils.time.TimerUtil;
-import dev.tenacity.module.impl.movement.Scaffold;
-import dev.tenacity.module.impl.combat.KillAura;
 import net.minecraft.client.gui.ScaledResolution;
 import net.minecraft.client.gui.inventory.GuiChest;
 import net.minecraft.client.player.inventory.ContainerLocalMenu;
+import net.minecraft.init.Blocks;
 import net.minecraft.inventory.ContainerChest;
 import net.minecraft.inventory.IInventory;
 import net.minecraft.item.Item;
@@ -27,28 +30,20 @@ import net.minecraft.item.ItemBlock;
 import net.minecraft.item.ItemStack;
 import net.minecraft.network.play.client.C0APacketAnimation;
 import net.minecraft.network.play.client.C0EPacketClickWindow;
+import net.minecraft.network.play.server.S02PacketChat;
+import net.minecraft.tileentity.TileEntityChest;
 import net.minecraft.util.BlockPos;
 import net.minecraft.util.EnumFacing;
-import net.minecraft.util.Vec3;
 import net.minecraft.util.MovingObjectPosition;
-import net.minecraft.tileentity.TileEntity;
-import net.minecraft.tileentity.TileEntityChest;
-import net.minecraft.init.Blocks;
-import dev.tenacity.event.impl.network.PacketReceiveEvent;
-import net.minecraft.network.play.server.S02PacketChat;
+import net.minecraft.util.Vec3;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-import java.util.Comparator;
+import java.util.*;
 
 public class ChestStealer extends Module {
 
     private final NumberSetting delay = new NumberSetting("Delay", 80, 300, 0, 10);
     private final BooleanSetting aura = new BooleanSetting("Aura", false);
-    private final BooleanSetting noAuraWhenHoldingBlock = new BooleanSetting("Disable When Holding Block", true);
+    private final BooleanSetting noAuraWhenHoldingBlock = new BooleanSetting("Held Block Halt", true);
     private final BooleanSetting throughWalls = new BooleanSetting("Through Walls", false);
     private final NumberSetting wallDistance = new NumberSetting("Through Block Distance", 3, 6, 1, 0.1);
     private final BooleanSetting swing = new BooleanSetting("Swing", false);
@@ -69,7 +64,6 @@ public class ChestStealer extends Module {
     private final TimerUtil auraTimer = new TimerUtil();
     public static boolean stealing;
     private InvManager invManager;
-    private AbstractFontRenderer tenacityFont20;
     private boolean isClearState;
 
     public static final Set<BlockPos> openedChests = new HashSet<>();
@@ -406,7 +400,17 @@ public class ChestStealer extends Module {
     public void onRender2DEvent(Render2DEvent event) {
         if (stealingIndicator.isEnabled() && stealing && mc != null && mc.fontRendererObj != null) {
             ScaledResolution sr = new ScaledResolution(mc);
-            AbstractFontRenderer fr = HUDMod.customFont.isEnabled() ? (tenacityFont20 != null ? tenacityFont20 : mc.fontRendererObj) : mc.fontRendererObj;
+            AbstractFontRenderer fr;
+            if (HUDMod.customFont.isEnabled()) {
+                if (HUDMod.getCustomFontMode().is("Inter")) {
+                    fr = FontUtil.interFont18;
+                } else {
+                    fr = FontUtil.tenacityFont20;
+                }
+            } else {
+                fr = mc.fontRendererObj;
+            }
+
             String text = "§lStealing...";
             float x = sr.getScaledWidth() / 2.0F - fr.getStringWidth(text) / 2.0F;
             float y = sr.getScaledHeight() / 2.0F + 10;

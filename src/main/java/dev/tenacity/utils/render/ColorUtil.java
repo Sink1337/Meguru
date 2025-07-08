@@ -286,6 +286,14 @@ public class ColorUtil {
         return new int[]{bitChangeColor(color, 16), bitChangeColor(color, 8), bitChangeColor(color, 0), bitChangeColor(color, 24)};
     }
 
+    public static int getColor(int red, int green, int blue, int alpha) {
+        int color = 0;
+        color |= alpha << 24;
+        color |= red << 16;
+        color |= green << 8;
+        return color |= blue;
+    }
+
     public static int getOppositeColor(int color) {
         int R = bitChangeColor(color, 0);
         int G = bitChangeColor(color, 8);

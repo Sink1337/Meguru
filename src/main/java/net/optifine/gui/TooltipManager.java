@@ -1,10 +1,10 @@
 package net.optifine.gui;
 
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.IFontRenderer;
 import net.minecraft.client.gui.Gui;
 import net.minecraft.client.gui.GuiButton;
 import net.minecraft.client.gui.GuiScreen;
+import net.minecraft.client.gui.IFontRenderer;
 
 import java.awt.*;
 import java.util.Arrays;
