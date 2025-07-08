@@ -116,7 +116,7 @@ public class Module extends ListenerAdapter implements Utils {
         float volume = HUDMod.togglesoundVolume.getValue().floatValue();
 
         if (hudMod != null && HUDMod.togglesound.isEnabled() && HUDMod.togglesoundmode.is("Click")) {
-            mc.getSoundHandler().playSound(PositionedSoundRecord.create(new ResourceLocation("random.click"), volume));
+            mc.theWorld.playSound(Module.mc.thePlayer.posX, Module.mc.thePlayer.posY, Module.mc.thePlayer.posZ, "random.click", 1f, enabled ? 1f : 0.7f, false);
         }
 
         if (hudMod != null && HUDMod.togglesound.isEnabled() && HUDMod.togglesoundmode.is("Sigma")) {

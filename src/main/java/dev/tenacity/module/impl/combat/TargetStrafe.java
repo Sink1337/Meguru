@@ -11,10 +11,7 @@ import dev.tenacity.module.impl.movement.Flight;
 import dev.tenacity.module.impl.movement.Speed;
 import dev.tenacity.module.impl.movement.TerrainSpeed;
 import dev.tenacity.module.settings.ParentAttribute;
-import dev.tenacity.module.settings.impl.BooleanSetting;
-import dev.tenacity.module.settings.impl.ColorSetting;
-import dev.tenacity.module.settings.impl.MultipleBoolSetting;
-import dev.tenacity.module.settings.impl.NumberSetting;
+import dev.tenacity.module.settings.impl.*;
 import dev.tenacity.utils.animations.Direction;
 import dev.tenacity.utils.animations.impl.DecelerateAnimation;
 import dev.tenacity.utils.player.MovementUtils;
@@ -22,11 +19,14 @@ import dev.tenacity.utils.player.RotationUtils;
 import dev.tenacity.utils.render.RenderUtil;
 import net.minecraft.block.BlockLiquid;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.renderer.GlStateManager;
+import net.minecraft.client.renderer.entity.RenderManager;
 import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.util.BlockPos;
 import net.minecraft.util.MathHelper;
 import net.minecraft.util.Vec3;
 import org.lwjgl.input.Keyboard;
+import org.lwjgl.opengl.GL11;
 
 import java.awt.*;
 
@@ -48,6 +48,7 @@ public final class TargetStrafe extends Module {
     public static final BooleanSetting space = new BooleanSetting("Require space key", true);
     public static final BooleanSetting auto3rdPerson = new BooleanSetting("Auto 3rd Person", false);
     private final BooleanSetting render = new BooleanSetting("Render", true);
+    private final ModeSetting rendermode = new ModeSetting("RenderMode", "Normal","Normal","Exhibition");
     private final ColorSetting color = new ColorSetting("Color", new Color(-16711712));
 
     private final NumberSetting voidDetectionRadius = new NumberSetting("Void Check Radius", 4, 10, 2, 1);
@@ -67,8 +68,9 @@ public final class TargetStrafe extends Module {
 
     public TargetStrafe() {
         super("TargetStrafe", Category.COMBAT, "strafe around targets");
-        addSettings(adaptiveSettings, radius, points, manualMode, space, auto3rdPerson, render, color,
+        addSettings(adaptiveSettings, radius, points, manualMode, space, auto3rdPerson, render,rendermode, color,
                 voidDetectionRadius, voidMinMotion, voidGroundReqMultiplier, voidMinGroundReq);
+        rendermode.addParent(render, ParentAttribute.BOOLEAN_CONDITION);
         color.addParent(render, ParentAttribute.BOOLEAN_CONDITION);
     }
 
@@ -186,8 +188,61 @@ public final class TargetStrafe extends Module {
             animation.setDirection(canStrafe ? Direction.FORWARDS : Direction.BACKWARDS);
 
             if (canStrafe || !animation.isDone()) {
-                drawCircle(5, 0xFF000000);
-                drawCircle(3, color.getColor().getRGB());
+                switch (rendermode.getMode()) {
+                    case "Normal":
+                        drawCircle(5, 0xFF000000);
+                        drawCircle(3, color.getColor().getRGB());
+                        break;
+                    case "Exhibition":
+                        GL11.glPushMatrix();
+                        GL11.glTranslated(
+                                currentTarget.lastTickPosX + (currentTarget.posX - currentTarget.lastTickPosX) * mc.timer.renderPartialTicks - RenderManager.renderPosX,
+                                currentTarget.lastTickPosY + (currentTarget.posY - currentTarget.lastTickPosY) * mc.timer.renderPartialTicks - RenderManager.renderPosY,
+                                currentTarget.lastTickPosZ + (currentTarget.posZ - currentTarget.lastTickPosZ) * mc.timer.renderPartialTicks - RenderManager.renderPosZ
+                        );
+
+                        GL11.glEnable(GL11.GL_BLEND);
+                        GL11.glEnable(GL11.GL_LINE_SMOOTH);
+                        GL11.glDisable(GL11.GL_TEXTURE_2D);
+                        GL11.glDisable(GL11.GL_DEPTH_TEST);
+                        GL11.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
+                        GL11.glRotatef(90f, 1f, 0f, 0f);
+
+                        GL11.glLineWidth(3 + 7.25f);
+                        GL11.glColor3f(0f, 0f, 0f);
+                        GL11.glBegin(GL11.GL_LINE_LOOP);
+                        for (int i = 0; i <= 360; i += 30) {
+                            GL11.glVertex2f(
+                                    (float) (Math.cos(i * Math.PI / 180.0) * radius.getValue()),
+                                    (float) (Math.sin(i * Math.PI / 180.0) * radius.getValue())
+                            );
+                        }
+                        GL11.glEnd();
+
+                        GL11.glLineWidth(3f);
+                        GL11.glBegin(GL11.GL_LINE_LOOP);
+                        for (int j = 0; j <= 360; j += 30) {
+                            if (active) {
+                                GL11.glColor4f(0.5f, 1f, 0.5f, 1f);
+                            } else {
+                                GL11.glColor4f(1f, 1f, 1f, 1f);
+                            }
+                            GL11.glVertex2f(
+                                    (float) (Math.cos(j * Math.PI / 180.0) * radius.getValue()),
+                                    (float) (Math.sin(j * Math.PI / 180.0) * radius.getValue())
+                            );
+                        }
+                        GL11.glEnd();
+
+                        GL11.glDisable(GL11.GL_BLEND);
+                        GL11.glEnable(GL11.GL_TEXTURE_2D);
+                        GL11.glEnable(GL11.GL_DEPTH_TEST);
+                        GL11.glDisable(GL11.GL_LINE_SMOOTH);
+                        GL11.glPopMatrix();
+                        GlStateManager.resetColor();
+                        GL11.glColor4f(1f, 1f, 1f, 1f);
+                        break;
+                }
             }
         }
     }
@@ -242,9 +297,9 @@ public final class TargetStrafe extends Module {
         double posY = entity.lastTickPosY + (entity.posY - entity.lastTickPosY) * partialTicks;
         double posZ = entity.lastTickPosZ + (entity.posZ - entity.lastTickPosZ) * partialTicks;
 
-        double renderPosX = mc.getRenderManager().renderPosX;
-        double renderPosY = mc.getRenderManager().renderPosY;
-        double renderPosZ = mc.getRenderManager().renderPosZ;
+        double renderPosX = RenderManager.renderPosX;
+        double renderPosY = RenderManager.renderPosY;
+        double renderPosZ = RenderManager.renderPosZ;
 
         double y = posY - renderPosY;
         for (double i = 0; i < Math.PI * 2.0; i += d) {

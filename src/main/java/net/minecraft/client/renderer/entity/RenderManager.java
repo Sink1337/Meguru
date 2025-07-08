@@ -53,9 +53,9 @@ public class RenderManager {
      * Renders fonts
      */
     private IFontRenderer textRenderer;
-    public double renderPosX;
-    public double renderPosY;
-    public double renderPosZ;
+    public static double renderPosX;
+    public static double renderPosY;
+    public static double renderPosZ;
     public TextureManager renderEngine;
 
     /**
@@ -75,9 +75,9 @@ public class RenderManager {
      * Reference to the GameSettings object.
      */
     public GameSettings options;
-    public double viewerPosX;
-    public double viewerPosY;
-    public double viewerPosZ;
+    public static double viewerPosX;
+    public static double viewerPosY;
+    public static double viewerPosZ;
     private boolean renderOutlines = false;
     private boolean renderShadow = true;
 

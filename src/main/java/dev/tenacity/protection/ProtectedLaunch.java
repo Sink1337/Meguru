@@ -16,7 +16,6 @@ import dev.tenacity.module.impl.misc.*;
 import dev.tenacity.module.impl.movement.*;
 import dev.tenacity.module.impl.player.*;
 import dev.tenacity.module.impl.render.*;
-import dev.tenacity.module.impl.render.killeffects.KillEffects;
 import dev.tenacity.module.impl.render.wings.DragonWings;
 import dev.tenacity.scripting.api.ScriptManager;
 import dev.tenacity.ui.altmanager.GuiAltManager;
@@ -152,6 +151,7 @@ public class ProtectedLaunch {
         modules.put(EntityEffects.class, new EntityEffects());
         modules.put(Chams.class, new Chams());
         modules.put(BrightPlayers.class, new BrightPlayers());
+        modules.put(DamageParticles.class,new DamageParticles());
 
         Tenacity.INSTANCE.getModuleCollection().setModules(modules);
 
