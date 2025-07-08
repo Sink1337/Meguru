@@ -311,7 +311,7 @@ public class EntityRenderer implements IResourceManagerReloadListener {
         }
     }
 
-    private void loadShader(ResourceLocation resourceLocationIn) {
+    public void loadShader(ResourceLocation resourceLocationIn) {
         if (OpenGlHelper.isFramebufferEnabled()) {
             try {
                 this.theShaderGroup = new ShaderGroup(this.mc.getTextureManager(), this.resourceManager, this.mc.getFramebuffer(), resourceLocationIn);

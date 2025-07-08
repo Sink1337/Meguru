@@ -117,6 +117,7 @@ public class ProtectedLaunch {
         modules.put(KillEffects.class, new KillEffects());
 
         // Render
+        modules.put(MotionBlur.class, new MotionBlur());
         modules.put(ArrayListMod.class, new ArrayListMod());
         modules.put(NotificationsMod.class, new NotificationsMod());
         modules.put(ScoreboardMod.class, new ScoreboardMod());

@@ -18,6 +18,7 @@ import dev.tenacity.event.impl.player.BlockPlaceableEvent;
 import dev.tenacity.event.impl.player.ClickEvent;
 import dev.tenacity.event.impl.player.ClickEventRight;
 import dev.tenacity.module.impl.render.ClickGUIMod;
+import dev.tenacity.module.impl.render.MotionBlur;
 import dev.tenacity.protection.ProtectedLaunch;
 import dev.tenacity.ui.SplashScreen;
 import dev.tenacity.ui.clickguis.dropdown.DropdownClickGUI;
@@ -97,6 +98,7 @@ import net.minecraft.world.chunk.storage.AnvilSaveConverter;
 import net.minecraft.world.storage.ISaveFormat;
 import net.minecraft.world.storage.ISaveHandler;
 import net.minecraft.world.storage.WorldInfo;
+import net.optifine.shaders.Shaders;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.Validate;
 import org.apache.logging.log4j.LogManager;
@@ -1984,6 +1986,26 @@ public class Minecraft implements IThreadListener, IPlayerUsage {
 
         this.mcProfiler.endSection();
         this.systemTime = getSystemTime();
+
+        try {
+            if (Minecraft.getMinecraft().thePlayer != null && Shaders.configAntialiasingLevel == 0) {
+                MotionBlur motionBlur = Tenacity.INSTANCE.getModuleCollection().getModule(MotionBlur.class);
+                if (motionBlur.isEnabled()) {
+                    if (Minecraft.getMinecraft().entityRenderer.getShaderGroup() == null) {
+                        Minecraft.getMinecraft().entityRenderer.loadShader(new ResourceLocation("minecraft", "shaders/post/motion_blur.json"));
+                    }
+                    float uniform = 1.0f - Math.min(motionBlur.blurAmount.getValue().floatValue() / 10.0f, 0.9f);
+                    if (Minecraft.getMinecraft().entityRenderer.getShaderGroup() != null) {
+                        Minecraft.getMinecraft().entityRenderer.getShaderGroup().listShaders.get(0).getShaderManager().getShaderUniform("Phosphor").set(uniform, 0.0f, 0.0f);
+                    }
+                } else if (Minecraft.getMinecraft().entityRenderer.isShaderActive()) {
+                    Minecraft.getMinecraft().entityRenderer.stopUseShader();
+                }
+            }
+        }
+        catch (Exception a) {
+            a.printStackTrace();
+        }
     }
 
     /**
