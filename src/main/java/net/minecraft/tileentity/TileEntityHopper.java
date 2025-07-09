@@ -1,5 +1,6 @@
 package net.minecraft.tileentity;
 
+import dev.tenacity.utils.render.betterfps.HopperLogic;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockChest;
 import net.minecraft.block.BlockHopper;
@@ -303,7 +304,7 @@ public class TileEntityHopper extends TileEntityLockable implements IHopper, ITi
     /**
      * Returns false if the specified IInventory contains any items
      */
-    private static boolean isInventoryEmpty(IInventory inventoryIn, EnumFacing side) {
+    protected static boolean isInventoryEmpty(IInventory inventoryIn, EnumFacing side) {
         if (inventoryIn instanceof ISidedInventory) {
             ISidedInventory isidedinventory = (ISidedInventory) inventoryIn;
             int[] aint = isidedinventory.getSlotsForFace(side);
@@ -326,40 +327,39 @@ public class TileEntityHopper extends TileEntityLockable implements IHopper, ITi
         return true;
     }
 
-    public static boolean captureDroppedItems(IHopper p_145891_0_) {
-        IInventory iinventory = getHopperInventory(p_145891_0_);
+    public static boolean captureDroppedItems(IHopper hopper)
+    {
+        HopperLogic hopperTE = hopper.getClass() == TileEntityHopper.class ? (HopperLogic)hopper : null;
 
-        if (iinventory != null) {
+        IInventory iinventory = hopperTE == null ? getHopperInventory(hopper) : hopperTE.topInventory;
+
+        if(iinventory != null) {
             EnumFacing enumfacing = EnumFacing.DOWN;
 
-            if (isInventoryEmpty(iinventory, enumfacing)) {
-                return false;
-            }
+            if(isInventoryEmpty(iinventory, enumfacing)) return false;
 
-            if (iinventory instanceof ISidedInventory) {
-                ISidedInventory isidedinventory = (ISidedInventory) iinventory;
+            if(iinventory instanceof ISidedInventory) {
+                ISidedInventory isidedinventory = (ISidedInventory)iinventory;
                 int[] aint = isidedinventory.getSlotsForFace(enumfacing);
 
-                for (int i = 0; i < aint.length; ++i) {
-                    if (pullItemFromSlot(p_145891_0_, iinventory, aint[i], enumfacing)) {
-                        return true;
-                    }
+                for (int j : aint) {
+                    if (pullItemFromSlot(hopper, iinventory, j, enumfacing)) return true;
                 }
             } else {
                 int j = iinventory.getSizeInventory();
 
-                for (int k = 0; k < j; ++k) {
-                    if (pullItemFromSlot(p_145891_0_, iinventory, k, enumfacing)) {
-                        return true;
-                    }
+                for(int k = 0; k < j; ++k) {
+                    if(pullItemFromSlot(hopper, iinventory, k, enumfacing)) return true;
                 }
             }
-        } else {
-            for (EntityItem entityitem : func_181556_a(p_145891_0_.getWorld(), p_145891_0_.getXPos(), p_145891_0_.getYPos() + 1.0D, p_145891_0_.getZPos())) {
-                if (putDropInInventoryAllSlots(p_145891_0_, entityitem)) {
+        } else if(hopperTE == null || hopperTE.canPickupDrops) {
+
+            for(EntityItem entityitem : func_181556_a(hopper.getWorld(), hopper.getXPos(), hopper.getYPos() + 1.0D, hopper.getZPos())) {
+                if(putDropInInventoryAllSlots(hopper, entityitem)) {
                     return true;
                 }
             }
+
         }
 
         return false;
@@ -369,7 +369,7 @@ public class TileEntityHopper extends TileEntityLockable implements IHopper, ITi
      * Pulls from the specified slot in the inventory and places in any available slot in the hopper. Returns true if
      * the entire stack was moved
      */
-    private static boolean pullItemFromSlot(IHopper hopper, IInventory inventoryIn, int index, EnumFacing direction) {
+    protected static boolean pullItemFromSlot(IHopper hopper, IInventory inventoryIn, int index, EnumFacing direction) {
         ItemStack itemstack = inventoryIn.getStackInSlot(index);
 
         if (itemstack != null && canExtractItemFromSlot(inventoryIn, itemstack, index, direction)) {

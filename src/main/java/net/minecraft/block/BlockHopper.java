@@ -1,6 +1,7 @@
 package net.minecraft.block;
 
 import com.google.common.base.Predicate;
+import dev.tenacity.utils.render.betterfps.HopperLogic;
 import net.minecraft.block.material.MapColor;
 import net.minecraft.block.material.Material;
 import net.minecraft.block.properties.IProperty;
@@ -122,7 +123,14 @@ public class BlockHopper extends BlockContainer {
     /**
      * Called when a neighboring block changes.
      */
-    public void onNeighborBlockChange(World worldIn, BlockPos pos, IBlockState state, Block neighborBlock) {
+    public void onNeighborBlockChange(World worldIn, BlockPos pos, IBlockState state, Block neighborBlock)
+    {
+        TileEntity te = worldIn.getTileEntity(pos);
+        if(te != null) {
+            TileEntityHopper hopper = (TileEntityHopper)te;
+            ((HopperLogic)hopper).checkBlockOnTop();
+            // This is casted to HopperLogic just to make this class compilable. It will be removed by the ASM
+        }
         this.updateState(worldIn, pos, state);
     }
 
