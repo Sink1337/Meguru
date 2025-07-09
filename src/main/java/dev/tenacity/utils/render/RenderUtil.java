@@ -463,6 +463,13 @@ public class RenderUtil implements Utils {
         GlStateManager.color(r, g, b, alpha);
     }
 
+    public static void color(Color color, float alpha) {
+        float r = color.getRed() / 255.0f;
+        float g = color.getGreen() / 255.0f;
+        float b = color.getBlue() / 255.0f;
+        GlStateManager.color(r, g, b, alpha);
+    }
+
     // Colors the next texture without a specified alpha value
     public static void color(int color) {
         color(color, (float) (color >> 24 & 255) / 255.0F);

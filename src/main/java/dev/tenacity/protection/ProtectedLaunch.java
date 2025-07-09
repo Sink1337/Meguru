@@ -137,6 +137,7 @@ public class ProtectedLaunch {
         modules.put(TargetHUDMod.class, new TargetHUDMod());
         modules.put(Glint.class, new Glint());
         modules.put(Breadcrumbs.class, new Breadcrumbs());
+        modules.put(Trails.class, new Trails());
         modules.put(Streamer.class, new Streamer());
         modules.put(Hitmarkers.class, new Hitmarkers());
         modules.put(NoHurtCam.class, new NoHurtCam());
