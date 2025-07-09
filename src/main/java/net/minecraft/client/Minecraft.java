@@ -1992,7 +1992,7 @@ public class Minecraft implements IThreadListener, IPlayerUsage {
                 MotionBlur motionBlur = Tenacity.INSTANCE.getModuleCollection().getModule(MotionBlur.class);
                 if (motionBlur.isEnabled()) {
                     if (Minecraft.getMinecraft().entityRenderer.getShaderGroup() == null) {
-                        Minecraft.getMinecraft().entityRenderer.loadShader(new ResourceLocation("minecraft", "shaders/post/motion_blur.json"));
+                        Minecraft.getMinecraft().entityRenderer.loadShader(new ResourceLocation("minecraft", "shaders/post/lunar_motionblur.json"));
                     }
                     float uniform = 1.0f - Math.min(motionBlur.blurAmount.getValue().floatValue() / 10.0f, 0.9f);
                     if (Minecraft.getMinecraft().entityRenderer.getShaderGroup() != null) {

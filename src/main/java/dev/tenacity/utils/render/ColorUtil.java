@@ -157,6 +157,30 @@ public class ColorUtil {
         return new Color(ColorUtil.interpolateColor(backgroundColor, accentColor, (255 * percentage) / 255));
     }
 
+    public static int colorSwitch(Color firstColor, Color secondColor, float time, int index, long timePerIndex, double speed) {
+        return colorSwitch(firstColor, secondColor, time, index, timePerIndex, speed, 255.0);
+    }
+
+    public static int colorSwitch(Color firstColor, Color secondColor, float time, int index, long timePerIndex, double speed, double alpha) {
+        long now = (long) (speed * (double) System.currentTimeMillis() + (double) ((long) index * timePerIndex));
+        float redDiff = (float) (firstColor.getRed() - secondColor.getRed()) / time;
+        float greenDiff = (float) (firstColor.getGreen() - secondColor.getGreen()) / time;
+        float blueDiff = (float) (firstColor.getBlue() - secondColor.getBlue()) / time;
+        int red = Math.round((float) secondColor.getRed() + redDiff * (float) (now % (long) time));
+        int green = Math.round((float) secondColor.getGreen() + greenDiff * (float) (now % (long) time));
+        int blue = Math.round((float) secondColor.getBlue() + blueDiff * (float) (now % (long) time));
+        float redInverseDiff = (float) (secondColor.getRed() - firstColor.getRed()) / time;
+        float greenInverseDiff = (float) (secondColor.getGreen() - firstColor.getGreen()) / time;
+        float blueInverseDiff = (float) (secondColor.getBlue() - firstColor.getBlue()) / time;
+        int inverseRed = Math.round((float) firstColor.getRed() + redInverseDiff * (float) (now % (long) time));
+        int inverseGreen = Math.round((float) firstColor.getGreen() + greenInverseDiff * (float) (now % (long) time));
+        int inverseBlue = Math.round((float) firstColor.getBlue() + blueInverseDiff * (float) (now % (long) time));
+        if (now % ((long) time * 2L) < (long) time) {
+            return getColor(inverseRed, inverseGreen, inverseBlue, (int) alpha);
+        }
+        return getColor(red, green, blue, (int) alpha);
+    }
+
     public static int applyOpacity(int color, float opacity) {
         Color old = new Color(color);
         return applyOpacity(old, opacity).getRGB();

@@ -414,7 +414,7 @@ public class HUDMod extends Module {
                 if (watermarkCustomization.getSetting("Ping").isEnabled()) {
                     stringBuilder1.append(" [§f").append(PingerUtils.getPing()).append("ms§7]");
                 }
-                FontUtil.interFont.boldSize(18).drawStringWithShadow(stringBuilder1.toString(), 2, 3, clientColors.getFirst().getRGB());
+                FontUtil.idkFont.boldSize(18).drawStringWithShadow(stringBuilder1.toString(), 2, 3, clientColors.getFirst().getRGB());
         }
 
 
@@ -430,7 +430,7 @@ public class HUDMod extends Module {
     private void drawBottomRight() {
         AbstractFontRenderer frToUse = mc.fontRendererObj;
         if (customFont.isEnabled()) {
-            frToUse = customFontMode.is("Inter") ? FontUtil.interFont18 : FontUtil.tenacityFont20;
+            frToUse = customFontMode.is("Inter") ? FontUtil.idkFont18 : FontUtil.tenacityFont20;
         }
         final AbstractFontRenderer finalFr = frToUse;
 
@@ -513,7 +513,7 @@ public class HUDMod extends Module {
         //InfoStuff
         AbstractFontRenderer nameInfoFrToUse = mc.fontRendererObj;
         if (customFont.isEnabled()) {
-            nameInfoFrToUse = customFontMode.is("Inter") ? FontUtil.interFont18 : FontUtil.tenacityFont20;
+            nameInfoFrToUse = customFontMode.is("Inter") ? FontUtil.idkFont18 : FontUtil.tenacityFont20;
         }
         final AbstractFontRenderer finalNameInfoFr = nameInfoFrToUse;
 
@@ -606,7 +606,7 @@ public class HUDMod extends Module {
     }
 
     public static String getCurrentTimeStamp() {
-        return new SimpleDateFormat("hh:mm a",Locale.ENGLISH).format(new Date());
+        return new SimpleDateFormat("hh:mm a").format(new Date());
     }
 
     public static String get(String text) {
@@ -700,6 +700,11 @@ public class HUDMod extends Module {
                 break;
             }
         }
+    }
+
+    public static Color color(int tick) {
+        return new Color(ColorUtil.colorSwitch(HUDMod.getClientColors().getFirst(), HUDMod.getClientColors().getSecond(),
+                2000.0f, -(tick * 200) / 40, 75L, 1.0));
     }
 
     @Getter

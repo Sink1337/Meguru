@@ -25,7 +25,7 @@ public class Gui {
     protected AbstractFontRenderer getFont() {
         if (HUDMod.fontChat.isEnabled()) {
             if (HUDMod.getCustomFontMode().is("Inter")) {
-                return FontUtil.interFont18;
+                return FontUtil.idkFont18;
             } else {
                 return FontUtil.tenacityFont20;
             }

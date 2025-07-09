@@ -75,8 +75,8 @@ public class Notification implements Utils {
 
         RenderUtil.drawImage(new ResourceLocation("Tenacity/noti/" + getNotificationType().getName() + ".png"), x + 2f, y + 3f, 18, 18);
 
-        interFont18.drawString(getTitle(), x + 21.5f, (float)(y + 5), Color.WHITE);
-        interFont14.drawString(getDescription(), x + 21.5f, (float)(y + 16  ), Color.WHITE);
+        idkBoldFont18.drawString(getTitle(), x + 22f, (float)(y + 6), Color.WHITE);
+        idkFont14.drawString(getDescription(), x + 22f, (float)(y + 16), Color.WHITE);
     }
 
     public void blurExhi(float x, float y, float width, float height) {

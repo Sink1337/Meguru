@@ -218,8 +218,8 @@ public class Breaker extends Module {
             RoundedUtil.drawRound(x - half, y, barAnim.getOutput().floatValue() * breakProgress, thickness, thickness / 2, barColor);
 
             String progressStr = (int) (breakProgress * 100.0) + "%";
-            float textWidth = interFont12.getStringWidth(progressStr);
-            interFont12.drawStringWithShadow(progressStr, x - textWidth / 2, y + 1, -1);
+            float textWidth = idkFont12.getStringWidth(progressStr);
+            idkFont12.drawStringWithShadow(progressStr, x - textWidth / 2, y + 1, -1);
         }
     }
 

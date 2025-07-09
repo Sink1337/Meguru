@@ -86,7 +86,7 @@ public class GuiTextField extends Gui {
         HUDMod hudMod = dev.tenacity.Tenacity.INSTANCE.getModuleCollection().getModule(HUDMod.class);
         if (hudMod != null && hudMod.fontChat.isEnabled()) {
             if (hudMod.customFontMode.is("Inter")) {
-                return FontUtil.interFont18;
+                return FontUtil.idkFont18;
             } else {
                 return FontUtil.tenacityFont20;
             }

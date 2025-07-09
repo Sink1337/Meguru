@@ -17,15 +17,12 @@ import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Locale;
 
 /**
- * @author cedo
+ * @author 余承东爱导管
  * @since 05/12/2022
  */
 public class CustomFont implements AbstractFontRenderer {
-    private static final char COLOR_INVOKER = '\247';
-    private static final int MARGIN = 4;
     private static int[] colorCode;
     private static final String colorcodeIdentifiers = "0123456789abcdefklmnor";
     private final Font font;
@@ -36,15 +33,40 @@ public class CustomFont implements AbstractFontRenderer {
 
     private int fontHeight;
     private static final float KERNING = 8.2f;
-    private CharacterData[] regularData;
-    private CharacterData[] boldData;
-    private CharacterData[] italicsData;
+
+
+    private FontDrawer chineseFontDrawer;
+    private boolean useChineseRendering = false;
 
     public CustomFont(Font font) {
         generateColorCodes();
         this.font = font;
         setupTexture(regular);
         setupTexture(italic);
+
+
+        this.chineseFontDrawer = new FontDrawer(font, true, true);
+    }
+
+    private boolean isChineseChar(char c) {
+        Character.UnicodeBlock ub = Character.UnicodeBlock.of(c);
+        return ub == Character.UnicodeBlock.CJK_UNIFIED_IDEOGRAPHS
+                || ub == Character.UnicodeBlock.CJK_COMPATIBILITY_IDEOGRAPHS
+                || ub == Character.UnicodeBlock.CJK_UNIFIED_IDEOGRAPHS_EXTENSION_A
+                || ub == Character.UnicodeBlock.CJK_UNIFIED_IDEOGRAPHS_EXTENSION_B
+                || ub == Character.UnicodeBlock.CJK_SYMBOLS_AND_PUNCTUATION
+                || ub == Character.UnicodeBlock.HALFWIDTH_AND_FULLWIDTH_FORMS
+                || ub == Character.UnicodeBlock.GENERAL_PUNCTUATION;
+    }
+
+    private boolean containsChinese(String text) {
+        if (text == null) return false;
+        for (int i = 0; i < text.length(); i++) {
+            if (isChineseChar(text.charAt(i))) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private void setupTexture(FontData fontData) {
@@ -64,13 +86,16 @@ public class CustomFont implements AbstractFontRenderer {
 
     public void drawSmoothStringWithShadow(String text, double x2, float y2, int color) {
         this.drawString(text, x2 + 0.5f, y2 + 0.5f, color, true, KERNING, true);
-
         this.drawString(text, x2, y2, color, false, KERNING, true);
     }
 
     @Override
     public int drawCenteredString(String name, float x, float y, int color) {
         return drawString(name, x - (getStringWidth(name) / 2), y, color);
+    }
+
+    public void drawButtomCenteredString(String s, double x, double y, int color) {
+        chineseFontDrawer.drawString(s, x - getStringWidth(s) / 2.0, y-0.5, color);
     }
 
     @Override
@@ -84,6 +109,11 @@ public class CustomFont implements AbstractFontRenderer {
 
     @Override
     public int drawStringWithShadow(String name, float x, float y, int color) {
+        if (containsChinese(name)) {
+            chineseFontDrawer.drawStringWithShadow(name, x, y, color);
+            return (int) x + chineseFontDrawer.getStringWidth(name);
+        }
+
         drawString(name, x + .5f, y + .5f, color, true, KERNING, false);
         return (int) drawString(name, x, y, color, false, KERNING, false);
     }
@@ -101,8 +131,18 @@ public class CustomFont implements AbstractFontRenderer {
 
     @Override
     public int drawString(String name, float x, float y, int color) {
+        if (containsChinese(name)) {
+            chineseFontDrawer.drawString(name, x, y, color);
+            return (int) x + chineseFontDrawer.getStringWidth(name);
+        }
         return drawString(name, x, y, color, false);
     }
+
+    public int drawGUIString(String name, float x, float y, int color) {
+        chineseFontDrawer.drawString(name, x, y, color);
+        return (int) x + chineseFontDrawer.getStringWidth(name);
+    }
+
 
     @Override
     public void drawString(String name, float x, float y, Color color) {
@@ -116,6 +156,14 @@ public class CustomFont implements AbstractFontRenderer {
 
         text = Streamer.filter(text);
 
+        if (containsChinese(text)) {
+            if (shadow) {
+                chineseFontDrawer.drawStringWithShadow(text, x, y, color);
+            } else {
+                chineseFontDrawer.drawString(text, x, y, color);
+            }
+            return (float) (x + chineseFontDrawer.getStringWidth(text));
+        }
 
         if (shadow) {
             color = (color & 0xFCFCFC) >> 2 | color & 0xFF000000;
@@ -157,7 +205,6 @@ public class CustomFont implements AbstractFontRenderer {
         for (int index = 0; index < text.length(); index++) {
             char character = text.charAt(index);
 
-            // If you need to apply color codes
             if (character == '§') {
                 int colorIndex = 21;
 
@@ -167,7 +214,6 @@ public class CustomFont implements AbstractFontRenderer {
                     e.printStackTrace();
                 }
 
-                //If it's a color code
                 if (colorIndex < 16) {
                     bold = false;
                     italic = false;
@@ -229,7 +275,6 @@ public class CustomFont implements AbstractFontRenderer {
 
                 ++index;
             } else if (character < currentData.chars.length) {
-
                 drawLetter(x, y, currentData, strikethrough, underline, character);
                 x += MathUtils.roundToHalf(currentData.chars[character].width - KERNING);
             }
@@ -358,12 +403,19 @@ public class CustomFont implements AbstractFontRenderer {
 
     @Override
     public float getStringWidth(String text) {
+        if (containsChinese(text)) {
+            return chineseFontDrawer.getStringWidth(text);
+        }
         return (float) getStringWidth(text, KERNING);
     }
 
     public double getStringWidth(String text, float kerning) {
         if (text == null) {
             return 0;
+        }
+
+        if (containsChinese(text)) {
+            return chineseFontDrawer.getStringWidth(text);
         }
 
         text = Streamer.filter(text);
@@ -395,7 +447,6 @@ public class CustomFont implements AbstractFontRenderer {
         }
 
         return width / 2;
-
     }
 
 
@@ -473,79 +524,6 @@ public class CustomFont implements AbstractFontRenderer {
         GL11.glEnable(GL11.GL_TEXTURE_2D);
     }
 
-    public float getWidth(String text) {
-
-        // The width of the string.
-        float width = 0;
-
-        // The character texture set to be used. (Regular by default)
-        CharacterData[] characterData = regularData;
-
-        // The length of the text.
-        int length = text.length();
-
-        // Loops through the text.
-        for (int i = 0; i < length; i++) {
-            // The character at the index of 'i'.
-            char character = text.charAt(i);
-
-            // The previous character.
-            char previous = i > 0 ? text.charAt(i - 1) : '.';
-
-            // Continues if the previous color was the color invoker.
-            if (previous == COLOR_INVOKER) continue;
-
-            // Sets the color if the character is the color invoker and the character index is less than the length.
-            if (character == COLOR_INVOKER && i < length) {
-
-                // The color index of the character after the current character.
-                int index = "0123456789abcdefklmnor".indexOf(text.toLowerCase(Locale.ENGLISH).charAt(i + 1));
-
-                if (index == 17)
-                    // Sets the character data to the bold type.
-                    characterData = boldData;
-                else if (index == 20)
-                    // Sets the character data to the italics type.
-                    characterData = italicsData;
-                else if (index == 21)
-                    // Sets the character data to the regular type.
-                    characterData = regularData;
-            } else {
-                // Continues to not crash!
-                if (character > 255) continue;
-
-                // The character data for the given character.
-                CharacterData charData = characterData[character];
-
-                // Adds to the offset.
-                width += (charData.width - (2 * MARGIN)) / 2;
-            }
-        }
-        return width + MARGIN /2 ;
-}
-    static class CharacterData {
-
-        /**
-         * The width of the character.
-         */
-        public float width;
-
-        /**
-         * The height of the character.
-         */
-        public float height;
-
-        /**
-         * The id of the character texture.
-         */
-        private int textureId;
-
-        public CharacterData(float width, float height, int textureId) {
-            this.width = width;
-            this.height = height;
-            this.textureId = textureId;
-        }
-    }
 
     private static class FontData {
         private final CharData[] chars = new CharData[256];
@@ -651,6 +629,8 @@ public class CustomFont implements AbstractFontRenderer {
         }
 
     }
+
+
 
 
 }

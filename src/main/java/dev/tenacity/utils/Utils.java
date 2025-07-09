@@ -19,7 +19,7 @@ public interface Utils {
             neverloseFont = FontUtil.FontType.NEVERLOSE,
             tahomaFont = FontUtil.FontType.TAHOMA,
             rubikFont = FontUtil.FontType.RUBIK,
-            interFont = FontUtil.FontType.INTER;
+            idkFont = FontUtil.FontType.IDK;
 
 
     //Regular Fonts
@@ -62,18 +62,18 @@ public interface Utils {
             enchantFont12 = tahomaFont.size(12);
 
     //INTER Regular Font
-    CustomFont interFont12 = interFont.size(12),
-            interFont14 = interFont.size(14),
-            interFont16 = interFont.size(16),
-            interFont18 = interFont.size(18),
-            interFont20 = interFont.size(20),
-            interFont24 = interFont.size(24),
-            interFont28 = interFont.size(28);
+    CustomFont idkFont12 = idkFont.size(12),
+            idkFont14 = idkFont.size(14),
+            idkFont16 = idkFont.size(16),
+            idkFont18 = idkFont.size(18),
+            idkFont20 = idkFont.size(20),
+            idkFont24 = idkFont.size(24),
+            idkFont28 = idkFont.size(28);
 
     //INTER Bold Font
-    CustomFont interBoldFont16 = interFont16.getBoldFont(),
-            interBoldFont18 = interFont18.getBoldFont(),
-            interBoldFont20 = interFont20.getBoldFont(),
-            interBoldFont24 = interFont24.getBoldFont(),
-            interBoldFont28 = interFont28.getBoldFont();
+    CustomFont idkBoldFont16 = idkFont16.getBoldFont(),
+            idkBoldFont18 = idkFont18.getBoldFont(),
+            idkBoldFont20 = idkFont20.getBoldFont(),
+            idkBoldFont24 = idkFont24.getBoldFont(),
+            idkBoldFont28 = idkFont28.getBoldFont();
 }

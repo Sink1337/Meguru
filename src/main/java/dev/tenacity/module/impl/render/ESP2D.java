@@ -119,7 +119,7 @@ public class ESP2D extends Module {
                             font = tenacityBoldFont20;
                             break;
                         case "Inter":
-                            font = interFont18;
+                            font = idkFont18;
                             break;
                         default:
                             font = mc.fontRendererObj;
@@ -212,7 +212,7 @@ public class ESP2D extends Module {
                         font = tenacityBoldFont20;
                         break;
                     case "Inter":
-                        font = interFont18;
+                        font = idkFont18;
                         break;
                     default:
                         font = mc.fontRendererObj;
@@ -262,7 +262,7 @@ public class ESP2D extends Module {
                     } else if (fontMode.is("Tenacity")) {
                         tenacityBoldFont20.drawSmoothStringWithShadow(text.toString(), middle, (float) (y - (fontHeight + 5)), healthColor.getRGB());
                     } else if (fontMode.is("Inter")) {
-                        interFont18.drawSmoothStringWithShadow(text.toString(), middle, (float) (y - (fontHeight + 5)), healthColor.getRGB());
+                        idkFont18.drawSmoothStringWithShadow(text.toString(), middle, (float) (y - (fontHeight + 5)), healthColor.getRGB());
                     }
                     glPopMatrix();
                 }
@@ -283,7 +283,7 @@ public class ESP2D extends Module {
                                 currentFont = tenacityBoldFont20;
                                 break;
                             case "Inter":
-                                currentFont = interFont18;
+                                currentFont = idkFont18;
                                 break;
                             default:
                                 currentFont = mc.fontRendererObj;
@@ -306,7 +306,7 @@ public class ESP2D extends Module {
                         } else if (fontMode.is("Tenacity")) {
                             tenacityBoldFont20.drawSmoothStringWithShadow(text, middle, bottom + 4, -1);
                         } else if (fontMode.is("Inter")) {
-                            interFont18.drawSmoothStringWithShadow(text, middle, bottom + 4, -1);
+                            idkFont18.drawSmoothStringWithShadow(text, middle, bottom + 4, -1);
                         }
                         glPopMatrix();
                     }
@@ -367,7 +367,7 @@ public class ESP2D extends Module {
                                 currentFont = tenacityBoldFont20;
                                 break;
                             case "Inter":
-                                currentFont = interFont18;
+                                currentFont = idkFont18;
                                 break;
                             default:
                                 currentFont = mc.fontRendererObj;
@@ -390,7 +390,7 @@ public class ESP2D extends Module {
                         } else if (fontMode.is("Tenacity")) {
                             tenacityBoldFont20.drawSmoothStringWithShadow(text, textX, textY, -1);
                         } else if (fontMode.is("Inter")) {
-                            interFont18.drawSmoothStringWithShadow(text, textX, textY, -1);
+                            idkFont18.drawSmoothStringWithShadow(text, textX, textY, -1);
                         }
                         glPopMatrix();
                     }

@@ -403,7 +403,7 @@ public class ChestStealer extends Module {
             AbstractFontRenderer fr;
             if (HUDMod.customFont.isEnabled()) {
                 if (HUDMod.getCustomFontMode().is("Inter")) {
-                    fr = FontUtil.interFont18;
+                    fr = FontUtil.idkFont18;
                 } else {
                     fr = FontUtil.tenacityFont20;
                 }

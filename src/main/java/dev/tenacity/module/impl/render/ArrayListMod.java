@@ -404,11 +404,11 @@ public class ArrayListMod extends Module {
             case "Inter":
                 if (fontSettings.getSetting("Bold").isEnabled()) {
                     if (smallFont) {
-                        return interBoldFont18;
+                        return idkBoldFont18;
                     }
-                    return interBoldFont20;
+                    return idkBoldFont20;
                 }
-                return smallFont ? interFont18 : interFont20;
+                return smallFont ? idkFont18 : idkFont20;
             default:
                 return smallFont ? tenacityFont18 : tenacityFont20;
         }
