@@ -183,6 +183,7 @@ public final class TargetStrafe extends Module {
     @Override
     public void onRender3DEvent(Render3DEvent event) {
         if (render.isEnabled()) {
+            if (currentTarget == null) return;
             if (animation.getEndPoint() != radius.getValue()) animation.setEndPoint(radius.getValue());
             boolean canStrafe = active;
             animation.setDirection(canStrafe ? Direction.FORWARDS : Direction.BACKWARDS);

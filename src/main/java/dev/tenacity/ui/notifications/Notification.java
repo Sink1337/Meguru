@@ -73,10 +73,10 @@ public class Notification implements Utils {
         float percentage = Math.min((timerUtil.getTime() / getTime()), 1);
         Gui.drawRect2(x + (width * percentage), y + height - 1, width - (width * percentage), 1, getNotificationType().getColor().getRGB());
 
-        RenderUtil.drawImage(new ResourceLocation("Tenacity/noti/" + getNotificationType().getName() + ".png"), x + 2f, y + 4.5f, 18, 18);
+        RenderUtil.drawImage(new ResourceLocation("Tenacity/noti/" + getNotificationType().getName() + ".png"), x + 2f, y + 3f, 18, 18);
 
-        interFont18.drawString(getTitle(), x + 21.5f, (float)(y + 4.5), Color.WHITE);
-        interFont14.drawString(getDescription(), x + 21.5f, (float)(y + 15.5), Color.WHITE);
+        interFont18.drawString(getTitle(), x + 21.5f, (float)(y + 5), Color.WHITE);
+        interFont14.drawString(getDescription(), x + 21.5f, (float)(y + 16  ), Color.WHITE);
     }
 
     public void blurExhi(float x, float y, float width, float height) {

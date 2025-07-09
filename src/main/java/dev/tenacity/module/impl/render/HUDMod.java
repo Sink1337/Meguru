@@ -414,7 +414,7 @@ public class HUDMod extends Module {
                 if (watermarkCustomization.getSetting("Ping").isEnabled()) {
                     stringBuilder1.append(" [§f").append(PingerUtils.getPing()).append("ms§7]");
                 }
-                FontUtil.interFont.boldSize(18).drawStringWithShadow(stringBuilder1.toString(), 2, 2, clientColors.getFirst().getRGB());
+                FontUtil.interFont.boldSize(18).drawStringWithShadow(stringBuilder1.toString(), 2, 3, clientColors.getFirst().getRGB());
         }
 
 
@@ -606,7 +606,7 @@ public class HUDMod extends Module {
     }
 
     public static String getCurrentTimeStamp() {
-        return new SimpleDateFormat("hh:mm a").format(new Date());
+        return new SimpleDateFormat("hh:mm a",Locale.ENGLISH).format(new Date());
     }
 
     public static String get(String text) {
