@@ -558,6 +558,17 @@ public class Block {
         return f < 0.0F ? 0.0F : (!playerIn.canHarvestBlock(this) ? playerIn.getToolDigEfficiency(this) / f / 100.0F : playerIn.getToolDigEfficiency(this) / f / 30.0F);
     }
 
+    public float getPlayerRelativeBlockHardness(EntityPlayer playerIn, World worldIn, BlockPos pos)
+    {
+        float f = this.getBlockHardness(worldIn, pos);
+        return f < 0.0F ? 0.0F : (!playerIn.canHarvestBlock(this) ? playerIn.getToolDigEfficiency(this) / f / 100.0F : playerIn.getToolDigEfficiency(this) / f / 30.0F);
+    }
+
+    public float getBlockHardness(World worldIn, BlockPos pos)
+    {
+        return this.blockHardness;
+    }
+
     /**
      * Spawn this Block's drops into the World as EntityItems
      */

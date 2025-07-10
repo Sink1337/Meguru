@@ -64,6 +64,7 @@ public class ESP2D extends Module {
             new BooleanSetting("Formatted Tags", false),
             new BooleanSetting("Add PostProcessing", false),
             new BooleanSetting("Health Text", true),
+            new BooleanSetting("Target Text", true),
             new BooleanSetting("Background", true),
             new BooleanSetting("Red Background", false),
             new BooleanSetting("Round", true));
@@ -132,6 +133,15 @@ public class ESP2D extends Module {
                             (FriendCommand.isFriend(renderingEntity.getName()) ? "§d" : redTags.isEnabled() ? "§c" : "§f") + name);
                     if (nametagSettings.getSetting("Health Text").isEnabled()) {
                         text.append(String.format(" §7[§r%s HP§7]", df.format(renderingEntity.getHealth())));
+                    }
+                    if (nametagSettings.getSetting("Target Text").isEnabled()) {
+                        String targettext;
+                        if (TargetManager.checkEntity(renderingEntity)) {
+                            targettext = "§c[Enemy] ";
+                        }else {
+                            targettext = "§d[Friend] ";
+                        }
+                        text = new StringBuilder(targettext + text);
                     }
                     double fontScale = scale.getValue();
                     float middle = x + ((right - x) / 2);
@@ -228,6 +238,15 @@ public class ESP2D extends Module {
                             (FriendCommand.isFriend(renderingEntity.getName()) ? "§d" : redTags.isEnabled() ? "§c" : "§f") + name);
                     if (nametagSettings.getSetting("Health Text").isEnabled()) {
                         text.append(String.format(" §7[§r%s HP§7]", df.format(renderingEntity.getHealth())));
+                    }
+                    if (nametagSettings.getSetting("Target Text").isEnabled()) {
+                        String targettext;
+                        if (TargetManager.checkEntity(renderingEntity)) {
+                            targettext = "§c[Enemy] ";
+                        }else {
+                            targettext = "§d[Friend] ";
+                        }
+                        text = new StringBuilder(targettext + text);
                     }
                     double fontScale = scale.getValue();
                     float middle = x + ((right - x) / 2);

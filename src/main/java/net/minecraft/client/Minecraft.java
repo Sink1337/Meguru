@@ -17,6 +17,7 @@ import dev.tenacity.event.impl.player.BlockEvent;
 import dev.tenacity.event.impl.player.BlockPlaceableEvent;
 import dev.tenacity.event.impl.player.ClickEvent;
 import dev.tenacity.event.impl.player.ClickEventRight;
+import dev.tenacity.module.impl.player.Breaker;
 import dev.tenacity.module.impl.render.ClickGUIMod;
 import dev.tenacity.module.impl.render.MotionBlur;
 import dev.tenacity.protection.ProtectedLaunch;

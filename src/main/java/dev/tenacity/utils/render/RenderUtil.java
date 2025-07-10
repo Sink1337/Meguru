@@ -615,6 +615,50 @@ public class RenderUtil implements Utils {
         renderBox(blockPos.getX(), blockPos.getY(), blockPos.getZ(), 1, 1, 1, filledColor, outlineColor, outline, filled);
     }
 
+    public static void renderBlock(BlockPos blockPos, int color, boolean outline, boolean shade) {
+        renderBox(blockPos.getX(), blockPos.getY(), blockPos.getZ(), 1, 1, 1, color, outline, shade);
+    }
+
+    public static void drawAxisAlignedBB(AxisAlignedBB axisAlignedBB,boolean filled, boolean outline, int color) {
+        drawSelectionBoundingBox(axisAlignedBB, outline, filled,color);
+    }
+
+    public static void drawSelectionBoundingBox(final AxisAlignedBB bb, final boolean outline, final boolean filled,int color) {
+        GlStateManager.enableBlend();
+        GlStateManager.blendFunc(770, 771);
+        GL11.glLineWidth(2.0F);
+        GlStateManager.disableTexture2D();
+        GL11.glDisable(2929);
+        GlStateManager.depthMask(false);
+        GlStateManager.pushMatrix();
+
+        if (outline) {
+
+            glEnable(GL_LINE_SMOOTH);
+
+            drawOutlineBoundingBox(bb,new Color(color,true));
+
+            glDisable(GL_LINE_SMOOTH);
+        }
+        if (filled) {
+            drawFilledBoundingBox(bb,new Color(color,true));
+        }
+
+        GlStateManager.popMatrix();
+        GlStateManager.depthMask(true);
+        GL11.glEnable(2929);
+        GlStateManager.enableTexture2D();
+        GlStateManager.disableBlend();
+    }
+
+    public static void renderBox(int x, int y, int z, double x2, double y2, double z2, int color, boolean outline, boolean shade) {
+        double xPos = x - mc.getRenderManager().viewerPosX;
+        double yPos = y - mc.getRenderManager().viewerPosY;
+        double zPos = z - mc.getRenderManager().viewerPosZ;
+        AxisAlignedBB axisAlignedBB = new AxisAlignedBB(xPos, yPos, zPos, xPos + x2, yPos + y2, zPos + z2);
+        drawAxisAlignedBB(axisAlignedBB, shade, outline,color);
+    }
+
     public static void renderBox(double x, double y, double z, double width, double height, double depth, int filledColor, int outlineColor, boolean outline, boolean filled) {
         double xPos = x - mc.getRenderManager().viewerPosX;
         double yPos = y - mc.getRenderManager().viewerPosY;
