@@ -6,7 +6,12 @@ import dev.tenacity.utils.animations.Direction;
 import dev.tenacity.utils.animations.impl.DecelerateAnimation;
 import dev.tenacity.utils.misc.HoveringUtil;
 import dev.tenacity.utils.render.RenderUtil;
+import dev.tenacity.utils.render.RoundedUtil;
+import dev.tenacity.utils.render.blur.GaussianBlur;
+import net.minecraft.network.play.client.C03PacketPlayer;
 import net.minecraft.util.ResourceLocation;
+
+import java.awt.*;
 
 public class MenuButton implements Screen {
 
@@ -30,8 +35,6 @@ public class MenuButton implements Screen {
 
     }
 
-    private static final ResourceLocation rs = new ResourceLocation("Tenacity/MainMenu/menu-rect.png");
-
     @Override
     public void drawScreen(int mouseX, int mouseY) {
 
@@ -39,14 +42,14 @@ public class MenuButton implements Screen {
         hoverAnimation.setDirection(hovered ? Direction.FORWARDS : Direction.BACKWARDS);
 
 
-        RenderUtil.color(-1);
-        RenderUtil.drawImage(rs, x, y, width, height);
+        //RenderUtil.color(-1);
+        //RenderUtil.drawImage(rs, x, y, width, height);
+        GaussianBlur.startBlur();
+        RoundedUtil.drawRound(x,y,width,height,4f,new Color(20,20,20,100));
+        GaussianBlur.endBlur(40,2);
+        RoundedUtil.drawRound(x,y,width,height,4f,new Color(255,255,255,(int)(80*hoverAnimation.getOutput())));
 
         tenacityFont22.drawCenteredString(text, x + width / 2f, y + tenacityFont22.getMiddleOfBox(height), -1);
-    }
-
-    public void drawOutline() {
-        RenderUtil.drawImage(rs, x, y, width, height);
     }
 
     @Override

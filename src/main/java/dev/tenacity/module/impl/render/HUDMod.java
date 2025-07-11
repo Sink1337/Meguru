@@ -414,7 +414,7 @@ public class HUDMod extends Module {
                 if (watermarkCustomization.getSetting("Ping").isEnabled()) {
                     stringBuilder1.append(" [§f").append(PingerUtils.getPing()).append("ms§7]");
                 }
-                FontUtil.idkFont.boldSize(18).drawStringWithShadow(stringBuilder1.toString(), 2, 3, clientColors.getFirst().getRGB());
+                FontUtil.idkFont.boldSize(18).drawStringWithShadow(stringBuilder1.toString(), 2, 2, clientColors.getFirst().getRGB());
         }
 
 

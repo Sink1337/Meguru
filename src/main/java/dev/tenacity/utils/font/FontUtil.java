@@ -76,7 +76,7 @@ public class FontUtil implements Utils {
 
     @Getter
     public enum FontType {
-        TENACITY("tenacity", "tenacity-bold", 12, 14, 16, 18, 20, 22, 24, 26, 28, 32, 40, 80),
+        TENACITY("tenacity", "tenacity-bold", 12, 14, 16, 18, 20, 22, 24, 26, 28, 32, 40, 80,100),
         TAHOMA("tahoma", "tahoma-bold", 10, 12, 14, 16, 18, 27),
         RUBIK("rubik", "rubik-bold", 13, 18),
         NEVERLOSE("neverlose", 12, 18, 22),

@@ -29,6 +29,7 @@ import store.intent.intentguard.annotation.Bootstrap;
 import store.intent.intentguard.annotation.Native;
 
 import java.io.File;
+import java.time.MonthDay;
 import java.util.Arrays;
 import java.util.HashMap;
 
@@ -40,6 +41,8 @@ public class ProtectedLaunch {
     @Native
     @Bootstrap
     public static void start() {
+
+
         // Setup Intent API access
         Tenacity.INSTANCE.setIntentAccount(new IntentAccount());
         Tenacity.INSTANCE.setModuleCollection(new ModuleCollection());
@@ -184,6 +187,12 @@ public class ProtectedLaunch {
         Tenacity.INSTANCE.setAltManager(new GuiAltManager());
 
         Tenacity.INSTANCE.setKingGenApi(new KingGenApi());
+
+        Tenacity.LOGGER.info("Trying download Background Video");
+        Tenacity.INSTANCE.downloadBackGroundVideo();
+
+        Tenacity.LOGGER.info("Initializing background...");
+        Tenacity.INSTANCE.initVideoBackground();
 
         try {
             Tenacity.LOGGER.info("Starting ViaMCP...");

@@ -126,6 +126,7 @@ import java.nio.ByteOrder;
 import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
 import java.time.LocalDate;
+import java.time.MonthDay;
 import java.util.List;
 import java.util.Queue;
 import java.util.*;
@@ -457,6 +458,9 @@ public class Minecraft implements IThreadListener, IPlayerUsage {
         this.mcResourceManager.registerReloadListener(this.renderEngine);
 
         FontUtil.setupFonts();
+        MonthDay today = MonthDay.now();
+        MonthDay july21 = MonthDay.of(7, 21);
+        Tenacity.is0721 = (today.equals(july21));
 
         SplashScreen.continueCount();
         this.skinManager = new SkinManager(this.renderEngine, new File(this.fileAssets, "skins"), this.sessionService);

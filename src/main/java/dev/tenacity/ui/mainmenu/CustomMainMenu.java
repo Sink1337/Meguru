@@ -12,10 +12,7 @@ import dev.tenacity.utils.misc.DiscordRPC;
 import dev.tenacity.utils.misc.HoveringUtil;
 import dev.tenacity.utils.misc.IOUtils;
 import dev.tenacity.utils.misc.NetworkingUtils;
-import dev.tenacity.utils.render.GLUtil;
-import dev.tenacity.utils.render.RenderUtil;
-import dev.tenacity.utils.render.RoundedUtil;
-import dev.tenacity.utils.render.StencilUtil;
+import dev.tenacity.utils.render.*;
 import dev.tenacity.utils.render.blur.GaussianBlur;
 import lombok.Getter;
 import net.minecraft.client.gui.*;
@@ -41,7 +38,7 @@ public class CustomMainMenu extends GuiScreen {
     }};
 
     private final List<TextButton> textButtons = new ArrayList() {{
-        add(new TextButton("Scripting"));
+        add(new TextButton("QQ"));
         add(new TextButton("Discord"));
     }};
 
@@ -78,32 +75,38 @@ public class CustomMainMenu extends GuiScreen {
         width = sr.getScaledWidth();
         height = sr.getScaledHeight();
 
-
         RenderUtil.resetColor();
-        RenderUtil.drawImage(backgroundResource, 0, 0, width, height);
 
-        particleEngine.render();
+        Tenacity.INSTANCE.videoRenderer.render(width, height);
 
-        float rectWidth = 277;
-        float rectHeight = 275.5f;
+//        float rectWidth = 277;
+//        float rectHeight = 275.5f;
 
-        GaussianBlur.startBlur();
-        RoundedUtil.drawRound(width / 2f - rectWidth / 2f, height / 2f - rectHeight / 2f,
-                rectWidth, rectHeight, 10, Color.WHITE);
-        GaussianBlur.endBlur(40, 2);
+//        GaussianBlur.startBlur();
+//        RoundedUtil.drawRound(width / 2f - rectWidth / 2f, height / 2f - rectHeight / 2f,
+//                rectWidth, rectHeight, 10, Color.WHITE);
+//        GaussianBlur.endBlur(40, 2);
 
 
-        float outlineImgWidth = 688 / 2f;
-        float outlineImgHeight = 681 / 2f;
-        GLUtil.startBlend();
-        RenderUtil.color(-1);
-        RenderUtil.drawImage(blurredRect, width / 2f - outlineImgWidth / 2f, height / 2f - outlineImgHeight / 2f,
-                outlineImgWidth, outlineImgHeight);
-
+//        float outlineImgWidth = 688 / 2f;
+//        float outlineImgHeight = 681 / 2f;
+//        GLUtil.startBlend();
+//        RenderUtil.color(-1);
+//        RenderUtil.drawImage(blurredRect, width / 2f - outlineImgWidth / 2f, height / 2f - outlineImgHeight / 2f,
+//                outlineImgWidth, outlineImgHeight);
+//
 
         if (animatedOpen) {
             //    tenacityFont80.drawCenteredString("Tenacity", width / 2f, height / 2f - 110, Color.WHITE.getRGB());
             //    tenacityFont32.drawString(Tenacity.VERSION, width / 2f + tenacityFont80.getStringWidth("Tenacity") / 2f - (tenacityFont32.getStringWidth(Tenacity.VERSION) / 2f), height / 2f - 113, Color.WHITE.getRGB());
+        }
+        Color textcolor =new Color(255,255,255,100);
+        tenacityBoldFont80.drawCenteredString("Tenacity", width / 2f, height / 2f - 110, textcolor);
+        tenacityFont32.drawString(Tenacity.VERSION, width / 2f + tenacityBoldFont80.getStringWidth("Tenacity") / 2f - (tenacityFont32.getStringWidth(Tenacity.VERSION) / 2f), height / 2f - 113, textcolor);
+        if (Tenacity.is0721){
+            tenacityFont18.drawCenteredString("0721 Edition", width / 2f, height / 2f - 68 + 5, textcolor);
+        }else {
+            tenacityFont18.drawCenteredString("Bloxd Edition", width / 2f, height / 2f - 68 + 5, textcolor);
         }
 
         GL11.glEnable(GL11.GL_BLEND);
@@ -112,18 +115,9 @@ public class CustomMainMenu extends GuiScreen {
         StencilUtil.initStencilToWrite();
 
         RenderUtil.setAlphaLimit(13);
-        buttons.forEach(MenuButton::drawOutline);
 
         RenderUtil.setAlphaLimit(0);
         StencilUtil.readStencilBuffer(1);
-
-
-        float circleW = 174 / 2f;
-        float circleH = 140 / 2f;
-        ResourceLocation rs = new ResourceLocation("Tenacity/MainMenu/circle-funny.png");
-        mc.getTextureManager().bindTexture(rs);
-        GLUtil.startBlend();
-        RenderUtil.drawImage(rs, mouseX - circleW / 2f, mouseY - circleH / 2f, circleW, circleH);
 
         StencilUtil.uninitStencilBuffer();
 
@@ -157,7 +151,7 @@ public class CustomMainMenu extends GuiScreen {
                 }
             };
             button.drawScreen(mouseX, mouseY);
-            count += buttonHeight + 5;
+            count += buttonHeight + 7;
         }
 
 
@@ -169,11 +163,11 @@ public class CustomMainMenu extends GuiScreen {
         int buttonIncrement = 0;
         for (TextButton button : textButtons) {
             button.x = width / 2f - buttonsWidth / 2f + buttonCount;
-            button.y = (height / 2f) + 120;
+            button.y = (height / 2f) + 130;
             switch (button.text) {
-                case "Scripting":
+                case "QQ":
                     button.clickAction = () -> {
-                        IOUtils.openLink("https://scripting.tenacity.dev");
+                        IOUtils.openLink("https://qm.qq.com/q/i5ZMkG5S1O");
                     };
                     break;
                 case "Discord":
@@ -192,9 +186,6 @@ public class CustomMainMenu extends GuiScreen {
             buttonIncrement++;
         }
 
-        tenacityBoldFont80.drawCenteredString("Tenacity", width / 2f, height / 2f - 110, Color.WHITE.getRGB());
-        tenacityFont32.drawString(Tenacity.VERSION, width / 2f + tenacityBoldFont80.getStringWidth("Tenacity") / 2f - (tenacityFont32.getStringWidth(Tenacity.VERSION) / 2f), height / 2f - 113, Color.WHITE.getRGB());
-        tenacityFont18.drawCenteredString("edited by Sink", width / 2f, height / 2f - 68, Color.WHITE.getRGB());
 
     }
 

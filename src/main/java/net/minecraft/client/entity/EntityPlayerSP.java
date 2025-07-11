@@ -3,6 +3,7 @@ package net.minecraft.client.entity;
 import dev.tenacity.Tenacity;
 import dev.tenacity.commands.CommandHandler;
 import dev.tenacity.event.impl.player.*;
+import dev.tenacity.module.impl.exploit.Disabler;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.audio.MovingSoundMinecartRiding;
 import net.minecraft.client.audio.PositionedSoundRecord;
@@ -155,6 +156,9 @@ public class EntityPlayerSP extends AbstractClientPlayer {
                 this.sendQueue.addToSendQueue(new C03PacketPlayer.C05PacketPlayerLook(this.rotationYaw, this.rotationPitch, this.onGround));
                 this.sendQueue.addToSendQueue(new C0CPacketInput(this.moveStrafing, this.moveForward, this.movementInput.jump, this.movementInput.sneak));
             } else {
+                if (Disabler.disablers.getSetting("MiniBlox C0C").isEnabled()) {
+                    this.sendQueue.addToSendQueue(new C0CPacketInput(this.moveStrafing, this.moveForward, this.movementInput.jump, this.movementInput.sneak));
+                }
                 this.onUpdateWalkingPlayer();
             }
         }

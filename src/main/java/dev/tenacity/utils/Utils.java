@@ -34,7 +34,9 @@ public interface Utils {
             tenacityFont28 = tenacityFont.size(28),
             tenacityFont32 = tenacityFont.size(32),
             tenacityFont40 = tenacityFont.size(40),
-            tenacityFont80 = tenacityFont.size(80);
+            tenacityFont80 = tenacityFont.size(80),
+            tenacityFont100 = tenacityFont.size(100);;
+
 
     //Bold Fonts
     CustomFont tenacityBoldFont12 = tenacityFont12.getBoldFont(),
@@ -48,7 +50,8 @@ public interface Utils {
             tenacityBoldFont28 = tenacityFont28.getBoldFont(),
             tenacityBoldFont32 = tenacityFont32.getBoldFont(),
             tenacityBoldFont40 = tenacityFont40.getBoldFont(),
-            tenacityBoldFont80 = tenacityFont80.getBoldFont();
+            tenacityBoldFont80 = tenacityFont80.getBoldFont(),
+            tenacityBoldFont100 = tenacityFont100.getBoldFont();
 
     //Icon Fontsor i
     CustomFont iconFont16 = iconFont.size(16),
