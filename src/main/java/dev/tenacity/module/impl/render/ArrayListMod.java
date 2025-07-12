@@ -31,7 +31,8 @@ public class ArrayListMod extends Module {
     private final ModeSetting textShadow = new ModeSetting("Text Shadow", "Black", "Colored", "Black", "None");
     private final ModeSetting rectangle = new ModeSetting("Rectangle", "Top", "None", "Top", "Side", "Outline");
     private final BooleanSetting partialGlow = new BooleanSetting("Partial Glow", true);
-    private final ModeSetting fontMode = new ModeSetting("Font Mode", "Tenacity", "Tenacity", "Inter", "Minecraft");
+    private final ModeSetting fontMode = new ModeSetting("Font Mode", "Tenacity", "Tenacity", "Inter", "Roboto" , "Minecraft");
+    private final ModeSetting suffixmode = new ModeSetting("Suffix Mode", "-", " ","-");
     private final BooleanSetting bold = new BooleanSetting("Bold", false);
     private final NumberSetting fontScale = new NumberSetting("Font Size", 18, 24, 16, 1);
     public final NumberSetting height = new NumberSetting("Height", 11, 20, 9, .5f);
@@ -90,8 +91,13 @@ public class ArrayListMod extends Module {
             }
 
             if (!module.isEnabled() && moduleAnimation.finished(Direction.BACKWARDS)) continue;
-
-            String displayText = HUDMod.get(module.getName() + (module.hasMode() ? " §7" + module.getSuffix() : ""));
+            String suffix;
+            if (suffixmode.is(" ")){
+                suffix = "";
+            }else {
+                suffix = "- ";
+            }
+            String displayText = HUDMod.get(module.getName() + (module.hasMode() ? " §7" + suffix + module.getSuffix() : ""));
             displayText = applyText(displayText);
             float textWidth = font.getStringWidth(displayText);
 
@@ -214,8 +220,14 @@ public class ArrayListMod extends Module {
 
             if (!module.isEnabled() && moduleAnimation.finished(Direction.BACKWARDS)) continue;
 
+            String suffix;
+            if (suffixmode.is(" ")){
+                suffix = "";
+            }else {
+                suffix = "- ";
+            }
 
-            String displayText = HUDMod.get(module.getName() + (module.hasMode() ? (module.getCategory().equals(Category.SCRIPTS) ? " §c" : " §7") + module.getSuffix() : ""));
+            String displayText = HUDMod.get(module.getName() + (module.hasMode() ? (module.getCategory().equals(Category.SCRIPTS) ? " §c" : " §7") + suffix + module.getSuffix() : ""));
             displayText = applyText(displayText);
             float textWidth = font.getStringWidth(displayText);
 
@@ -328,6 +340,8 @@ public class ArrayListMod extends Module {
 
 
             float textYOffset = isMinecraftFont ? .5f : 0;
+            if (fontMode.is("Roboto")) textYOffset = .8f;
+            if (fontMode.is("Inter")) textYOffset = .8f;
             y += textYOffset;
             Color color = ColorUtil.applyOpacity(textcolor, alphaAnimation);
             switch (textShadow.getMode()) {
@@ -399,6 +413,11 @@ public class ArrayListMod extends Module {
                     return idkFont.boldSize(fontSize);
                 }
                 return idkFont.size(fontSize);
+            case "Roboto":
+                if (bold.isEnabled()) {
+                    return robotoFont.boldSize(fontSize);
+                }
+                return robotoFont.size(fontSize);
             default:
                 return tenacityFont.size(fontSize);
         }

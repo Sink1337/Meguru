@@ -75,7 +75,8 @@ public class FontUtil implements Utils {
         RUBIK("rubik", "rubik-bold", 13, 18),
         NEVERLOSE("neverlose", 12, 18, 22),
         ICON("icon", 16, 20, 26, 35, 40),
-        INTER("inter-semi-bold", 12, 13, 14, 16, 18, 20, 22 ,24, 28),
+        INTER("Inter-Medium","Inter-Bold", 14,20),
+        ROBOTO("Roboto-Medium","Roboto-Bold", 12, 14, 16, 18, 20, 22, 24, 26, 28, 32, 40, 80,100),
         IDK("idk-regular", "idk-bold", 12, 13, 14, 16, 18, 20, 24, 28);
 
         private final ResourceLocation location, boldLocation;

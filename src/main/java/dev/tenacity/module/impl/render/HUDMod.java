@@ -45,7 +45,7 @@ import java.util.*;
 public class HUDMod extends Module {
 
     private final StringSetting clientName = new StringSetting("Client Name");
-    private final ModeSetting watermarkMode = new ModeSetting("Watermark Mode", "Tenacity", "Tenacity", "Plain Text", "Neverlose", "Tenasense", "Exhi1", "Exhi2", "Logo", "None");
+    private final ModeSetting watermarkMode = new ModeSetting("Watermark Mode", "Tenacity", "Tenacity", "Plain Text", "Neverlose", "Tenasense", "Exhi1", "Exhi2", "Moon" ,"Logo", "None");
     public static final ColorSetting color1 = new ColorSetting("Color 1", new Color(0xffa028d4));
     public static final ColorSetting color2 = new ColorSetting("Color 2", new Color(0xff0008ff));
     public static final ModeSetting theme = Theme.getModeSetting("Theme Selection", "Tenacity");
@@ -130,9 +130,14 @@ public class HUDMod extends Module {
 
             String finalName = get(name);
             String intentInfo = Tenacity.INSTANCE.getIntentAccount().username;
+            float WH = 110 / 2f;
             switch (watermarkMode.getMode()) {
+                case "Moon":
+                    mc.getTextureManager().bindTexture(new ResourceLocation("Tenacity/Moonlogo.png"));
+                    Gui.drawModalRectWithCustomSizedTexture(7, 7, 0, 0, WH, WH, WH, WH);
+                    break;
                 case "Logo":
-                    float WH = 110 / 2f;
+
                     float textWidth = FontUtil.tenacityBoldFont32.getStringWidth(finalName);
 
                     GL11.glEnable(GL11.GL_SCISSOR_TEST);
@@ -217,11 +222,9 @@ public class HUDMod extends Module {
 
         String finalName = get(name);
         String intentInfo = Tenacity.INSTANCE.getIntentAccount().username;
-
+        float WH = 110 / 2f;
         switch (watermarkMode.getMode()) {
             case "Logo":
-
-                float WH = 110 / 2f;
 
                 if (MovementUtils.isMoving()) {
                     ticks = 0;
@@ -415,6 +418,10 @@ public class HUDMod extends Module {
                     stringBuilder1.append(" [§f").append(PingerUtils.getPing()).append("ms§7]");
                 }
                 FontUtil.idkFont.boldSize(18).drawStringWithShadow(stringBuilder1.toString(), 2, 2, clientColors.getFirst().getRGB());
+            case "Moon":
+                mc.getTextureManager().bindTexture(new ResourceLocation("Tenacity/Moonlogo.png"));
+                Gui.drawModalRectWithCustomSizedTexture(7, 7, 0, 0, WH, WH, WH, WH);
+                break;
         }
 
 

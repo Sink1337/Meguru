@@ -20,6 +20,7 @@ public interface Utils {
             tahomaFont = FontUtil.FontType.TAHOMA,
             rubikFont = FontUtil.FontType.RUBIK,
             interFont = FontUtil.FontType.INTER,
+            robotoFont = FontUtil.FontType.ROBOTO,
             idkFont = FontUtil.FontType.IDK;
 
 
@@ -81,8 +82,40 @@ public interface Utils {
             idkBoldFont24 = idkFont24.getBoldFont(),
             idkBoldFont28 = idkFont28.getBoldFont();
 
-    CustomFont intersemiBoldFont14 = interFont.size(14),
-            intersemiBoldFont13 = interFont.size(13),
-            intersemiBoldFont18 = interFont.size(18),
-            intersemiBoldFont22 = interFont.size(22);
+    CustomFont interMedium20 = interFont.size(20),
+            interBold20 = interMedium20.getBoldFont(),
+            interMedium14 = interFont.size(14);
+
+
+    //Regular Fonts
+    CustomFont robotoFont12 = robotoFont.size(12),
+            robotoFont14 = robotoFont.size(14),
+            robotoFont16 = robotoFont.size(16),
+            robotoFont18 = robotoFont.size(18),
+            robotoFont20 = robotoFont.size(20),
+            robotoFont22 = robotoFont.size(22),
+            robotoFont24 = robotoFont.size(24),
+            robotoFont26 = robotoFont.size(26),
+            robotoFont28 = robotoFont.size(28),
+            robotoFont32 = robotoFont.size(32),
+            robotoFont40 = robotoFont.size(40),
+            robotoFont80 = robotoFont.size(80),
+            robotoFont100 = robotoFont.size(100);;
+
+
+    //Bold Fonts
+    CustomFont robotoBoldFont12 = robotoFont12.getBoldFont(),
+            robotoBoldFont14 = robotoFont14.getBoldFont(),
+            robotoBoldFont16 = robotoFont16.getBoldFont(),
+            robotoBoldFont18 = robotoFont18.getBoldFont(),
+            robotoBoldFont20 = robotoFont20.getBoldFont(),
+            robotoBoldFont22 = robotoFont22.getBoldFont(),
+            robotoBoldFont24 = robotoFont24.getBoldFont(),
+            robotoBoldFont26 = robotoFont26.getBoldFont(),
+            robotoBoldFont28 = robotoFont28.getBoldFont(),
+            robotoBoldFont32 = robotoFont32.getBoldFont(),
+            robotoBoldFont40 = robotoFont40.getBoldFont(),
+            robotoBoldFont80 = robotoFont80.getBoldFont(),
+            robotoBoldFont100 = robotoFont100.getBoldFont();
+
 }

@@ -1,12 +1,10 @@
 package dev.tenacity.module.impl.render.targethud;
 
 import dev.tenacity.utils.animations.ContinualAnimation;
-import dev.tenacity.utils.font.CustomFont;
 import dev.tenacity.utils.render.ColorUtil;
 import dev.tenacity.utils.render.RenderUtil;
 import dev.tenacity.utils.render.RoundedUtil;
 import dev.tenacity.utils.render.StencilUtil;
-import dev.tenacity.utils.render.GLUtil;
 import net.minecraft.client.entity.AbstractClientPlayer;
 import net.minecraft.client.gui.Gui;
 import net.minecraft.client.renderer.GlStateManager;
@@ -25,56 +23,44 @@ public class MoonTargetHUD extends TargetHUD {
         super("Moon");
     }
 
-    private static void renderPlayer2D(EntityLivingBase abstractClientPlayer, final float x, final float y, final float size, float radius, int color) {
-        if (abstractClientPlayer instanceof AbstractClientPlayer) {
-            AbstractClientPlayer player = (AbstractClientPlayer) abstractClientPlayer;
-
-            StencilUtil.initStencilToWrite();
-            RenderUtil.drawRoundedRect(x, y, size, size, radius, -1);
-            StencilUtil.readStencilBuffer(1);
-            RenderUtil.color(color);
-            GLUtil.startBlend();
-            mc.getTextureManager().bindTexture(player.getLocationSkin());
-            Gui.drawScaledCustomSizeModalRect(x, y, (float) 8.0, (float) 8.0, 8, 8, size, size, 64.0F, 64.0F);
-            GLUtil.endBlend();
-            StencilUtil.uninitStencilBuffer();
-        }
-    }
-
     @Override
     public void render(float x, float y, float alpha, EntityLivingBase target) {
 
-        setWidth(35 + intersemiBoldFont18.getStringWidth(target.getName()) + 33);
-        setHeight(40.5f);
+        setWidth(35 + interBold20.getStringWidth(target.getName()) + 15);
+        setHeight(35f);
 
         float healthPercentage = target.getHealth() / target.getMaxHealth();
-        float space = (getWidth() - 48) / 100;
+        float space = (getWidth() - 45) / 100;
 
         animation.animate((100 * space) * MathHelper.clamp_float(healthPercentage, 0, 1), 30);
 
-        RoundedUtil.drawRound(x, y, getWidth(), getHeight(), 8, ColorUtil.applyOpacity(new Color(0, 0, 0, 100), alpha));
+        RoundedUtil.drawRound(x, y, getWidth(), getHeight(), 8, ColorUtil.applyOpacity(new Color(0, 0, 0, 80), alpha));
 
-        RoundedUtil.drawRound(x + 40, y + 26.5f, (100 * space), 8, 4, ColorUtil.applyOpacity(Color.BLACK, alpha * (150f / 255f)));
+        RoundedUtil.drawRound(x + 38, y + 24f, (100 * space), 6f, 3f, ColorUtil.applyOpacity(Color.BLACK, alpha * (150f / 255f)));
 
         String text = String.format("%.1f", target.getHealth());
 
-        RoundedUtil.drawRound(x + 40, y + 26.5f, (float) animation.getOutput(), 8.5f, 4, ColorUtil.applyOpacity(colorWheel.getColor1(), alpha));
+        RoundedUtil.drawRound(x + 38, y + 24f, (float) animation.getOutput(), 6f, 3f, ColorUtil.applyOpacity(colorWheel.getColor1(), alpha));
 
         GlStateManager.pushMatrix();
         int textColor = ColorUtil.applyOpacity(-1, alpha);
 
-        float playerModelSize = 32;
+        float playerModelSize = 30;
         if (target instanceof AbstractClientPlayer) {
-            renderPlayer2D(target, x + 5f, y + 4f, playerModelSize, 10, textColor);
+            StencilUtil.initStencilToWrite();
+            RenderUtil.renderRoundedRect(x + 4f, y + 2.5f, playerModelSize, playerModelSize, 5, -1);
+            StencilUtil.readStencilBuffer(1);
+            RenderUtil.color(-1, alpha);
+            renderPlayer2D(x + 4f, y + 2.5f, playerModelSize, playerModelSize,(AbstractClientPlayer) target);
+            StencilUtil.uninitStencilBuffer();
+            GlStateManager.disableBlend();
         } else {
-            Gui.drawRect(x + 2.5, y + 2.5, x + 2.5 + playerModelSize, y + 2.5 + playerModelSize, ColorUtil.applyOpacity(Color.DARK_GRAY, alpha).getRGB());
-            GlStateManager.scale(2, 2, 2);
-            intersemiBoldFont18.drawStringWithShadow("?", (x + 2.5f + playerModelSize / 2f) / 2.0F, (y + 2.5f + playerModelSize / 2f) / 2.0F, textColor);
+            interBold20.drawString("?", (x + 15f), (y + 14f), textColor);
         }
         GlStateManager.popMatrix();
 
-        tenacityBoldFont14.drawStringWithShadow(text + " HP", x + 40, y + 18, textColor);
-        tenacityBoldFont22.drawStringWithShadow(target.getName(), x + 40, y + 6, textColor);
+        interMedium14.drawSmoothString(text + " HP", x + 38, y + 17, textColor);
+        interBold20.drawSmoothString(target.getName(), x + 38, y + 7, textColor);
     }
 
     @Override
