@@ -81,6 +81,8 @@ public interface Utils {
             idkBoldFont24 = idkFont24.getBoldFont(),
             idkBoldFont28 = idkFont28.getBoldFont();
 
-    CustomFont intersemiBoldFont13 = interFont.size(13),
-            intersemiBoldFont18 = interFont.size(18);
+    CustomFont intersemiBoldFont14 = interFont.size(14),
+            intersemiBoldFont13 = interFont.size(13),
+            intersemiBoldFont18 = interFont.size(18),
+            intersemiBoldFont22 = interFont.size(22);
 }

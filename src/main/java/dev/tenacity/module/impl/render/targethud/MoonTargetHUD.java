@@ -54,18 +54,18 @@ public class MoonTargetHUD extends TargetHUD {
 
         RoundedUtil.drawRound(x, y, getWidth(), getHeight(), 8, ColorUtil.applyOpacity(new Color(0, 0, 0, 100), alpha));
 
-        RoundedUtil.drawRound(x + 42, y + 26.5f, (100 * space), 8, 4, ColorUtil.applyOpacity(Color.BLACK, alpha * (150f / 255f)));
+        RoundedUtil.drawRound(x + 40, y + 26.5f, (100 * space), 8, 4, ColorUtil.applyOpacity(Color.BLACK, alpha * (150f / 255f)));
 
         String text = String.format("%.1f", target.getHealth());
 
-        RoundedUtil.drawRound(x + 42, y + 26.5f, (float) animation.getOutput(), 8.5f, 4, ColorUtil.applyOpacity(colorWheel.getColor1(), alpha));
+        RoundedUtil.drawRound(x + 40, y + 26.5f, (float) animation.getOutput(), 8.5f, 4, ColorUtil.applyOpacity(colorWheel.getColor1(), alpha));
 
         GlStateManager.pushMatrix();
         int textColor = ColorUtil.applyOpacity(-1, alpha);
 
-        float playerModelSize = 35;
+        float playerModelSize = 32;
         if (target instanceof AbstractClientPlayer) {
-            renderPlayer2D((AbstractClientPlayer) target, x + 2.5f, y + 2.5f, playerModelSize, 4, textColor);
+            renderPlayer2D(target, x + 5f, y + 4f, playerModelSize, 10, textColor);
         } else {
             Gui.drawRect(x + 2.5, y + 2.5, x + 2.5 + playerModelSize, y + 2.5 + playerModelSize, ColorUtil.applyOpacity(Color.DARK_GRAY, alpha).getRGB());
             GlStateManager.scale(2, 2, 2);
@@ -73,8 +73,8 @@ public class MoonTargetHUD extends TargetHUD {
         }
         GlStateManager.popMatrix();
 
-        intersemiBoldFont13.drawStringWithShadow(text + "HP", x + 40, y + 17, textColor);
-        intersemiBoldFont18.drawStringWithShadow(target.getName(), x + 40, y + 6, textColor);
+        tenacityBoldFont14.drawStringWithShadow(text + " HP", x + 40, y + 18, textColor);
+        tenacityBoldFont22.drawStringWithShadow(target.getName(), x + 40, y + 6, textColor);
     }
 
     @Override
