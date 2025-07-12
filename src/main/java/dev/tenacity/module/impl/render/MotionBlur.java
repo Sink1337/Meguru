@@ -9,6 +9,5 @@ public class MotionBlur extends Module {
     public MotionBlur(){
         super("MotionBlur", Category.RENDER,"MotionBlur");
         addSettings(blurAmount);
-        if (!enabled) this.toggleSilent();
     }
 }

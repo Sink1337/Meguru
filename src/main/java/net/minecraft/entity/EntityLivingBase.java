@@ -1202,11 +1202,12 @@ public abstract class EntityLivingBase extends Entity {
      * Returns an integer indicating the end point of the swing animation, used by {@link #swingProgress} to provide a
      * progress indicator. Takes dig speed enchantments into account.
      */
-    private int getArmSwingAnimationEnd() {
-        return (Tenacity.INSTANCE.getModuleCollection().get(Animations.class).isEnabled() ? Animations.slowdown.getValue().intValue() : 1)
-                * (this.isPotionActive(Potion.digSpeed)
-                ? 6 - (1 + this.getActivePotionEffect(Potion.digSpeed).getAmplifier())
-                : (this.isPotionActive(Potion.digSlowdown) ? 6 + (1 + this.getActivePotionEffect(Potion.digSlowdown).getAmplifier()) * 2 : 6));
+    public int getArmSwingAnimationEnd() {
+        if (Tenacity.INSTANCE.getModuleCollection().getModule(Animations.class).isEnabled() && this == Minecraft.getMinecraft().thePlayer) {
+            return (int) (6 + Tenacity.INSTANCE.getModuleCollection().getModule(Animations.class).slowdown.getValue());
+        } else {
+            return this.isPotionActive(Potion.digSpeed) ? 6 - (1 + this.getActivePotionEffect(Potion.digSpeed).getAmplifier()) : this.isPotionActive(Potion.digSlowdown) ? 6 + (1 + this.getActivePotionEffect(Potion.digSlowdown).getAmplifier()) * 2 : 6;
+        }
     }
 
     /**

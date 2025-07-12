@@ -53,7 +53,6 @@ public class Chams extends Module {
 
     @Override
     public void onRenderChestEvent(RenderChestEvent event) {
-        // 确保这里仍然只检查 Chests
         if (!entities.isEnabled("Chests")) return;
 
         Color behindWallsColor = Color.WHITE;

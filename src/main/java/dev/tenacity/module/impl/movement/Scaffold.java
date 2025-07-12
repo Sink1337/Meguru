@@ -400,7 +400,7 @@ public class Scaffold extends Module {
     }
 
     public void renderCounterBlur() {
-        if (!enabled && anim.isDone() && !animationMode.is("None")) return;
+        if (!enabled && anim.isDone()) return;
 
         int slotToDisplay;
         if (swapMode.is("Lite Spoof") || swapMode.is("Spoof")) {

@@ -9,6 +9,7 @@ import java.awt.*;
 import java.io.InputStream;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class FontUtil implements Utils {
     //These are for the icon font for ease of access
@@ -54,22 +55,15 @@ public class FontUtil implements Utils {
     public static void setupFonts() {
         for (FontType type : FontType.values()) {
             type.setup();
-            HashMap<Integer, CustomFont> fontSizes = new HashMap<>();
+            customFontMap.put(type, new ConcurrentHashMap<>());
 
-            if (type.hasBold()) {
-                for (int size : type.getSizes()) {
-                    CustomFont font = new CustomFont(type.fromSize(size));
+            for (int size : type.getSizes()) {
+                CustomFont font = new CustomFont(type.fromSize(size));
+                if (type.hasBold()) {
                     font.setBoldFont(new CustomFont(type.fromBoldSize(size)));
-
-                    fontSizes.put(size, font);
                 }
-            } else {
-                for (int size : type.getSizes()) {
-                    fontSizes.put(size, new CustomFont(type.fromSize(size)));
-                }
+                customFontMap.get(type).put(size, font);
             }
-
-            customFontMap.put(type, fontSizes);
         }
     }
 
@@ -81,7 +75,8 @@ public class FontUtil implements Utils {
         RUBIK("rubik", "rubik-bold", 13, 18),
         NEVERLOSE("neverlose", 12, 18, 22),
         ICON("icon", 16, 20, 26, 35, 40),
-        IDK("idk-regular", "idk-bold", 12, 14, 16, 18, 20, 24, 28);
+        INTER("inter-semi-bold", 12, 13, 14, 16, 18, 20, 24, 28),
+        IDK("idk-regular", "idk-bold", 12, 13, 14, 16, 18, 20, 24, 28);
 
         private final ResourceLocation location, boldLocation;
         private Font font, boldFont;
@@ -119,11 +114,18 @@ public class FontUtil implements Utils {
         }
 
         public CustomFont size(int size) {
-            return customFontMap.get(this).computeIfAbsent(size, k -> null);
+            return customFontMap.get(this).computeIfAbsent(size, k -> {
+                CustomFont newFont = new CustomFont(fromSize(k));
+                if (hasBold()) {
+                    newFont.setBoldFont(new CustomFont(fromBoldSize(k)));
+                }
+                return newFont;
+            });
         }
 
         public CustomFont boldSize(int size) {
-            return customFontMap.get(this).get(size).getBoldFont();
+            CustomFont customFont = size(size);
+            return customFont != null ? customFont.getBoldFont() : null;
         }
     }
 
@@ -133,9 +135,8 @@ public class FontUtil implements Utils {
             return Font.createFont(Font.TRUETYPE_FONT, is);
         } catch (Exception e) {
             e.printStackTrace();
-            System.out.println("Error loading font");
-            return new Font("default", Font.PLAIN, +10);
+            System.out.println("Error loading font for " + location.getResourcePath());
+            return new Font("default", Font.PLAIN, 10);
         }
     }
-
 }

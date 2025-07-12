@@ -23,6 +23,7 @@ import org.lwjgl.opengl.GL11;
 
 import java.awt.*;
 
+import static java.lang.Math.PI;
 import static dev.tenacity.utils.misc.MathUtils.interpolate;
 import static net.minecraft.client.renderer.GlStateManager.disableBlend;
 import static org.lwjgl.opengl.GL11.*;
@@ -287,6 +288,57 @@ public class RenderUtil implements Utils {
         GLUtil.end2DRendering();
 
         glDisable(GL_LINE_SMOOTH);
+    }
+
+    public static void drawRoundedRect(float x, float y, float width, float height, float radius, int color) {
+        float x1 = x + width, // @off
+                y1 = y + height;
+        final float f = (color >> 24 & 0xFF) / 255.0F,
+                f1 = (color >> 16 & 0xFF) / 255.0F,
+                f2 = (color >> 8 & 0xFF) / 255.0F,
+                f3 = (color & 0xFF) / 255.0F; // @on
+        GL11.glPushAttrib(0);
+        GL11.glScaled(0.5, 0.5, 0.5);
+
+        x *= 2;
+        y *= 2;
+        x1 *= 2;
+        y1 *= 2;
+
+        glDisable(GL11.GL_TEXTURE_2D);
+        GL11.glColor4f(f1, f2, f3, f);
+        GlStateManager.enableBlend();
+        glEnable(GL11.GL_LINE_SMOOTH);
+
+        GL11.glBegin(GL11.GL_POLYGON);
+        final double v = PI / 180;
+
+        for (int i = 0; i <= 90; i += 3) {
+            GL11.glVertex2d(x + radius + MathHelper.sin((float) (i * v)) * (radius * -1), y + radius + MathHelper.cos((float) (i * v)) * (radius * -1));
+        }
+
+        for (int i = 90; i <= 180; i += 3) {
+            GL11.glVertex2d(x + radius + MathHelper.sin((float) (i * v)) * (radius * -1), y1 - radius + MathHelper.cos((float) (i * v)) * (radius * -1));
+        }
+
+        for (int i = 0; i <= 90; i += 3) {
+            GL11.glVertex2d(x1 - radius + MathHelper.sin((float) (i * v)) * radius, y1 - radius + MathHelper.cos((float) (i * v)) * radius);
+        }
+
+        for (int i = 90; i <= 180; i += 3) {
+            GL11.glVertex2d(x1 - radius + MathHelper.sin((float) (i * v)) * radius, y + radius + MathHelper.cos((float) (i * v)) * radius);
+        }
+
+        GL11.glEnd();
+
+        glEnable(GL11.GL_TEXTURE_2D);
+        glDisable(GL11.GL_LINE_SMOOTH);
+        glEnable(GL11.GL_TEXTURE_2D);
+
+        GL11.glScaled(2, 2, 2);
+
+        GL11.glPopAttrib();
+        GL11.glColor4f(1, 1, 1, 1);
     }
 
     // Bad rounded rect method but the shader one requires scaling that sucks
@@ -709,8 +761,6 @@ public class RenderUtil implements Utils {
         float b = color.getBlue() / 255F;
         float a = color.getAlpha() / 255F;
 
-        // 绘制第一个面（6个面，每面2个三角形，共12个三角形，你这里是8个顶点，看起来是Cube的绘制逻辑）
-        // 我将你原有的 int 颜色参数改为 float，与 GlStateManager.color() 保持一致，并正确应用 alpha
         worldrenderer.begin(GL11.GL_QUADS, DefaultVertexFormats.POSITION_COLOR);
         worldrenderer.pos(bb.minX, bb.minY, bb.minZ).color(r, g, b, a).endVertex();
         worldrenderer.pos(bb.minX, bb.maxY, bb.minZ).color(r, g, b, a).endVertex();

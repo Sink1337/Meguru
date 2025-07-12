@@ -188,10 +188,10 @@ public class ProtectedLaunch {
 
         Tenacity.INSTANCE.setKingGenApi(new KingGenApi());
 
-        Tenacity.LOGGER.info("Trying download Background Video");
-        Tenacity.INSTANCE.downloadBackGroundVideo();
+        Tenacity.LOGGER.info("Preparing background video file...");
+        Tenacity.INSTANCE.ensureBackgroundVideoExists();
 
-        Tenacity.LOGGER.info("Initializing background...");
+        Tenacity.LOGGER.info("Initializing video background...");
         Tenacity.INSTANCE.initVideoBackground();
 
         try {

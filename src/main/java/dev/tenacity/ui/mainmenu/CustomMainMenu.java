@@ -100,7 +100,7 @@ public class CustomMainMenu extends GuiScreen {
             //    tenacityFont80.drawCenteredString("Tenacity", width / 2f, height / 2f - 110, Color.WHITE.getRGB());
             //    tenacityFont32.drawString(Tenacity.VERSION, width / 2f + tenacityFont80.getStringWidth("Tenacity") / 2f - (tenacityFont32.getStringWidth(Tenacity.VERSION) / 2f), height / 2f - 113, Color.WHITE.getRGB());
         }
-        Color textcolor =new Color(255,255,255,100);
+        Color textcolor =new Color(255,255,255,255);
         tenacityBoldFont80.drawCenteredString("Tenacity", width / 2f, height / 2f - 110, textcolor);
         tenacityFont32.drawString(Tenacity.VERSION, width / 2f + tenacityBoldFont80.getStringWidth("Tenacity") / 2f - (tenacityFont32.getStringWidth(Tenacity.VERSION) / 2f), height / 2f - 113, textcolor);
         if (Tenacity.is0721){

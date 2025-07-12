@@ -435,7 +435,6 @@ public class GuiIngame extends Gui implements Utils {
                 if (mc.thePlayer.experienceLevel > 0) {
                     String str = "EXP " + mc.thePlayer.experienceLevel;
                     float length = tenacityBoldFont14.getStringWidth(str);
-                    expAnim.animate(mc.thePlayer.experience, 18);
                     RoundedUtil.drawRound(x + length + 2, l, 182 - length - 2, 5, 2, new Color(43, 42, 43));
                     RoundedUtil.drawRound(x + length + 2, l, expAnim.getOutput() * (182 - length - 2), 5, 2, new Color(0, 168, 107));
                     tenacityBoldFont14.drawString(str, x, l - tenacityBoldFont14.getHeight() / 2f + 2.5f, -1);
@@ -1311,7 +1310,26 @@ public class GuiIngame extends Gui implements Utils {
     }
 
     public AbstractFontRenderer getScoreboardFontRenderer() {
-        return ScoreboardMod.customFont.isEnabled() ? tenacityFont20 : this.mc.fontRendererObj;
+        ScoreboardMod scoreboardMod = Tenacity.INSTANCE.getModuleCollection().getModule(ScoreboardMod.class);
+        if (scoreboardMod.fontMode.is("Minecraft")) {
+            return this.mc.fontRendererObj;
+        }
+        int fontSize = scoreboardMod.fontScale.getValue().intValue();
+
+        switch (scoreboardMod.fontMode.getMode()) {
+            case "Tenacity":
+                if (scoreboardMod.bold.isEnabled()) {
+                    return tenacityFont.boldSize(fontSize);
+                }
+                return tenacityFont.size(fontSize);
+            case "Inter":
+                if (scoreboardMod.bold.isEnabled()) {
+                    return idkFont.boldSize(fontSize);
+                }
+                return idkFont.size(fontSize);
+            default:
+                return tenacityFont.size(fontSize);
+        }
     }
 
     public GuiSpectator getSpectatorGui() {

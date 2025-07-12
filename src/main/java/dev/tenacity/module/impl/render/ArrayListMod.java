@@ -9,7 +9,6 @@ import dev.tenacity.module.ModuleCollection;
 import dev.tenacity.module.settings.ParentAttribute;
 import dev.tenacity.module.settings.impl.BooleanSetting;
 import dev.tenacity.module.settings.impl.ModeSetting;
-import dev.tenacity.module.settings.impl.MultipleBoolSetting;
 import dev.tenacity.module.settings.impl.NumberSetting;
 import dev.tenacity.utils.animations.Animation;
 import dev.tenacity.utils.animations.Direction;
@@ -33,9 +32,8 @@ public class ArrayListMod extends Module {
     private final ModeSetting rectangle = new ModeSetting("Rectangle", "Top", "None", "Top", "Side", "Outline");
     private final BooleanSetting partialGlow = new BooleanSetting("Partial Glow", true);
     private final ModeSetting fontMode = new ModeSetting("Font Mode", "Tenacity", "Tenacity", "Inter", "Minecraft");
-    private final MultipleBoolSetting fontSettings = new MultipleBoolSetting("Font Settings",
-            new BooleanSetting("Bold", false),
-            new BooleanSetting("Small Font", false));
+    private final BooleanSetting bold = new BooleanSetting("Bold", false);
+    private final NumberSetting fontScale = new NumberSetting("Font Size", 18, 24, 16, 1);
     public final NumberSetting height = new NumberSetting("Height", 11, 20, 9, .5f);
     private final ModeSetting animation = new ModeSetting("Animation", "Scale in", "Move in", "Scale in", "None");
     private final NumberSetting colorIndex = new NumberSetting("Color Seperation", 20, 100, 5, 1);
@@ -44,19 +42,17 @@ public class ArrayListMod extends Module {
     private final BooleanSetting backgroundColor = new BooleanSetting("Background Color", false);
     private final NumberSetting backgroundAlpha = new NumberSetting("Background Alpha", .35, 1, 0, .01);
 
-    public AbstractFontRenderer font = tenacityFont.size(20);
+    public AbstractFontRenderer font = tenacityFont.size(16);
     public List<Module> modules;
 
     public ArrayListMod() {
         super("ArrayList", Category.RENDER, "Displays your active modules");
-        addSettings(importantModules, rectangle, partialGlow, textShadow, fontMode, fontSettings, height, animation,
+        addSettings(importantModules, rectangle, partialGlow, textShadow, fontMode, bold, fontScale, height, animation,
                 colorIndex, colorSpeed, background, backgroundColor, backgroundAlpha);
         backgroundAlpha.addParent(background, ParentAttribute.BOOLEAN_CONDITION);
         backgroundColor.addParent(background, ParentAttribute.BOOLEAN_CONDITION);
         partialGlow.addParent(rectangle, modeSetting -> !modeSetting.is("None"));
-
-        fontSettings.getSetting("Bold").addParent(fontMode, modeSetting -> !modeSetting.is("Minecraft"));
-        fontSettings.getSetting("Small Font").addParent(fontMode, modeSetting -> !modeSetting.is("Minecraft"));
+        fontScale.addParent(fontMode, modeSetting -> !modeSetting.is("Minecraft"));
 
         if (!enabled) this.toggleSilent();
     }
@@ -379,7 +375,7 @@ public class ArrayListMod extends Module {
     }
 
     private String applyText(String text) {
-        if (fontMode.is("Minecraft") && fontSettings.getSetting("Bold").isEnabled()) {
+        if (fontMode.is("Minecraft") && bold.isEnabled()) {
             return "§l" + text.replace("§7", "§7§l");
         }
         return text;
@@ -390,27 +386,21 @@ public class ArrayListMod extends Module {
         if (fontMode.is("Minecraft")) {
             return mc.fontRendererObj;
         }
+        int fontSize = fontScale.getValue().intValue();
 
-        boolean smallFont = fontSettings.getSetting("Small Font").isEnabled();
         switch (fontMode.getMode()) {
             case "Tenacity":
-                if (fontSettings.getSetting("Bold").isEnabled()) {
-                    if (smallFont) {
-                        return tenacityBoldFont18;
-                    }
-                    return tenacityBoldFont20;
+                if (bold.isEnabled()) {
+                    return tenacityFont.boldSize(fontSize);
                 }
-                return smallFont ? tenacityFont18 : tenacityFont20;
+                return tenacityFont.size(fontSize);
             case "Inter":
-                if (fontSettings.getSetting("Bold").isEnabled()) {
-                    if (smallFont) {
-                        return idkBoldFont18;
-                    }
-                    return idkBoldFont20;
+                if (bold.isEnabled()) {
+                    return idkFont.boldSize(fontSize);
                 }
-                return smallFont ? idkFont18 : idkFont20;
+                return idkFont.size(fontSize);
             default:
-                return smallFont ? tenacityFont18 : tenacityFont20;
+                return tenacityFont.size(fontSize);
         }
     }
 

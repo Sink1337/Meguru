@@ -29,7 +29,9 @@ import org.apache.logging.log4j.Logger;
 import java.awt.*;
 import java.io.File;
 import java.io.IOException;
-import java.time.MonthDay;
+import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -90,34 +92,36 @@ public class Tenacity implements Utils {
         DragManager.draggables.put(name, new Dragging(module, name, x, y));
         return DragManager.draggables.get(name);
     }
-    public void downloadBackGroundVideo() {
-        LOGGER.info("Downloading background video");
-        if (is0721) {
-            backGroundFile = new File(BACKGROUND, "0721.mp4");
-            if (!backGroundFile.exists()) {
-                try {
-                    if (backGroundFile.getParentFile().mkdirs()) {
-                        backGroundFile.createNewFile();
-                        backGroundFile.mkdir();
-                    }
-                } catch (IOException e) {
-                    // e.printStackTrace();
+    public void ensureBackgroundVideoExists() {
+        LOGGER.info("Initializing local background...");
+
+        final String fileName = is0721 ? "0721.mp4" : "background.mp4";
+        backGroundFile = new File(BACKGROUND, fileName);
+
+        if (!BACKGROUND.exists()) {
+            LOGGER.info("Creating background directory: {}", BACKGROUND.getAbsolutePath());
+            BACKGROUND.mkdirs();
+        }
+
+        if (!backGroundFile.exists()) {
+            LOGGER.warn("Local background file not found. Copying from resources...");
+
+            String resourcePath = "/assets/minecraft/Tenacity/Background/" + fileName;
+
+            try (InputStream inputStream = Tenacity.class.getResourceAsStream(resourcePath)) {
+                if (inputStream == null) {
+                    LOGGER.error("FATAL: Resource '{}' not found inside the JAR. Please check your project setup.", resourcePath);
+                    return;
                 }
-                HTTPUtil.download("https://tenacity.cn-nb1.rains3.com/0721.mp4", backGroundFile);
+
+                Files.copy(inputStream, backGroundFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
+                LOGGER.info("Successfully copied background to {}", backGroundFile.getAbsolutePath());
+
+            } catch (IOException e) {
+                LOGGER.error("Failed to copy background file from resources.", e);
             }
         } else {
-            backGroundFile = new File(BACKGROUND, "background.mp4");
-            if (!backGroundFile.exists()) {
-                try {
-                    if (backGroundFile.getParentFile().mkdirs()) {
-                        backGroundFile.createNewFile();
-                        backGroundFile.mkdir();
-                    }
-                } catch (IOException e) {
-                    // e.printStackTrace();
-                }
-                HTTPUtil.download("https://tenacity.cn-nb1.rains3.com/background.mp4", backGroundFile);
-            }
+            LOGGER.info("Local background file found: {}", backGroundFile.getAbsolutePath());
         }
     }
 

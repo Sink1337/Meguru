@@ -19,6 +19,7 @@ public interface Utils {
             neverloseFont = FontUtil.FontType.NEVERLOSE,
             tahomaFont = FontUtil.FontType.TAHOMA,
             rubikFont = FontUtil.FontType.RUBIK,
+            interFont = FontUtil.FontType.INTER,
             idkFont = FontUtil.FontType.IDK;
 
 
@@ -79,4 +80,7 @@ public interface Utils {
             idkBoldFont20 = idkFont20.getBoldFont(),
             idkBoldFont24 = idkFont24.getBoldFont(),
             idkBoldFont28 = idkFont28.getBoldFont();
+
+    CustomFont intersemiBoldFont13 = interFont.size(13),
+            intersemiBoldFont18 = interFont.size(18);
 }
