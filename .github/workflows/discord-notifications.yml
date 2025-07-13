@@ -1,4 +1,4 @@
-name: Discord Commits Notification
+name: Discord Commits
 
 on:
   push:
@@ -19,4 +19,4 @@ jobs:
         with:
           webhook: ${{ secrets.DISCORD_WEBHOOK_URL }}
           template: "avatar-with-link"
-          include-extras: true
+          include-extras: false
