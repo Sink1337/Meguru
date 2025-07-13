@@ -5,24 +5,36 @@ import dev.tenacity.event.impl.network.PacketSendEvent;
 import dev.tenacity.event.impl.player.BlockPlaceableEvent;
 import dev.tenacity.event.impl.player.MotionEvent;
 import dev.tenacity.event.impl.player.SafeWalkEvent;
+import dev.tenacity.event.impl.player.UpdateEvent;
 import dev.tenacity.module.Category;
 import dev.tenacity.module.Module;
+import dev.tenacity.module.impl.misc.EnumFacingUtils;
 import dev.tenacity.module.settings.ParentAttribute;
 import dev.tenacity.module.settings.impl.BooleanSetting;
 import dev.tenacity.module.settings.impl.ModeSetting;
 import dev.tenacity.module.settings.impl.NumberSetting;
+import dev.tenacity.ui.notifications.NotificationManager;
+import dev.tenacity.ui.notifications.NotificationType;
+import dev.tenacity.utils.BlinkUtils;
+import dev.tenacity.utils.addons.rise.MovementFix;
+import dev.tenacity.utils.addons.rise.RayCastUtil;
+import dev.tenacity.utils.addons.rise.RotationUtil;
+import dev.tenacity.utils.addons.rise.component.RenderSlotComponent;
+import dev.tenacity.utils.addons.rise.component.RotationComponent;
+import dev.tenacity.utils.addons.vector.Rotation;
+import dev.tenacity.utils.addons.vector.Vector2f;
 import dev.tenacity.utils.animations.Animation;
 import dev.tenacity.utils.animations.Direction;
 import dev.tenacity.utils.animations.impl.DecelerateAnimation;
 import dev.tenacity.utils.misc.MathUtils;
-import dev.tenacity.utils.player.MovementUtils;
-import dev.tenacity.utils.player.RotationUtils;
-import dev.tenacity.utils.player.ScaffoldUtils;
+import dev.tenacity.utils.misc.SlotUtil;
+import dev.tenacity.utils.player.*;
 import dev.tenacity.utils.render.ColorUtil;
 import dev.tenacity.utils.render.RenderUtil;
 import dev.tenacity.utils.render.RoundedUtil;
 import dev.tenacity.utils.server.PacketUtils;
 import dev.tenacity.utils.time.TimerUtil;
+import net.minecraft.block.BlockAir;
 import net.minecraft.client.gui.IFontRenderer;
 import net.minecraft.client.gui.ScaledResolution;
 import net.minecraft.client.renderer.GlStateManager;
@@ -30,18 +42,21 @@ import net.minecraft.client.renderer.RenderHelper;
 import net.minecraft.client.settings.GameSettings;
 import net.minecraft.client.settings.KeyBinding;
 import net.minecraft.init.Blocks;
+import net.minecraft.item.ItemBlock;
 import net.minecraft.item.ItemStack;
+import net.minecraft.network.Packet;
 import net.minecraft.network.play.client.C03PacketPlayer;
 import net.minecraft.network.play.client.C09PacketHeldItemChange;
 import net.minecraft.network.play.client.C0APacketAnimation;
 import net.minecraft.network.play.client.C0BPacketEntityAction;
 import net.minecraft.potion.Potion;
-import net.minecraft.util.BlockPos;
-import net.minecraft.util.MathHelper;
-import net.minecraft.util.MouseFilter;
+import net.minecraft.util.*;
 import org.lwjgl.opengl.GL11;
 
 import java.awt.*;
+import java.util.concurrent.ThreadLocalRandom;
+
+import static dev.tenacity.utils.misc.MathUtils.getRandom;
 
 public class Scaffold extends Module {
 
@@ -87,8 +102,19 @@ public class Scaffold extends Module {
     private int blockPlacementSlot = -1;
     private int prevSlot;
     private float[] cachedRots = new float[2];
+    private int offGroundTicks = 0;
 
     private final Animation anim = new DecelerateAnimation(250, 1);
+    private boolean shouldrot;
+
+    //hypixel bypasses
+    public static Vec3 targetBlock;
+    private int ticksOnAir;
+    private EnumFacingUtils enumFacingABC;
+    private BlockPos blockFace;
+    private static float targetYaw;
+    private float targetPitch;
+    double startY;
 
     public Scaffold() {
         super("Scaffold", Category.MOVEMENT, "Automatically places blocks under you");
@@ -115,160 +141,267 @@ public class Scaffold extends Module {
         }
 
         if (e.isPre()) {
-            if (baseSpeed.isEnabled()) {
-                MovementUtils.setSpeed(MovementUtils.getBaseMoveSpeed() * 0.7);
-            }
-            if (autoJump.isEnabled() && mc.thePlayer.onGround && MovementUtils.isMoving() && !mc.gameSettings.keyBindJump.isKeyDown()) {
-                mc.thePlayer.jump();
-            }
+            if (rotations.isEnabled() && rotationMode.is("Watchdog") && sprintMode.is("Watchdog")) {
+                if (PlayerUtil.blockRelativeToPlayer(0, -1, 0) instanceof BlockAir) {
+                    ticksOnAir++;
+                } else {
+                    ticksOnAir = 0;
+                }
+                // Gets block to place
+                targetBlock = PlayerUtil.getPlacePossibility(0,0,0,(int) 5);;
+                if (targetBlock == null) {
+                    return;
+                }
+                //Gets EnumFacing
+                enumFacingABC = PlayerUtil.getEnumFacing(targetBlock);
+                if (enumFacingABC == null) {
+                    return;
+                }
+                final BlockPos position = new BlockPos(targetBlock.xCoord, targetBlock.yCoord, targetBlock.zCoord);
+                blockFace = position.add(enumFacingABC.getOffset().xCoord, enumFacingABC.getOffset().yCoord, enumFacingABC.getOffset().zCoord);
+                if (blockFace == null || enumFacingABC == null) {
+                    return;
+                }
+                calculateRotations();
+                if (!GameSettings.isKeyDown(mc.gameSettings.keyBindJump)) {
+                    mc.gameSettings.keyBindJump.pressed = ((mc.thePlayer.onGround && MoveUtil.isMoving()) || mc.gameSettings.keyBindJump.isPressed());
+                } else {
+                    mc.gameSettings.keyBindJump.pressed = GameSettings.isKeyDown(mc.gameSettings.keyBindJump);
+                }
+                if (e.isOnGround()){
+                    if (!BlinkUtils.instance.blinking){
+                        BlinkUtils.startBlink();
+                    }
+                    mc.thePlayer.setSprinting(true);
+                }else {
+                    mc.thePlayer.setSprinting(false);
+                    BlinkUtils.stopBlink();
+                }
+            } else {
+                if (baseSpeed.isEnabled()) {
+                    MovementUtils.setSpeed(MovementUtils.getBaseMoveSpeed() * 0.7);
+                }
+                if (rotations.isEnabled()) {
+                    float[] rotations = new float[]{0, 0};
+                    switch (rotationMode.getMode()) {
+                        case "NCP":
+                            float prevYaw = cachedRots[0];
+                            if ((blockCache = ScaffoldUtils.getBlockInfo()) == null) {
+                                blockCache = lastBlockCache;
+                            }
+                            if (blockCache != null && (mc.thePlayer.ticksExisted % 3 == 0
+                                    || mc.theWorld.getBlockState(new BlockPos(e.getX(), ScaffoldUtils.getYLevel(), e.getZ())).getBlock() == Blocks.air)) {
+                                cachedRots = RotationUtils.getRotations(blockCache.getPosition(), blockCache.getFacing());
+                            }
+                            if ((mc.thePlayer.onGround || (MovementUtils.isMoving() && tower.isEnabled() && mc.gameSettings.keyBindJump.isKeyDown())) && Math.abs(cachedRots[0] - prevYaw) >= 90) {
+                                cachedRots[0] = MovementUtils.getMoveYaw(e.getYaw()) - 180;
+                            }
+                            rotations = cachedRots;
+                            e.setRotations(rotations[0], rotations[1]);
+                            break;
+                        case "Back":
+                            rotations = new float[]{MovementUtils.getMoveYaw(e.getYaw()) - 180, 77};
+                            e.setRotations(rotations[0], rotations[1]);
+                            break;
+                        case "Down":
+                            e.setPitch(90);
+                            break;
+                        case "45":
+                            float val;
+                            if (MovementUtils.isMoving()) {
+                                float f = MovementUtils.getMoveYaw(e.getYaw()) - 180;
+                                float[] numbers = new float[]{-135, -90, -45, 0, 45, 90, 135, 180};
+                                float lastDiff = 999;
+                                val = f;
+                                for (float v : numbers) {
+                                    float diff = Math.abs(v - f);
+                                    if (diff < lastDiff) {
+                                        lastDiff = diff;
+                                        val = v;
+                                    }
+                                }
+                            } else {
+                                val = rotations[0];
+                            }
+                            rotations = new float[]{
+                                    (val + MathHelper.wrapAngleTo180_float(mc.thePlayer.prevRotationYawHead)) / 2.0F,
+                                    (77 + MathHelper.wrapAngleTo180_float(mc.thePlayer.prevRotationPitchHead)) / 2.0F};
+                            e.setRotations(rotations[0], rotations[1]);
+                            break;
+                        case "Enum":
+                            if (lastBlockCache != null) {
+                                float yaw = RotationUtils.getEnumRotations(lastBlockCache.getFacing());
+                                e.setRotations(yaw, 77);
+                            } else {
+                                e.setRotations(mc.thePlayer.rotationYaw + 180, 77);
+                            }
+                            break;
+                        case "0":
+                            e.setRotations(0, 0);
+                            break;
+                    }
+                    RotationUtils.setVisualRotations(e);
+                }
 
-            if (sprint.isEnabled() && sprintMode.is("Watchdog") && mc.thePlayer.onGround && MovementUtils.isMoving() && !mc.gameSettings.keyBindJump.isKeyDown() && !isDownwards() && mc.thePlayer.isSprinting()) {
-                final double[] offset = MathUtils.yawPos(mc.thePlayer.getDirection(), MovementUtils.getSpeed() / 2);
-                mc.thePlayer.sendQueue.addToSendQueue(new C03PacketPlayer.C04PacketPlayerPosition(mc.thePlayer.posX - offset[0], mc.thePlayer.posY, mc.thePlayer.posZ - offset[1], true));
-            }
+                if (speedSlowdown.isEnabled() && mc.thePlayer.isPotionActive(Potion.moveSpeed) && !mc.gameSettings.keyBindJump.isKeyDown() && mc.thePlayer.onGround) {
+                    MovementUtils.setSpeed(speedSlowdownAmount.getValue());
+                }
 
-            if (rotations.isEnabled()) {
-                float[] rotations = new float[]{0, 0};
-                switch (rotationMode.getMode()) {
-                    case "Watchdog":
-                        rotations = new float[]{MovementUtils.getMoveYaw(e.getYaw()) - 180, y};
-                        e.setRotations(rotations[0], rotations[1]);
-                        break;
-                    case "NCP":
-                        float prevYaw = cachedRots[0];
-                        if ((blockCache = ScaffoldUtils.getBlockInfo()) == null) {
-                            blockCache = lastBlockCache;
-                        }
-                        if (blockCache != null && (mc.thePlayer.ticksExisted % 3 == 0
-                                || mc.theWorld.getBlockState(new BlockPos(e.getX(), ScaffoldUtils.getYLevel(), e.getZ())).getBlock() == Blocks.air)) {
-                            cachedRots = RotationUtils.getRotations(blockCache.getPosition(), blockCache.getFacing());
-                        }
-                        if ((mc.thePlayer.onGround || (MovementUtils.isMoving() && tower.isEnabled() && mc.gameSettings.keyBindJump.isKeyDown())) && Math.abs(cachedRots[0] - prevYaw) >= 90) {
-                            cachedRots[0] = MovementUtils.getMoveYaw(e.getYaw()) - 180;
-                        }
-                        rotations = cachedRots;
-                        e.setRotations(rotations[0], rotations[1]);
-                        break;
-                    case "Back":
-                        rotations = new float[]{MovementUtils.getMoveYaw(e.getYaw()) - 180, 77};
-                        e.setRotations(rotations[0], rotations[1]);
-                        break;
-                    case "Down":
-                        e.setPitch(90);
-                        break;
-                    case "45":
-                        float val;
-                        if (MovementUtils.isMoving()) {
-                            float f = MovementUtils.getMoveYaw(e.getYaw()) - 180;
-                            float[] numbers = new float[]{-135, -90, -45, 0, 45, 90, 135, 180};
-                            float lastDiff = 999;
-                            val = f;
-                            for (float v : numbers) {
-                                float diff = Math.abs(v - f);
-                                if (diff < lastDiff) {
-                                    lastDiff = diff;
-                                    val = v;
+                if (sneak.isEnabled()) KeyBinding.setKeyBindState(mc.gameSettings.keyBindSneak.getKeyCode(), true);
+
+                if (mc.thePlayer.onGround) {
+                    keepYCoord = Math.floor(mc.thePlayer.posY - 1.0);
+                }
+
+                if (tower.isEnabled() && mc.gameSettings.keyBindJump.isKeyDown()) {
+                    double centerX = Math.floor(e.getX()) + 0.5, centerZ = Math.floor(e.getZ()) + 0.5;
+                    switch (towerMode.getMode()) {
+                        case "Vanilla":
+                            mc.thePlayer.motionY = 0.42f;
+                            break;
+                        case "Verus":
+                            if (mc.thePlayer.ticksExisted % 2 == 0)
+                                mc.thePlayer.motionY = 0.42f;
+                            break;
+                        case "Watchdog":
+                            if (!MovementUtils.isMoving() && mc.theWorld.getBlockState(new BlockPos(mc.thePlayer).down()).getBlock() != Blocks.air && lastBlockCache != null) {
+                                if (mc.thePlayer.ticksExisted % 6 == 0) {
+                                    e.setX(centerX + 0.1);
+                                    e.setZ(centerZ + 0.1);
+                                } else {
+                                    e.setX(centerX - 0.1);
+                                    e.setZ(centerZ - 0.1);
+                                }
+                                MovementUtils.setSpeed(0);
+                            }
+
+                            mc.thePlayer.motionY = 0.3;
+                            e.setOnGround(true);
+                            break;
+                        case "NCP":
+                            if (!MovementUtils.isMoving() || MovementUtils.getSpeed() < 0.16) {
+                                if (mc.thePlayer.onGround) {
+                                    mc.thePlayer.motionY = 0.42;
+                                } else if (mc.thePlayer.motionY < 0.23) {
+                                    mc.thePlayer.setPosition(mc.thePlayer.posX, (int) mc.thePlayer.posY, mc.thePlayer.posZ);
+                                    mc.thePlayer.motionY = 0.42;
                                 }
                             }
-                        } else {
-                            val = rotations[0];
-                        }
-                        rotations = new float[]{
-                                (val + MathHelper.wrapAngleTo180_float(mc.thePlayer.prevRotationYawHead)) / 2.0F,
-                                (77 + MathHelper.wrapAngleTo180_float(mc.thePlayer.prevRotationPitchHead)) / 2.0F};
-                        e.setRotations(rotations[0], rotations[1]);
-                        break;
-                    case "Enum":
-                        if (lastBlockCache != null) {
-                            float yaw = RotationUtils.getEnumRotations(lastBlockCache.getFacing());
-                            e.setRotations(yaw, 77);
-                        } else {
-                            e.setRotations(mc.thePlayer.rotationYaw + 180, 77);
-                        }
-                        break;
-                    case "0":
-                        e.setRotations(0, 0);
-                        break;
-                }
-                RotationUtils.setVisualRotations(e);
-            }
-
-            if (speedSlowdown.isEnabled() && mc.thePlayer.isPotionActive(Potion.moveSpeed) && !mc.gameSettings.keyBindJump.isKeyDown() && mc.thePlayer.onGround) {
-                MovementUtils.setSpeed(speedSlowdownAmount.getValue());
-            }
-
-            if (sneak.isEnabled()) KeyBinding.setKeyBindState(mc.gameSettings.keyBindSneak.getKeyCode(), true);
-
-            if (mc.thePlayer.onGround) {
-                keepYCoord = Math.floor(mc.thePlayer.posY - 1.0);
-            }
-
-            if (tower.isEnabled() && mc.gameSettings.keyBindJump.isKeyDown()) {
-                double centerX = Math.floor(e.getX()) + 0.5, centerZ = Math.floor(e.getZ()) + 0.5;
-                switch (towerMode.getMode()) {
-                    case "Vanilla":
-                        mc.thePlayer.motionY = 0.42f;
-                        break;
-                    case "Verus":
-                        if (mc.thePlayer.ticksExisted % 2 == 0)
-                            mc.thePlayer.motionY = 0.42f;
-                        break;
-                    case "Watchdog":
-                        if (!MovementUtils.isMoving() && mc.theWorld.getBlockState(new BlockPos(mc.thePlayer).down()).getBlock() != Blocks.air && lastBlockCache != null) {
-                            if (mc.thePlayer.ticksExisted % 6 == 0) {
-                                e.setX(centerX + 0.1);
-                                e.setZ(centerZ + 0.1);
-                            } else {
-                                e.setX(centerX - 0.1);
-                                e.setZ(centerZ - 0.1);
-                            }
-                            MovementUtils.setSpeed(0);
-                        }
-
-                        mc.thePlayer.motionY = 0.3;
-                        e.setOnGround(true);
-                        break;
-                    case "NCP":
-                        if (!MovementUtils.isMoving() || MovementUtils.getSpeed() < 0.16) {
+                            break;
+                        case "Legit":
                             if (mc.thePlayer.onGround) {
-                                mc.thePlayer.motionY = 0.42;
-                            } else if (mc.thePlayer.motionY < 0.23) {
-                                mc.thePlayer.setPosition(mc.thePlayer.posX, (int) mc.thePlayer.posY, mc.thePlayer.posZ);
-                                mc.thePlayer.motionY = 0.42;
+                                mc.thePlayer.jump();
                             }
-                        }
-                        break;
-                    case "Legit":
-                        if (mc.thePlayer.onGround) {
-                            mc.thePlayer.jump();
-                        }
-                        break;
+                            break;
+                    }
                 }
-            }
 
-            blockCache = ScaffoldUtils.getBlockInfo();
-            if (blockCache != null) {
-                lastBlockCache = ScaffoldUtils.getBlockInfo();
-            } else {
-                return;
-            }
+                blockCache = ScaffoldUtils.getBlockInfo();
+                if (blockCache != null) {
+                    lastBlockCache = ScaffoldUtils.getBlockInfo();
+                } else {
+                    return;
+                }
 
-            if (mc.thePlayer.ticksExisted % 4 == 0) {
-                pre = true;
-            }
+                if (mc.thePlayer.ticksExisted % 4 == 0) {
+                    pre = true;
+                }
 
-            if (placeType.is("Pre") || (placeType.is("Dynamic") && pre)) {
-                if (place()) {
+                if (placeType.is("Pre") || (placeType.is("Dynamic") && pre)) {
+                    if (place()) {
+                        pre = false;
+                    }
+                } else {
+                    if (placeType.is("Post") || (placeType.is("Dynamic") && !pre)) {
+                        place();
+                    }
+
                     pre = false;
                 }
             }
-        } else {
-            if (placeType.is("Post") || (placeType.is("Dynamic") && !pre)) {
+        }
+        if (e.isPost()) {
+            if (rotations.isEnabled() && rotationMode.is("Watchdog") && sprintMode.is("Watchdog")) {
+                int slot = SlotUtil.findBlock();
+                if (slot == -1) {
+                    NotificationManager.post(NotificationType.WARNING, "Scaffold", "No blocks in hotbar!");
+                    toggle();
+                    return;
+                }
+                mc.thePlayer.inventory.currentItem = slot;
+            }
+        }
+    }
+
+    @Override
+    public void onBlockPlaceable(BlockPlaceableEvent event) {
+        if (rotations.isEnabled() && rotationMode.is("Watchdog") && sprintMode.is("Watchdog")) {
+            if (mc.thePlayer == null) {
+                return;
+            }
+            // Same Y
+            if (keepY.isEnabled()) {
+                final boolean sameY = !GameSettings.isKeyDown(mc.gameSettings.keyBindJump) && MoveUtil.isMoving();
+                if (targetBlock!=null) {
+                    if (startY - 1 != Math.floor(targetBlock.yCoord) && !mc.thePlayer.onGround && sameY) {
+                        return;
+                    }
+                }
+            }
+            if (ticksOnAir > getRandom(0, 0) && RayCastUtil.overBlock(RotationComponent.lastServerRotations, enumFacingABC.getEnumFacing(), blockFace, false)) {
+//
+               Vec3 hitVec = this.getHitVec();
+//
+                if (mc.playerController.onPlayerRightClick(mc.thePlayer, mc.theWorld, mc.thePlayer.getHeldItem(), blockFace, enumFacingABC.getEnumFacing(), hitVec)) {
+                    mc.thePlayer.swingItem();
+               }
+               mc.rightClickDelayTimer = 0;
+            }
+            //For Same Y
+            if (mc.thePlayer != null && keepY.isEnabled()) {
+                if (mc.thePlayer.onGround || (mc.gameSettings.keyBindJump.isKeyDown() && !MoveUtil.isMoving())) {
+                    startY = Math.floor(mc.thePlayer.posY);
+                }
+                if (mc.thePlayer.posY < startY) {
+                    startY = mc.thePlayer.posY;
+                }
+            }
+        }else {
+            if (placeType.is("Legit")){
                 place();
             }
-
-            pre = false;
         }
+    }
+
+    public Vec3 getHitVec() {
+        /* Correct HitVec */
+        Vec3 hitVec = new Vec3(blockFace.getX() + Math.random(), blockFace.getY() + Math.random(), blockFace.getZ() + Math.random());
+        final MovingObjectPosition movingObjectPosition = RayCastUtil.rayCast(RotationComponent.rotations, mc.playerController.getBlockReachDistance());
+        switch (enumFacingABC.getEnumFacing()) {
+            case DOWN:
+                hitVec.yCoord = blockFace.getY();
+                break;
+            case UP:
+                hitVec.yCoord = blockFace.getY() + 1;
+                break;
+            case NORTH:
+                hitVec.zCoord = blockFace.getZ();
+                break;
+            case EAST:
+                hitVec.xCoord = blockFace.getX() + 1;
+                break;
+            case SOUTH:
+                hitVec.zCoord = blockFace.getZ() + 1;
+                break;
+            case WEST:
+                hitVec.xCoord = blockFace.getX();
+                break;
+        }
+        if (movingObjectPosition != null && movingObjectPosition.getBlockPos().equals(blockFace) &&
+                movingObjectPosition.sideHit == enumFacingABC.getEnumFacing()) {
+            hitVec = movingObjectPosition.hitVec;
+        }
+        return hitVec;
     }
 
     private boolean place() {
@@ -321,14 +454,8 @@ public class Scaffold extends Module {
                 }
             }
         }
-        return placed;
-    }
 
-    @Override
-    public void onBlockPlaceable(BlockPlaceableEvent event) {
-        if (placeType.is("Legit")) {
-            place();
-        }
+        return placed;
     }
 
     @Override
@@ -342,6 +469,11 @@ public class Scaffold extends Module {
         if (downwards.isEnabled()) {
             KeyBinding.setKeyBindState(mc.gameSettings.keyBindSneak.getKeyCode(), false);
             mc.thePlayer.movementInput.sneak = false;
+        }
+        if (mc.thePlayer.isOnGround()) {
+            offGroundTicks++;
+        }else {
+            offGroundTicks = 0;
         }
     }
 
@@ -368,7 +500,18 @@ public class Scaffold extends Module {
                 KeyBinding.setKeyBindState(mc.gameSettings.keyBindSneak.getKeyCode(), GameSettings.isKeyDown(mc.gameSettings.keyBindSneak));
         }
         mc.timer.timerSpeed = 1;
+        BlinkUtils.stopBlink();
         super.onDisable();
+    }
+
+    @Override
+    public void onUpdateEvent(UpdateEvent event) {
+        if (autoJump.isEnabled() && !sprintMode.is("Watchdog") && GameSettings.isKeyDown(mc.gameSettings.keyBindForward)) {
+            if (mc.thePlayer.onGround) {
+                mc.thePlayer.jump();
+                mc.gameSettings.keyBindJump.pressed = false;
+            }
+        }
     }
 
     @Override
@@ -617,4 +760,65 @@ public class Scaffold extends Module {
         return downwards.isEnabled() && GameSettings.isKeyDown(mc.gameSettings.keyBindSneak);
     }
 
+    public static Vec3i translate(BlockPos blockPos, EnumFacing enumFacing) {
+        double x = blockPos.getX();
+        double y = blockPos.getY();
+        double z = blockPos.getZ();
+        double r1 = ThreadLocalRandom.current().nextDouble(0.3, 0.5);
+        double r2 = ThreadLocalRandom.current().nextDouble(0.9, 1.0);
+        if (enumFacing.equals(EnumFacing.UP)) {
+            x += r1;
+            z += r1;
+            y += 1.0;
+        } else if (enumFacing.equals(EnumFacing.DOWN)) {
+            x += r1;
+            z += r1;
+        } else if (enumFacing.equals(EnumFacing.WEST)) {
+            y += r2;
+            z += r1;
+        } else if (enumFacing.equals(EnumFacing.EAST)) {
+            y += r2;
+            z += r1;
+            x += 1.0;
+        } else if (enumFacing.equals(EnumFacing.SOUTH)) {
+            y += r2;
+            x += r1;
+            z += 1.0;
+        } else if (enumFacing.equals(EnumFacing.NORTH)) {
+            y += r2;
+            x += r1;
+        }
+        return new Vec3i(x, y, z);
+    }
+
+    public void calculateRotations() {
+        final Vector2f rotations = RotationUtil.calculate(new dev.tenacity.utils.addons.vector.Vector3d(blockFace.getX(), blockFace.getY(), blockFace.getZ()), enumFacingABC.getEnumFacing());
+        if (mc.thePlayer.offGroundTicks > 0) {
+            if (!RayCastUtil.overBlock(RotationComponent.rotations, enumFacingABC.getEnumFacing(), blockFace, false)) {
+                getRotationsA();
+                targetYaw = rotations.x;
+            }
+        } else {
+            getRotationsA();
+            targetYaw = getYaw();
+        }
+        RotationComponent.setRotations(new Vector2f(targetYaw, targetPitch), 10f, MovementFix.NORMAL);
+    }
+
+    public void getRotationsA() {
+        final Vector2f rotations = RotationUtil.calculate(new dev.tenacity.utils.addons.vector.Vector3d(blockFace.getX(), blockFace.getY(), blockFace.getZ()), enumFacingABC.getEnumFacing());
+        targetYaw = rotations.x;
+        if (mc.gameSettings.keyBindJump.isKeyDown() && !MoveUtil.isMoving()) {
+            targetYaw = rotations.x;
+        }
+        targetPitch = rotations.y;
+    }
+
+    private float getYaw() {
+        final Vector2f rotations = RotationUtil.calculate(new dev.tenacity.utils.addons.vector.Vector3d(blockFace.getX(), blockFace.getY(), blockFace.getZ()), enumFacingABC.getEnumFacing());
+        if (mc.thePlayer.hurtTime > 0 || mc.gameSettings.keyBindBack.isKeyDown()) {
+            return mc.thePlayer.rotationYaw - rotations.x;
+        }
+        return mc.thePlayer.rotationYaw;
+    }
 }

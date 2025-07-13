@@ -10,6 +10,9 @@ import dev.tenacity.module.api.TargetManager;
 import dev.tenacity.module.impl.movement.Scaffold;
 import dev.tenacity.module.impl.render.HUDMod;
 import dev.tenacity.module.settings.impl.*;
+import dev.tenacity.utils.addons.rise.MovementFix;
+import dev.tenacity.utils.addons.rise.component.RotationComponent;
+import dev.tenacity.utils.addons.vector.Vector2f;
 import dev.tenacity.utils.animations.Animation;
 import dev.tenacity.utils.animations.Direction;
 import dev.tenacity.utils.animations.impl.DecelerateAnimation;
@@ -59,6 +62,8 @@ public final class KillAura extends Module {
 
     private final BooleanSetting rotations = new BooleanSetting("Rotations", true);
     private final ModeSetting rotationMode = new ModeSetting("Rotation Mode", "Vanilla", "Vanilla", "Smooth");
+    private final NumberSetting rotationSpeed = new NumberSetting("Rotation speed", 5, 10, 2, 0.1);
+    public static final ModeSetting movementFix = new ModeSetting("Movement fix Mode", "Traditional", "Off", "Normal", "Traditional", "Backwards Sprint");
 
     private final ModeSetting sortMode = new ModeSetting("Sort Mode", "Range", "Range", "Hurt Time", "Health", "Armor");
 
@@ -81,11 +86,13 @@ public final class KillAura extends Module {
         super("KillAura", Category.COMBAT, "Automatically attacks players");
         autoblockMode.addParent(autoblock, a -> autoblock.isEnabled());
         rotationMode.addParent(rotations, r -> rotations.isEnabled());
+        rotationSpeed.addParent(rotations, r -> rotations.isEnabled());
+        movementFix.addParent(addons, r -> r.isEnabled("Movement Fix"));
         switchDelay.addParent(mode, m -> mode.is("Switch"));
         maxTargetAmount.addParent(mode, m -> mode.is("Multi"));
         customColor.addParent(auraESP, r -> r.isEnabled("Custom Color"));
         this.addSettings(mode, maxTargetAmount, switchDelay, minCPS, maxCPS, reach, autoblock, autoblockMode,
-                rotations, rotationMode, sortMode, addons, auraESP, customColor);
+                rotations, rotationMode, rotationSpeed,movementFix ,sortMode, addons, auraESP, customColor);
     }
 
     @Override
@@ -105,7 +112,9 @@ public final class KillAura extends Module {
     @Override
     public void onMotionEvent(MotionEvent event) {
         this.setSuffix(mode.getMode());
-
+        final double minRotationSpeed = rotationSpeed.getValue();
+        final double maxRotationSpeed = rotationSpeed.getValue();
+        final float rotationSpeed = (float) MathUtils.getRandom(minRotationSpeed, maxRotationSpeed);
         if (minCPS.getValue() > maxCPS.getValue()) {
             minCPS.setValue(minCPS.getValue() - 1);
         }
@@ -151,8 +160,7 @@ public final class KillAura extends Module {
                                 break;
                         }
                         yaw = event.getYaw();
-                        event.setRotations(rotations[0], rotations[1]);
-                        RotationUtils.setVisualRotations(event.getYaw(), event.getPitch());
+                        RotationComponent.setRotations(new Vector2f(rotations[0], rotations[1]), rotationSpeed, MovementFix.values()[movementFix.modes.indexOf(movementFix.getMode())]);
                     }
 
                     if (addons.getSetting("Ray Cast").isEnabled() && !RotationUtils.isMouseOver(event.getYaw(), event.getPitch(), TargetManager.target, reach.getValue().floatValue())) {
@@ -274,20 +282,6 @@ public final class KillAura extends Module {
         if (mc.thePlayer == null || entity == null) return false;
         if (!addons.isEnabled("Through Walls") && !mc.thePlayer.canEntityBeSeen(entity)) return false;
         else return TargetManager.checkEntity(entity);
-    }
-
-    @Override
-    public void onPlayerMoveUpdateEvent(PlayerMoveUpdateEvent event) {
-        if (addons.getSetting("Movement Fix").isEnabled() && TargetManager.target != null) {
-            event.setYaw(yaw);
-        }
-    }
-
-    @Override
-    public void onJumpFixEvent(JumpFixEvent event) {
-        if (addons.getSetting("Movement Fix").isEnabled() && TargetManager.target != null) {
-            event.setYaw(yaw);
-        }
     }
 
     @Override

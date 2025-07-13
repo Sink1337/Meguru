@@ -4,35 +4,42 @@ import dev.tenacity.Tenacity;
 import dev.tenacity.module.impl.movement.Scaffold;
 import dev.tenacity.module.impl.movement.Speed;
 import dev.tenacity.utils.Utils;
+import dev.tenacity.utils.addons.vector.Rotation;
+import lombok.Getter;
+import lombok.Setter;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockAir;
+import net.minecraft.block.BlockSnow;
 import net.minecraft.block.material.Material;
 import net.minecraft.init.Blocks;
 import net.minecraft.item.ItemBlock;
 import net.minecraft.item.ItemStack;
-import net.minecraft.util.BlockPos;
-import net.minecraft.util.EnumFacing;
-import net.minecraft.util.Vec3;
+import net.minecraft.util.*;
+import org.lwjgl.input.Keyboard;
+
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
+import java.util.ListIterator;
+import java.util.stream.Collectors;
 
 public class ScaffoldUtils implements Utils {
 
+    @Getter
     public static class BlockCache {
+        private BlockPos position;
+        @Setter
+        private EnumFacing facing;
+        @Setter
+        private Rotation rotation;
+        @Setter
+        private Vec3 hitVec;
 
-        private final BlockPos position;
-        private final EnumFacing facing;
-
-        public BlockCache(final BlockPos position, final EnumFacing facing) {
+        public BlockCache(BlockPos position, EnumFacing facing) {
             this.position = position;
             this.facing = facing;
         }
 
-        public BlockPos getPosition() {
-            return this.position;
-        }
-
-        public EnumFacing getFacing() {
-            return this.facing;
-        }
     }
 
     public static double getYLevel() {
@@ -126,6 +133,241 @@ public class ScaffoldUtils implements Utils {
             x += 0.15;
         }
         return new Vec3(x, y, z);
+    }
+
+    public static BlockCache getBlockCache(boolean placeUp, int range) {
+
+        BlockCache cache;
+        List<Vec3> possibilities = new ArrayList<>();
+
+        for (int x = -range; x <= range; ++x) {
+            for (int y = -range; y <= range; ++y) {
+                for (int z = -range; z <= range; ++z) {
+                    BlockPos blockPos = new BlockPos(mc.thePlayer.posX + x, mc.thePlayer.posY + y, mc.thePlayer.posZ + z);
+                    Block block = mc.theWorld.getBlockState(blockPos).getBlock();
+
+                    if (block.getDefaultState().getBlock().isReplaceable(mc.theWorld, blockPos)) {
+                        possibilities.add(new Vec3(blockPos.getX(),blockPos.getY(),blockPos.getZ()));
+
+                    }
+                }
+            }
+        }
+
+        if (possibilities.isEmpty()) {
+            return null;
+        }
+
+        possibilities = possibilities.stream()
+                .filter(vec3 -> mc.theWorld.getBlockState(new BlockPos(vec3.xCoord,vec3.yCoord,vec3.zCoord)).getBlock().isReplaceable(mc.theWorld, new BlockPos(vec3.xCoord,vec3.yCoord,vec3.zCoord)) && mc.thePlayer.getDistance(vec3.xCoord, vec3.yCoord, vec3.zCoord) <= range)
+                .sorted(Comparator.comparingDouble(vec3 -> {
+                    BlockPos blockPos = new BlockPos(vec3.xCoord, vec3.yCoord, vec3.zCoord);
+                    Vec3 centerVec = new Vec3(blockPos.getX() + 0.5, blockPos.getY() + 0.5, blockPos.getZ() + 0.5);
+                    double d0 = mc.thePlayer.posX - centerVec.xCoord;
+                    double d1 = mc.thePlayer.posY - centerVec.yCoord;
+                    double d2 = mc.thePlayer.posZ - centerVec.zCoord;
+                    return MathHelper.sqrt_double(d0 * d0 + d1 * d1 + d2 * d2);
+                }))
+                .collect(Collectors.toList());
+
+        //possibilities.sort();
+
+        BlockCache closestCache = null;
+
+        for (Vec3 possibility : possibilities) {
+            BlockPos closestPos = new BlockPos(possibility.xCoord, possibility.yCoord, possibility.zCoord);
+            cache = findValidBlockData(closestPos,true, true);
+
+            if (cache != null) {
+                if (closestCache == null || closestCache.getPosition().getY() + 1 > mc.thePlayer.posY) {
+                    closestCache = cache;
+                }
+
+                if (!closestCache.equals(cache)) {
+                    if (!cache.getPosition().equals(closestCache.getPosition())) {
+                        return null;
+                    }
+                }
+
+                if ((cache.getFacing() == EnumFacing.UP && !placeUp && !mc.thePlayer.onGround) || (closestCache.getPosition().getY() + 1 > mc.thePlayer.posY))
+                    continue;
+
+                Rotation floats = RotationUtils.rotationToFace(cache.getPosition(),cache.getFacing(),null);
+                floats.setYaw(MathHelper.wrapAngleTo180_float(floats.getYaw()) + Math.round((mc.thePlayer.rotationYaw / 360)) * 360);
+                MovingObjectPosition rayTraceResult = mc.thePlayer.rayTraceCustom(4.5, floats.getYaw(), floats.getPitch());
+                if ((rayTraceResult.sideHit != cache.getFacing() || !rayTraceResult.getBlockPos().equals(cache.getPosition()))) {
+                    continue;
+                }
+
+                cache.setRotation(floats);
+                cache.setHitVec(rayTraceResult.hitVec);
+
+                return cache;
+            } /*else if (closestCache == null) {
+                return null;
+            }*/
+        }
+
+        return null;
+    }
+
+
+
+
+    public static BlockCache findValidBlockData(BlockPos searchPos, boolean excludedown, boolean sortMethod) {
+
+        for (BlockPos targetPos : sortBlockPositionsWithMode(findAccessibleBlockPositions(searchPos), new Vec3(mc.thePlayer.posX, mc.thePlayer.posY, mc.thePlayer.posZ), sortMethod
+        )) {
+            for (EnumFacing EnumFacing : EnumFacing.values()) {
+                if ((EnumFacing != EnumFacing.DOWN || !excludedown) && !isNotAir(targetPos) && isNotAir(targetPos.offset(EnumFacing, -1))) {
+                    return new BlockCache(targetPos.offset(EnumFacing, -1), EnumFacing);
+                }
+            }
+        }
+
+        return null;
+
+    }
+
+    public static boolean isNotAir(BlockPos blockPos) {
+        if (blockPos != null) {
+            Block block = mc.theWorld.getBlockState(blockPos).getBlock();
+            return (block.getMaterial().isSolid() || !block.getMaterial().isReplaceable()) && !(block instanceof BlockSnow);
+        } else {
+            return false;
+        }
+    }
+
+    public static List<BlockPos> findAccessibleBlockPositions(BlockPos pos) {
+        List<BlockPos> accessiblePositions = new ArrayList<>();
+        double playerY = mc.thePlayer.posY;
+
+        int range = Math.max((int) (mc.playerController.getBlockReachDistance() - 3.0F), 0);
+
+        int baseX = pos.getX();
+        int baseY = pos.getY();
+        int baseZ = pos.getZ();
+
+        for (int yOffset = -range; yOffset <= 0; yOffset++) {
+            int currentY = baseY + yOffset;
+            if (playerY >= currentY) {
+                addValidXZPositions(accessiblePositions, baseX, currentY, baseZ, range);
+            }
+        }
+
+        return accessiblePositions;
+    }
+
+    private static void addValidXZPositions(
+            List<BlockPos> result,
+            int baseX,
+            int currentY,
+            int baseZ,
+            int range
+    ) {
+        for (int xOffset = -range; xOffset <= range; xOffset++) {
+            for (int zOffset = -range; zOffset <= range; zOffset++) {
+                BlockPos pos = new BlockPos(baseX + xOffset, currentY, baseZ + zOffset);
+                result.add(pos);
+            }
+        }
+    }
+
+    public static List<BlockPos> sortBlockPositionsWithMode(List<BlockPos> posList, Vec3 playerPos, boolean sortMethod) {
+        final double playerX = playerPos.getX();
+        final double playerY = playerPos.getY();
+        final double playerZ = playerPos.getZ();
+
+        List<BlockPosSortData> sortDataList = new ArrayList<>(posList.size());
+
+        for (BlockPos pos : posList) {
+            final double centerX = pos.getX() + 0.5;
+            final double centerY = pos.getY() + 0.5;
+            final double centerZ = pos.getZ() + 0.5;
+
+            if (sortMethod) {
+                float dx = (float) (playerX - centerX);
+                float dz = (float) (playerZ - centerZ);
+                float horizontalSq = dx * dx + dz * dz;
+                float verticalDiff = (float) (playerY - centerY);
+                sortDataList.add(new BlockPosSortData(pos, horizontalSq, verticalDiff));
+            } else {
+                float dx = (float) (playerX - centerX);
+                float dy = (float) (playerY - centerY);
+                float dz = (float) (playerZ - centerZ);
+                float distanceSq = dx * dx + dy * dy + dz * dz;
+                sortDataList.add(new BlockPosSortData(pos, distanceSq, 0));
+            }
+        }
+
+        sortDataList.sort((a, b) -> {
+            int mainCompare = Float.compare(a.primaryMetric, b.primaryMetric);
+            if (mainCompare != 0) return mainCompare;
+
+            if (sortMethod) {
+                return Float.compare(Math.abs(a.secondaryMetric), Math.abs(b.secondaryMetric));
+            }
+            return 0;
+        });
+
+        ListIterator<BlockPos> iter = posList.listIterator();
+        for (BlockPosSortData data : sortDataList) {
+            iter.next();
+            iter.set(data.pos);
+        }
+
+        return posList;
+    }
+
+    private static class BlockPosSortData {
+        final BlockPos pos;
+        final float primaryMetric;
+        final float secondaryMetric;
+
+        BlockPosSortData(BlockPos pos, float primary, float secondary) {
+            this.pos = pos;
+            this.primaryMetric = primary;
+            this.secondaryMetric = secondary;
+        }
+    }
+
+    //Rvn Moment
+
+    public static double getMovementAngle() {
+        double angle = Math.toDegrees(Math.atan2(-mc.thePlayer.motionX, mc.thePlayer.motionZ));
+        return (angle == 0.0D) ? 0.0D : angle;
+    }
+
+    public static float getMotionYaw() {
+        return (float)Math.toDegrees(Math.atan2(mc.thePlayer.posZ - mc.thePlayer.prevPosZ, mc.thePlayer.posX - mc.thePlayer.prevPosX)) - 90.0F;
+    }
+
+    public static float hardcodedYaw() {
+        float simpleYaw = 0.0F;
+        boolean w = Keyboard.isKeyDown(mc.gameSettings.keyBindForward.getKeyCode());
+        boolean s = Keyboard.isKeyDown(mc.gameSettings.keyBindBack.getKeyCode());
+        boolean a = Keyboard.isKeyDown(mc.gameSettings.keyBindLeft.getKeyCode());
+        boolean d = Keyboard.isKeyDown(mc.gameSettings.keyBindRight.getKeyCode());
+        boolean dupe = a & d; // Both A and D pressed
+
+        if (w) { // Moving forward (W key)
+            simpleYaw -= 180.0F;
+            if (!dupe) {
+                if (a) simpleYaw += 45.0F; // W + A = forward-left (45° adjustment)
+                if (d) simpleYaw -= 45.0F; // W + D = forward-right (-45° adjustment)
+            }
+        } else if (!s) { // Not moving backward
+            simpleYaw -= 180.0F;
+            if (!dupe) {
+                if (a) simpleYaw += 90.0F; // A only = strafe left (90° adjustment)
+                if (d) simpleYaw -= 90.0F; // D only = strafe right (-90° adjustment)
+            }
+        } else if (!w && !dupe) { // Moving backward (S key) without A+D conflict
+            if (a) simpleYaw -= 45.0F; // S + A = backward-left (-45° adjustment)
+            if (d) simpleYaw += 45.0F; // S + D = backward-right (45° adjustment)
+        }
+
+        return simpleYaw;
     }
 
 }

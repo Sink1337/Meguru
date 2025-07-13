@@ -4,6 +4,7 @@ import dev.tenacity.Tenacity;
 import dev.tenacity.commands.CommandHandler;
 import dev.tenacity.event.impl.player.*;
 import dev.tenacity.module.impl.exploit.Disabler;
+import dev.tenacity.utils.addons.vector.Vector2f;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.audio.MovingSoundMinecartRiding;
 import net.minecraft.client.audio.PositionedSoundRecord;
@@ -32,6 +33,7 @@ import net.minecraft.world.World;
 public class EntityPlayerSP extends AbstractClientPlayer {
     public final NetHandlerPlayClient sendQueue;
     private final StatFileWriter statWriter;
+    public int offGroundTicks, onGroundTicks;
 
     /**
      * The last X position which was transmitted to the server, used to determine when the X position changes and needs
@@ -168,6 +170,13 @@ public class EntityPlayerSP extends AbstractClientPlayer {
      * called every tick when the player is on foot. Performs all the things that normally happen during movement.
      */
     public void onUpdateWalkingPlayer() {
+        if (this.onGround) {
+            offGroundTicks = 0;
+            onGroundTicks++;
+        } else {
+            onGroundTicks = 0;
+            offGroundTicks++;
+        }
         boolean flag = this.isSprinting();
 
         if (flag != serverSprintState) {
@@ -196,7 +205,7 @@ public class EntityPlayerSP extends AbstractClientPlayer {
             MotionEvent motionEvent = new MotionEvent(this.posX, this.getEntityBoundingBox().minY, this.posZ, this.rotationYaw, this.rotationPitch, this.onGround);
             Tenacity.INSTANCE.getEventProtocol().handleEvent(motionEvent);
 
-            if (!motionEvent.isCancelled()) {
+            if(!motionEvent.isCancelled()) {
                 double posX = motionEvent.getX(), posY = motionEvent.getY(), posZ = motionEvent.getZ();
                 float rotationYaw = motionEvent.getYaw(), rotationPitch = motionEvent.getPitch();
                 boolean onGround = motionEvent.isOnGround();
@@ -806,5 +815,9 @@ public class EntityPlayerSP extends AbstractClientPlayer {
 
     public void silentJump() {
         super.jump();
+    }
+
+    public Vector2f getPreviousRotation() {
+        return new Vector2f(lastReportedYaw, lastReportedPitch);
     }
 }

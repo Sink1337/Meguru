@@ -7,6 +7,7 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.security.SecureRandom;
 import java.text.DecimalFormat;
+import java.util.Random;
 
 public class MathUtils {
 
@@ -15,11 +16,24 @@ public class MathUtils {
     public static final DecimalFormat DF_2 = new DecimalFormat("0.00");
     public static final DecimalFormat DF_1D = new DecimalFormat("0.#");
     public static final DecimalFormat DF_2D = new DecimalFormat("0.##");
+    public static Random random;
+
+    static {
+        MathUtils.random = new Random();
+    }
 
     public static final SecureRandom secureRandom = new SecureRandom();
 
     public static int getRandomInRange(int min, int max) {
         return (int) ((Math.random() * (max - min)) + min);
+    }
+
+    public static double clamp(double num, double min, double max) {
+        if (num < min) {
+            return min;
+        } else {
+            return Math.min(num, max);
+        }
     }
 
     public static double[] yawPos(double value) {
@@ -106,4 +120,20 @@ public class MathUtils {
         return Math.max(0, bigDecimal.stripTrailingZeros().scale());
     }
 
+    public static double getRandom(final double min, final double max) {
+        final double range = max - min;
+        double scaled = MathUtils.random.nextDouble() * range;
+        if (scaled > max) {
+            scaled = max;
+        }
+        double shifted = scaled + min;
+        if (shifted > max) {
+            shifted = max;
+        }
+        return shifted;
+    }
+
+    public double wrappedDifference(double number1, double number2) {
+        return Math.min(Math.abs(number1 - number2), Math.min(Math.abs(number1 - 360) - Math.abs(number2 - 0), Math.abs(number2 - 360) - Math.abs(number1 - 0)));
+    }
 }

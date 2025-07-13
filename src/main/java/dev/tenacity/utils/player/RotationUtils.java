@@ -3,6 +3,9 @@ package dev.tenacity.utils.player;
 import com.google.common.base.Predicates;
 import dev.tenacity.event.impl.player.MotionEvent;
 import dev.tenacity.utils.Utils;
+import dev.tenacity.utils.addons.rise.MathConst;
+import dev.tenacity.utils.addons.vector.Rotation;
+import dev.tenacity.utils.addons.vector.Vector2f;
 import dev.tenacity.utils.misc.MathUtils;
 import net.minecraft.client.Minecraft;
 import net.minecraft.entity.Entity;
@@ -14,6 +17,8 @@ import store.intent.intentguard.annotation.Exclude;
 import store.intent.intentguard.annotation.Strategy;
 
 import java.util.List;
+
+import static dev.tenacity.utils.addons.rise.RotationUtils.toRotation;
 
 public class RotationUtils implements Utils {
 
@@ -276,5 +281,57 @@ public class RotationUtils implements Utils {
 
         return false;
     }
+
+    public static Vector2f calculate(final dev.tenacity.utils.addons.vector.Vector3d position, final EnumFacing enumFacing) {
+        double x = position.getX() + 0.5D;
+        double y = position.getY() + 0.5D;
+        double z = position.getZ() + 0.5D;
+
+        x += (double) enumFacing.getDirectionVec().getX() * 0.5D;
+        y += (double) enumFacing.getDirectionVec().getY() * 0.5D;
+        z += (double) enumFacing.getDirectionVec().getZ() * 0.5D;
+        return calculate(new dev.tenacity.utils.addons.vector.Vector3d(x, y, z));
+    }
+
+    public static Vector2f calculate(final dev.tenacity.utils.addons.vector.Vector3d to) {
+        return calculate(mc.thePlayer.getCustomPositionVector().add(mc.thePlayer.motionX, mc.thePlayer.getEyeHeight() + mc.thePlayer.motionY, mc.thePlayer.motionZ), to);
+    }
+
+    public static Vector2f calculate(final dev.tenacity.utils.addons.vector.Vector3d from, final dev.tenacity.utils.addons.vector.Vector3d to) {
+        final dev.tenacity.utils.addons.vector.Vector3d diff = to.subtract(from);
+        final double distance = Math.hypot(diff.getX(), diff.getZ());
+        final float yaw = (float) (MathHelper.atan2(diff.getZ(), diff.getX()) * MathConst.TO_DEGREES) - 90.0F;
+        final float pitch = (float) (-(MathHelper.atan2(diff.getY(), distance) * MathConst.TO_DEGREES));
+        return new Vector2f(yaw, pitch);
+    }
+
+    public static Rotation rotationToFace(BlockPos targetPos, EnumFacing targetFace, Vec3 helpVector) {
+        AxisAlignedBB bb = mc.theWorld.getBlockState(targetPos).getBlock().getCollisionBoundingBox(mc.theWorld, targetPos, mc.theWorld.getBlockState(targetPos));
+        double height = bb.maxY - bb.minY;
+        double xWidth = bb.maxX - bb.minX;
+        double zWidth = bb.maxZ - bb.minZ;
+        Vec3 hitVec = new Vec3(bb.minX, bb.minY, bb.minZ).add(new Vec3(xWidth / 2f, height / 2f, zWidth / 2f));
+        Vec3i faceVec = targetFace.getDirectionVec();
+        Vec3 directionVec = new Vec3(faceVec.getX() * (xWidth / 2f), faceVec.getY() * (height / 2f), faceVec.getZ() * (zWidth / 2f));
+        hitVec = hitVec.add(directionVec);
+        double max = 0.4;
+        double fixX = 0.0;
+        double fixZ = 0.0;
+        double fixY = 0.0;
+        if (helpVector != null) {
+            if (directionVec.getX() == 0) {
+                fixX += Math.min(-xWidth / 2f * max, Math.max(xWidth / 2f * max, helpVector.getX() - hitVec.getX()));
+            }
+            if (directionVec.getY() == 0) {
+                fixY += Math.min(-height / 2f * max, Math.max(height / 2f * max, helpVector.getY() - hitVec.getY()));
+            }
+            if (directionVec.getZ() == 0) {
+                fixZ += Math.min(-zWidth / 2f * max, Math.max(zWidth / 2f * max, helpVector.getZ() - hitVec.getZ()));
+            }
+        }
+        hitVec = hitVec.add(new Vec3(fixX, fixY, fixZ));
+        return toRotation(hitVec);
+    }
+
 
 }

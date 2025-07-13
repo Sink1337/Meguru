@@ -17,6 +17,9 @@ import java.util.function.Consumer;
  */
 public abstract class ListenerAdapter implements EventListener {
 
+    private final Map<Class<? extends Event>, Consumer<Event>> methods = new HashMap<>();
+    private boolean registered = false;
+
     // Game
     public void onGameCloseEvent(GameCloseEvent event) {
     }
@@ -84,6 +87,14 @@ public abstract class ListenerAdapter implements EventListener {
     public void onMoveEvent(MoveEvent event) {
     }
 
+    public void onEventMoveInput(EventMoveInput event){
+
+    }
+
+    public void onEventLook(EventLook event){
+
+    }
+
     public void onPlayerMoveUpdateEvent(PlayerMoveUpdateEvent event) {
     }
 
@@ -136,10 +147,6 @@ public abstract class ListenerAdapter implements EventListener {
     public void onShaderEvent(ShaderEvent event) {
     }
 
-    private final Map<Class<? extends Event>, Consumer<Event>> methods = new HashMap<>();
-
-    private boolean registered = false;
-
     @Override
     public void onEvent(Event event) {
         if (!registered) {
@@ -182,6 +189,8 @@ public abstract class ListenerAdapter implements EventListener {
         registerEvent(LivingDeathEvent.class, this::onLivingDeathEvent);
         registerEvent(MotionEvent.class, this::onMotionEvent);
         registerEvent(MoveEvent.class, this::onMoveEvent);
+        registerEvent(EventMoveInput.class,this::onEventMoveInput);
+        registerEvent(EventLook.class, this::onEventLook);
         registerEvent(PlayerMoveUpdateEvent.class, this::onPlayerMoveUpdateEvent);
         registerEvent(PlayerSendMessageEvent.class, this::onPlayerSendMessageEvent);
         registerEvent(PushOutOfBlockEvent.class, this::onPushOutOfBlockEvent);
