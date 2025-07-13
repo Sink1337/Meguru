@@ -13,26 +13,40 @@ import net.minecraft.util.MovingObjectPosition;
 
 public class AutoTool extends Module {
 
-    private final BooleanSetting autoSword = new BooleanSetting("AutoSword", true);
+    private final BooleanSetting autoSword = new BooleanSetting("Auto Sword", true);
+    private final BooleanSetting switchBack = new BooleanSetting("Switch Back", true);
+    private final BooleanSetting disableOnRightClick = new BooleanSetting("Disable On Right Click", true);
+
+    private int lastSlot = -1;
 
     public AutoTool() {
         super("AutoTool", Category.PLAYER, "switches to the best tool");
-        this.addSettings(autoSword);
+        this.addSettings(autoSword, switchBack, disableOnRightClick);
     }
 
     @Override
     public void onMotionEvent(MotionEvent e) {
         if (e.isPre()) {
+            if (disableOnRightClick.isEnabled() && mc.gameSettings.keyBindUseItem.isKeyDown()) {
+                return;
+            }
+
             if (mc.objectMouseOver != null && mc.gameSettings.keyBindAttack.isKeyDown()) {
                 MovingObjectPosition objectMouseOver = mc.objectMouseOver;
                 if (objectMouseOver.entityHit != null) {
+                    if (lastSlot == -1) lastSlot = mc.thePlayer.inventory.currentItem;
                     switchSword();
                 } else if (objectMouseOver.getBlockPos() != null) {
                     Block block = mc.theWorld.getBlockState(objectMouseOver.getBlockPos()).getBlock();
+                    if (lastSlot == -1) lastSlot = mc.thePlayer.inventory.currentItem;
                     updateItem(block);
                 }
             } else if (TargetManager.target != null) {
+                if (lastSlot == -1) lastSlot = mc.thePlayer.inventory.currentItem;
                 switchSword();
+            } else if (switchBack.isEnabled() && lastSlot != -1) {
+                mc.thePlayer.inventory.currentItem = lastSlot;
+                lastSlot = -1;
             }
         }
     }
@@ -51,7 +65,7 @@ public class AutoTool extends Module {
                 bestItem = i;
             }
         }
-        if (bestItem != -1) {
+        if (bestItem != -1 && mc.thePlayer.inventory.currentItem != bestItem) {
             mc.thePlayer.inventory.currentItem = bestItem;
         }
     }
@@ -67,9 +81,8 @@ public class AutoTool extends Module {
                 bestItem = i;
             }
         }
-        if (bestItem != -1) {
+        if (bestItem != -1 && mc.thePlayer.inventory.currentItem != bestItem) {
             mc.thePlayer.inventory.currentItem = bestItem;
         }
     }
-
 }

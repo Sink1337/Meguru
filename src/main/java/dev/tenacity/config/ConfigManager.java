@@ -207,4 +207,16 @@ public class ConfigManager {
         }
         return true;
     }
+
+    public void openConfigFolder() {
+        if (Desktop.isDesktopSupported()) {
+            Desktop desktop = Desktop.getDesktop();
+            try {
+                file.mkdirs();
+                desktop.open(file);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+    }
 }

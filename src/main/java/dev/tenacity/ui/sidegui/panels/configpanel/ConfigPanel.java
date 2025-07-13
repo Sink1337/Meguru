@@ -45,7 +45,7 @@ public class ConfigPanel extends Panel {
 
     public ConfigPanel() {
         toggleButtons = new ArrayList<>();
-        toggleButtons.add(new ToggleButton("Load visuals"));
+        toggleButtons.add(new ToggleButton("Load visuals", true));
         toggleButtons.add(new ToggleButton("Only show configs from current version"));
         toggleButtons.add(new ToggleButton("Only show configs made by you"));
 

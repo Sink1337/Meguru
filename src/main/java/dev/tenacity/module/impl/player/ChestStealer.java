@@ -112,8 +112,6 @@ public class ChestStealer extends Module {
             return;
         }
 
-        setSuffix(smart.isEnabled() ? "Smart" : null);
-
         if (invManager == null) {
             invManager = Tenacity.INSTANCE.getModuleCollection().getModule(InvManager.class);
         }

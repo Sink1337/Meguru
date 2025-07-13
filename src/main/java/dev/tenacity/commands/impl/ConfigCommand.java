@@ -11,7 +11,7 @@ import java.util.stream.Collectors;
 public class ConfigCommand extends Command {
 
     public ConfigCommand() {
-        super("config", "Manages local configurations, including module parameters and drag data.", ".config <list/save/load/delete> [name]");
+        super("config", "Manages local configurations, including module parameters and drag data.", ".config <list/save/load/delete/folder> [name]");
     }
 
     @Override
@@ -49,7 +49,7 @@ public class ConfigCommand extends Command {
                     String saveName = args[1];
                     sendChatWithPrefix("Saving current configuration (module parameters and drag data) as '" + saveName + "'...");
                     if (Tenacity.INSTANCE.getConfigManager().saveConfig(saveName)) {
-                        DragManager.saveDragData(); // 保存拖拽数据
+                        DragManager.saveDragData();
                         sendChatWithPrefix("Configuration '" + saveName + "' saved successfully!");
                         Tenacity.INSTANCE.getConfigManager().collectConfigs();
                     } else {
@@ -96,6 +96,14 @@ public class ConfigCommand extends Command {
                     } else {
                         sendChatError("Failed to delete configuration '" + deleteName + "'.");
                     }
+                    break;
+
+                case "folder":
+                    if (args.length != 1) {
+                        sendChatError("Usage: .config folder");
+                        return;
+                    }
+                    Tenacity.INSTANCE.getConfigManager().openConfigFolder();
                     break;
 
                 default:

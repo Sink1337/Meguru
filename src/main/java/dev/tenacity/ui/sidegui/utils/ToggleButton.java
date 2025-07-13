@@ -12,14 +12,12 @@ import dev.tenacity.utils.render.ColorUtil;
 import dev.tenacity.utils.render.RenderUtil;
 import dev.tenacity.utils.render.RoundedUtil;
 import lombok.Getter;
-import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 
 import java.awt.*;
 
 @Getter
 @Setter
-@RequiredArgsConstructor
 public class ToggleButton implements Screen {
 
     @Getter
@@ -31,6 +29,15 @@ public class ToggleButton implements Screen {
     private final float WH = 10;
 
     private final Animation toggleAnimation = new DecelerateAnimation(250, 1);
+
+    public ToggleButton(String name, boolean initialState) {
+        this.name = name;
+        this.enabled = initialState;
+    }
+
+    public ToggleButton(String name) {
+        this(name, false);
+    }
 
 
     @Override

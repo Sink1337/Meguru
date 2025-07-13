@@ -36,7 +36,7 @@ public class ArrayListMod extends Module {
     private final BooleanSetting bold = new BooleanSetting("Bold", false);
     private final NumberSetting fontScale = new NumberSetting("Font Size", 18, 24, 16, 1);
     public final NumberSetting height = new NumberSetting("Height", 11, 20, 9, .5f);
-    private final ModeSetting animation = new ModeSetting("Animation", "Scale in", "Move in", "Scale in", "None");
+    private final ModeSetting animation = new ModeSetting("Animation", "Scale in", "Move in", "None", "Scale in");
     private final NumberSetting colorIndex = new NumberSetting("Color Seperation", 20, 100, 5, 1);
     private final NumberSetting colorSpeed = new NumberSetting("Color Speed", 15, 30, 2, 1);
     private final BooleanSetting background = new BooleanSetting("Background", true);
@@ -48,7 +48,7 @@ public class ArrayListMod extends Module {
 
     public ArrayListMod() {
         super("ArrayList", Category.RENDER, "Displays your active modules");
-        addSettings(importantModules, rectangle, partialGlow, textShadow, fontMode, bold, fontScale, height, animation,
+        addSettings(importantModules, rectangle, partialGlow, textShadow, fontMode, suffixmode, bold, fontScale, height, animation,
                 colorIndex, colorSpeed, background, backgroundColor, backgroundAlpha);
         backgroundAlpha.addParent(background, ParentAttribute.BOOLEAN_CONDITION);
         backgroundColor.addParent(background, ParentAttribute.BOOLEAN_CONDITION);
@@ -66,7 +66,13 @@ public class ArrayListMod extends Module {
             modules = moduleList;
         }
         modules.sort(Comparator.<Module>comparingDouble(m -> {
-            String name = HUDMod.get(m.getName() + (m.hasMode() ? " " + m.getSuffix() : ""));
+            String suffix;
+            if (suffixmode.is(" ")){
+                suffix = "";
+            } else {
+                suffix = "- ";
+            }
+            String name = HUDMod.get(m.getName() + (m.hasMode() ? (m.getCategory().equals(Category.SCRIPTS) ? " §c" : " §7") + suffix + m.getSuffix() : ""));
             return font.getStringWidth(applyText(name));
         }).reversed());
     }
@@ -303,7 +309,13 @@ public class ArrayListMod extends Module {
                     break;
                 case "Outline":
                     if (count != 0) {
-                        String modText = applyText(HUDMod.get(lastModule.getName() + (lastModule.hasMode() ? " " + lastModule.getSuffix() : "")));
+                        String lastModuleSuffix;
+                        if (suffixmode.is(" ")) {
+                            lastModuleSuffix = "";
+                        } else {
+                            lastModuleSuffix = "- ";
+                        }
+                        String modText = applyText(HUDMod.get(lastModule.getName() + (lastModule.hasMode() ? (lastModule.getCategory().equals(Category.SCRIPTS) ? " §c" : " §7") + lastModuleSuffix + lastModule.getSuffix() : "")));
                         float texWidth = font.getStringWidth(modText) - textWidth;
                         //Draws the difference of width rect and also the rect on the side of the text
                         if (flip) {
