@@ -1,0 +1,30 @@
+name: Discord Commits Notification
+
+on:
+  push:
+    branches:
+      - main
+      - master
+
+jobs:
+  notify-discord:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Send commit message to Discord
+        uses: sniddl/discord-commits@v1
+        with:
+          webhook: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          message: |
+            🚀 **New commit to: ${{ github.repository }}** 🚀
+            ---
+            By **${{ commit.author.name }}**:
+            ```
+            ${{ commit.message }}
+            ```
+            [View commit details](https://github.com/${{ github.repository }}/commit/${{ commit.id }})
+          include-extras: true
+          last-commit-only: false
