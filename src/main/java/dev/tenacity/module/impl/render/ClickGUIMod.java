@@ -12,7 +12,7 @@ import org.lwjgl.input.Keyboard;
 
 public class ClickGUIMod extends Module {
 
-    public static final ModeSetting clickguiMode = new ModeSetting("ClickGui", "Dropdown", "Dropdown", "Modern","Skeet");
+    public static final ModeSetting clickguiMode = new ModeSetting("ClickGui", "Dropdown", "Dropdown", "Modern");
     public static final ModeSetting scrollMode = new ModeSetting("Scroll Mode", "Screen Height", "Screen Height", "Value");
     public static final BooleanSetting gradient = new BooleanSetting("Gradient", false);
     public static final BooleanSetting outlineAccent = new BooleanSetting("Outline Accent", true);

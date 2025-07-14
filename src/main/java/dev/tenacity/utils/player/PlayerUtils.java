@@ -39,6 +39,18 @@ public class PlayerUtils implements Utils {
         return bestSlot;
     }
 
+    public static boolean overVoid() {
+        double playerPosY = mc.thePlayer.posY;
+        for (int y = (int) playerPosY; y >= 0; y--) {
+            BlockPos currentPos = new BlockPos(mc.thePlayer.posX, y, mc.thePlayer.posZ);
+            Block blockAtPos = mc.theWorld.getBlockState(currentPos).getBlock();
+            if (!(blockAtPos instanceof BlockAir)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
     public static EnumFacingUtils getEnumFacing(final Vec3 position) {
         for (int x2 = -1; x2 <= 1; x2 += 2) {
             if (!(PlayerUtils.block(position.xCoord + x2, position.yCoord, position.zCoord) instanceof BlockAir)) {

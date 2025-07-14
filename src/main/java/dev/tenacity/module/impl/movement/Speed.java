@@ -26,7 +26,7 @@ import java.util.concurrent.ThreadLocalRandom;
 @SuppressWarnings("unused")
 public final class Speed extends Module {
     public final ModeSetting mode = new ModeSetting("Mode", "Watchdog",
-            "Watchdog", "Strafe", "Matrix", "HurtTime", "Vanilla", "BHop", "Verus", "Viper", "Vulcan", "Zonecraft", "Heatseeker", "Mineland", "Legit", "Bloxd");
+            "Watchdog", "Strafe", "Matrix", "HurtTime", "Vanilla", "BHop", "Verus", "Viper", "Vulcan", "Zonecraft", "Heatseeker", "Mineland", "Legit", "Bloxd", "BlocksMC");
     public final ModeSetting bloxdMode = new ModeSetting("Bloxd Mode", "LowHop", "LowHop", "Normal");
     private final ModeSetting watchdogMode = new ModeSetting("Watchdog Mode", "Hop", "Hop", "Dev", "Low Hop", "Ground");
     private final ModeSetting verusMode = new ModeSetting("Verus Mode", "Normal", "Low", "Normal");
@@ -35,6 +35,9 @@ public final class Speed extends Module {
     private final NumberSetting groundSpeed = new NumberSetting("Ground Speed", 2, 5, 1, 0.1);
     private final NumberSetting timer = new NumberSetting("Timer", 1, 5, 1, 0.1);
     private final NumberSetting vanillaSpeed = new NumberSetting("Speed", 1, 10, 1, 0.1);
+    private final BooleanSetting blocksMCTimer = new BooleanSetting("BlocksMC Timer", false);
+    private final NumberSetting blocksMCSpeedFactor = new NumberSetting("BlocksMC Speed Factor", 1.0, 2.0, 0.5, 0.05);
+    private final NumberSetting blocksMCOffset = new NumberSetting("BlocksMC Offset", 0.0, 0.2, -0.2, 0.01);
 
     private final TimerUtil timerUtil = new TimerUtil();
     private final float r = ThreadLocalRandom.current().nextFloat();
@@ -45,8 +48,8 @@ public final class Speed extends Module {
     private boolean setTimer = true;
     private double moveSpeed;
     private int inAirTicks;
-
     private final NoaPhysics bloxdPhysics = new NoaPhysics();
+    private int blocksMCLoaded;
 
     public Speed() {
         super("Speed", Category.MOVEMENT, "Makes you go faster");
@@ -56,8 +59,11 @@ public final class Speed extends Module {
         groundSpeed.addParent(watchdogMode, modeSetting -> modeSetting.is("Ground") && mode.is("Watchdog"));
         vanillaSpeed.addParent(mode, modeSetting -> modeSetting.is("Vanilla") || modeSetting.is("BHop"));
         bloxdMode.addParent(mode, modeSetting -> modeSetting.is("Bloxd"));
+        blocksMCTimer.addParent(mode, modeSetting -> modeSetting.is("BlocksMC"));
+        blocksMCSpeedFactor.addParent(mode, modeSetting -> modeSetting.is("BlocksMC"));
+        blocksMCOffset.addParent(mode, modeSetting -> modeSetting.is("BlocksMC"));
 
-        this.addSettings(mode, vanillaSpeed, watchdogMode, verusMode, viperMode, bloxdMode, autoDisable, groundSpeed, timer);
+        this.addSettings(mode, vanillaSpeed, watchdogMode, verusMode, viperMode, bloxdMode, autoDisable, groundSpeed, timer, blocksMCTimer, blocksMCSpeedFactor, blocksMCOffset);
     }
 
     @Override
@@ -71,6 +77,7 @@ public final class Speed extends Module {
         inAirTicks = 0;
         moveSpeed = 0;
         stage = 0;
+        blocksMCLoaded = 0;
 
         super.onEnable();
     }
@@ -79,8 +86,8 @@ public final class Speed extends Module {
     public void onDisable() {
         bloxdPhysics.reset();
         mc.timer.timerSpeed = 1;
-        mc.thePlayer.motionX = 0;
-        mc.thePlayer.motionZ = 0;
+
+        blocksMCLoaded = 0;
 
         super.onDisable();
     }
@@ -88,8 +95,25 @@ public final class Speed extends Module {
     @Override
     public void onMotionEvent(MotionEvent e) {
         this.setSuffix(mode.getMode());
-        if (setTimer) {
-            mc.timer.timerSpeed = timer.getValue().floatValue();
+
+        if (!mode.is("BlocksMC") || !blocksMCTimer.isEnabled()) {
+            if (setTimer) {
+                mc.timer.timerSpeed = timer.getValue().floatValue();
+            }
+        } else {
+            if (blocksMCTimer.isEnabled()) {
+                if(blocksMCLoaded < 30) {
+                    blocksMCLoaded++;
+                    if(blocksMCLoaded < 10) {
+                        mc.timer.timerSpeed = 0.5F;
+                    } else {
+                        mc.timer.timerSpeed = 2.0F;
+                    }
+                }
+                if(blocksMCLoaded == 30) {
+                    blocksMCLoaded = 0;
+                }
+            }
         }
 
         double distX = e.getX() - mc.thePlayer.prevPosX, distZ = e.getZ() - mc.thePlayer.prevPosZ;
@@ -281,6 +305,24 @@ public final class Speed extends Module {
                         break;
                 }
                 break;
+            case "BlocksMC":
+                if (e.isPre()) {
+                    if (mc.thePlayer.onGround && MovementUtils.isMoving()) {
+                        mc.thePlayer.jump();
+                        MovementUtils.setSpeed(mc.thePlayer.isPotionActive(Potion.moveSpeed) ?
+                                0.56 : (0.4 * blocksMCSpeedFactor.getValue() + blocksMCOffset.getValue()));
+                    }
+
+                    if (mc.thePlayer.offGroundTicks == 0 && MovementUtils.isMoving()) {
+                        mc.thePlayer.jump();
+                        MovementUtils.setSpeed(mc.thePlayer.isPotionActive(Potion.moveSpeed) ? 0.60 : 0.48);
+                    } else if (mc.thePlayer.offGroundTicks == 4 && mc.thePlayer.motionY > 0) {
+                        mc.thePlayer.motionY = -0.09800000190734863;
+                    }
+
+                    MovementUtils.applyFriction();
+                }
+                break;
         }
     }
 
@@ -329,6 +371,8 @@ public final class Speed extends Module {
                     case "Normal":
                         break;
                 }
+                break;
+            case "BlocksMC":
                 break;
         }
     }
@@ -390,7 +434,7 @@ public final class Speed extends Module {
         if (terrainSpeed != null && terrainSpeed.isEnabled()) {
             return false;
         }
-        return Tenacity.INSTANCE.isEnabled(Speed.class) && MovementUtils.isMoving() && !(mode.is("Watchdog") && watchdogMode.is("Ground")) && !(mode.is("Bloxd") && bloxdMode.is("LowHop"));
+        return Tenacity.INSTANCE.isEnabled(Speed.class) && MovementUtils.isMoving() && !(mode.is("Watchdog") && watchdogMode.is("Ground")) && !(mode.is("Bloxd") && bloxdMode.is("LowHop")) && !(mode.is("BlocksMC"));
     }
 
 }

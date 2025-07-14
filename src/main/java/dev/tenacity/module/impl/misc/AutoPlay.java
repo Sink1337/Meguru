@@ -47,7 +47,6 @@ public class AutoPlay extends Module {
 
     @Override
     public void onChatReceivedEvent(ChatReceivedEvent event) {
-        this.setSuffix(mode.getMode());
         String message = event.message.getUnformattedText(), strippedMessage = StringUtils.stripControlCodes(message);
 
         if (mode.is("Hypixel")) {

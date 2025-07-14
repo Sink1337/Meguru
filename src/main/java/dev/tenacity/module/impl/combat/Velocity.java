@@ -3,6 +3,7 @@ package dev.tenacity.module.impl.combat;
 import dev.tenacity.event.impl.game.WorldEvent;
 import dev.tenacity.event.impl.network.PacketReceiveEvent;
 import dev.tenacity.event.impl.network.PacketSendEvent;
+import dev.tenacity.event.impl.player.MotionEvent;
 import dev.tenacity.module.Category;
 import dev.tenacity.module.Module;
 import dev.tenacity.module.settings.Setting;
@@ -21,7 +22,7 @@ import net.minecraft.network.play.server.S27PacketExplosion;
 
 public class Velocity extends Module {
 
-    private final ModeSetting mode = new ModeSetting("Mode", "Packet", "Packet", "Matrix", "Tick", "Stack", "C0F Cancel");
+    private final ModeSetting mode = new ModeSetting("Mode", "Packet", "Packet", "Matrix", "Tick", "Stack", "C0F Cancel", "BlocksMC");
     private final NumberSetting horizontal = new NumberSetting("Horizontal", 0, 100, 0, 1);
     private final NumberSetting vertical = new NumberSetting("Vertical", 0, 100, 0, 1);
     private final NumberSetting chance = new NumberSetting("Chance", 100, 100, 0, 1);
@@ -31,11 +32,18 @@ public class Velocity extends Module {
     private long lastDamageTimestamp, lastAlertTimestamp;
     private boolean cancel;
     private int stack;
+    private int Ticks;
 
     public Velocity() {
         super("Velocity", Category.COMBAT, "Reduces your knockback");
         Setting.addParent(mode, m -> m.is("Packet"), horizontal, vertical, staffCheck);
         this.addSettings(mode, horizontal, vertical, chance, onlyWhileMoving, staffCheck);
+    }
+
+    @Override
+    public void onEnable() {
+        super.onEnable();
+        Ticks = 0;
     }
 
     @Override
@@ -53,6 +61,22 @@ public class Velocity extends Module {
         if ((onlyWhileMoving.isEnabled() && !MovementUtils.isMoving()) || (chance.getValue() != 100 && MathUtils.getRandomInRange(0, 100) > chance.getValue()))
             return;
         Packet<?> packet = e.getPacket();
+
+        if (mode.is("BlocksMC")) {
+            if (packet instanceof S12PacketEntityVelocity) {
+                S12PacketEntityVelocity s12 = (S12PacketEntityVelocity) e.getPacket();
+                if (mc.thePlayer != null && s12.getEntityID() == mc.thePlayer.getEntityId()) {
+                    e.cancel();
+                    Ticks = 2;
+                }
+            } else if (packet instanceof S27PacketExplosion) {
+                e.cancel();
+                Ticks = 2;
+            }
+            return;
+        }
+
+
         switch (mode.getMode()) {
             case "Packet":
                 if (packet instanceof S12PacketEntityVelocity) {
@@ -123,8 +147,24 @@ public class Velocity extends Module {
     }
 
     @Override
+    public void onMotionEvent(MotionEvent e) {
+        if (mode.is("BlocksMC")) {
+            this.setSuffix(mode.getMode());
+            Ticks--;
+            if (Ticks == 0) {
+                if (mc.thePlayer != null && MovementUtils.isMoving()) {
+                    mc.thePlayer.motionX *= 1.5;
+                    mc.thePlayer.motionZ *= 1.5;
+                    MovementUtils.strafe(MovementUtils.getSpeed(), false);
+                }
+            }
+        }
+    }
+
+    @Override
     public void onWorldEvent(WorldEvent event) {
         stack = 0;
+        Ticks = 0;
     }
 
     private boolean cancel(PacketReceiveEvent e) {

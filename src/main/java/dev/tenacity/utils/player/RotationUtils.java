@@ -168,7 +168,6 @@ public class RotationUtils implements Utils {
         return rotationYaw + MathHelper.wrapAngleTo180_float(var1 - rotationYaw);
     }
 
-    // Tenacity original getVecRotations (keeping for reference, but not used by Breaker)
     public static Vec3 getVecRotations(float yaw, float pitch) {
         double d = Math.cos(Math.toRadians(-yaw) - Math.PI);
         double d1 = Math.sin(Math.toRadians(-yaw) - Math.PI);
@@ -333,5 +332,35 @@ public class RotationUtils implements Utils {
         return toRotation(hitVec);
     }
 
-
+    public static float getMovementYaw() {
+        float yaw = 0.0f;
+        double moveForward = mc.thePlayer.moveForward;
+        double moveStrafe = mc.thePlayer.moveStrafing;
+        if (moveForward == 0.0) {
+            if (moveStrafe == 0.0) {
+                yaw = 180.0f;
+            } else if (moveStrafe > 0.0) {
+                yaw = 90.0f;
+            } else if (moveStrafe < 0.0) {
+                yaw = -90.0f;
+            }
+        } else if (moveForward > 0.0) {
+            if (moveStrafe == 0.0) {
+                yaw = 180.0f;
+            } else if (moveStrafe > 0.0) {
+                yaw = 135.0f;
+            } else if (moveStrafe < 0.0) {
+                yaw = -135.0f;
+            }
+        } else if (moveForward < 0.0) {
+            if (moveStrafe == 0.0) {
+                yaw = 0.0f;
+            } else if (moveStrafe > 0.0) {
+                yaw = 45.0f;
+            } else if (moveStrafe < 0.0) {
+                yaw = -45.0f;
+            }
+        }
+        return (MathHelper.wrapAngleTo180_float(mc.thePlayer.rotationYaw) + yaw % 360 + 360) % 360;
+    }
 }

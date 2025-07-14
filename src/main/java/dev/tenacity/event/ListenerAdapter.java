@@ -110,6 +110,9 @@ public abstract class ListenerAdapter implements EventListener {
     public void onSlowDownEvent(SlowDownEvent event) {
     }
 
+    public void onPreInput(PreInputEvent event) {
+    }
+
     public void onStepConfirmEvent(StepConfirmEvent event) {
     }
 
@@ -196,6 +199,7 @@ public abstract class ListenerAdapter implements EventListener {
         registerEvent(PushOutOfBlockEvent.class, this::onPushOutOfBlockEvent);
         registerEvent(SafeWalkEvent.class, this::onSafeWalkEvent);
         registerEvent(SlowDownEvent.class, this::onSlowDownEvent);
+        registerEvent(PreInputEvent.class, this::onPreInput);
         registerEvent(StepConfirmEvent.class, this::onStepConfirmEvent);
         registerEvent(UpdateEvent.class, this::onUpdateEvent);
 

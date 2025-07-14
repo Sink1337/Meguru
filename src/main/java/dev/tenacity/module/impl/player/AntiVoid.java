@@ -22,7 +22,7 @@ import java.util.List;
 
 public class AntiVoid extends Module {
 
-    private final ModeSetting mode = new ModeSetting("Mode", "Bloxd", "Bloxd");
+    private final ModeSetting mode = new ModeSetting("Mode", "Bloxd", "Bloxd", "BlocksMC");
     private final NumberSetting fallDist = new NumberSetting("Fall Distance", 3, 20, 1, 0.5);
     private final TimerUtil timer = new TimerUtil();
     private boolean reset;
@@ -35,6 +35,8 @@ public class AntiVoid extends Module {
     private boolean gameInProgress = false;
 
     private final List<Packet> packets = new ArrayList<>();
+
+    private boolean b1;
 
     public AntiVoid() {
         super("AntiVoid", Category.PLAYER, "saves you from the void");
@@ -49,6 +51,7 @@ public class AntiVoid extends Module {
         this.gameInProgress = false;
         this.gameStartDelayTicks = 0;
         packets.clear();
+        this.b1 = false;
     }
 
     @Override
@@ -84,6 +87,25 @@ public class AntiVoid extends Module {
             if (gameStartDelayTicks >= REQUIRED_GAME_START_TICKS) {
                 gameInProgress = true;
                 gameStartDelayTicks = -1;
+            }
+        }
+
+        if (mode.is("BlocksMC")) {
+            if (mc.thePlayer == null || mc.theWorld == null) {
+                return;
+            }
+
+            if (mc.thePlayer.onGround) {
+                this.lastGroundX = mc.thePlayer.posX;
+                this.lastGroundY = mc.thePlayer.posY;
+                this.lastGroundZ = mc.thePlayer.posZ;
+            }
+            if (b1) {
+                mc.thePlayer.motionY = -0.09800000190734863;
+                this.lastGroundY = mc.thePlayer.posY;
+                this.lastGroundX = mc.thePlayer.posX;
+                this.lastGroundZ = mc.thePlayer.posZ;
+                b1 = false;
             }
         }
     }
@@ -125,6 +147,14 @@ public class AntiVoid extends Module {
                         packets.forEach(PacketUtils::sendPacketNoEvent);
                         packets.clear();
                     }
+                }
+            }
+        } else if (mode.is("BlocksMC")) {
+            if (event.getPacket() instanceof C03PacketPlayer) {
+                if (!isBlockUnder() && mc.thePlayer.fallDistance > fallDist.getValue()) {
+                    mc.thePlayer.motionY = -0.09800000190734863;
+                    b1 = true;
+                    event.cancel();
                 }
             }
         }

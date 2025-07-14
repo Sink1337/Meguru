@@ -1,22 +1,26 @@
 package dev.tenacity.module.impl.player;
 
+import dev.tenacity.Tenacity;
 import dev.tenacity.event.impl.player.BoundingBoxEvent;
 import dev.tenacity.event.impl.player.MotionEvent;
 import dev.tenacity.module.Category;
 import dev.tenacity.module.Module;
+import dev.tenacity.module.impl.combat.KillAura;
 import dev.tenacity.module.settings.impl.ModeSetting;
 import dev.tenacity.utils.server.PacketUtils;
 import net.minecraft.network.play.client.C03PacketPlayer;
 import net.minecraft.util.AxisAlignedBB;
+import dev.tenacity.utils.player.PlayerUtils;
 
 @SuppressWarnings("unused")
 public final class NoFall extends Module {
 
-    private final ModeSetting mode = new ModeSetting("Mode", "Vanilla", "Vanilla", "Packet", "Verus");
+    private final ModeSetting mode = new ModeSetting("Mode", "Vanilla", "Vanilla", "Packet", "Verus", "BlocksMC");
     private double dist;
     private boolean doNofall;
     private double lastFallDistance;
     private boolean c04;
+    public boolean spoof;
 
     public NoFall() {
         super("NoFall", Category.PLAYER, "prevents fall damage");
@@ -27,6 +31,19 @@ public final class NoFall extends Module {
     public void onMotionEvent(MotionEvent event) {
         if (event.isPre()) {
             this.setSuffix(mode.getMode());
+
+            if (mode.is("BlocksMC")) {
+                if (mc.thePlayer.fallDistance > 3.5 && !PlayerUtils.overVoid() && Tenacity.INSTANCE.getModuleCollection().getModule(KillAura.class).isEnabled()) {
+                    mc.thePlayer.fallDistance = 0;
+                    mc.timer.timerSpeed = 0.5F;
+                    spoof = true;
+                } else if (spoof) {
+                    mc.timer.timerSpeed = 1.0F;
+                    spoof = false;
+                }
+            }
+
+
             if (mc.thePlayer.fallDistance > 3.0 && isBlockUnder()) {
                 switch (mode.getMode()) {
                     case "Vanilla":
@@ -36,7 +53,9 @@ public final class NoFall extends Module {
                         PacketUtils.sendPacket(new C03PacketPlayer(true));
                         break;
                 }
-                mc.thePlayer.fallDistance = 0;
+                if (!mode.is("BlocksMC")) {
+                    mc.thePlayer.fallDistance = 0;
+                }
             }
         }
     }
@@ -60,4 +79,12 @@ public final class NoFall extends Module {
         return false;
     }
 
+    @Override
+    public void onDisable() {
+        if (spoof) {
+            mc.timer.timerSpeed = 1.0F;
+            spoof = false;
+        }
+        super.onDisable();
+    }
 }

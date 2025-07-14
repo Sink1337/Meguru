@@ -690,7 +690,8 @@ public class EntityPlayerSP extends AbstractClientPlayer {
         float f = 0.8F;
         boolean flag2 = this.movementInput.moveForward >= f;
         this.movementInput.updatePlayerMoveState();
-
+        PreInputEvent preInputEvent = new PreInputEvent();
+        Tenacity.INSTANCE.getEventProtocol().handleEvent(preInputEvent);
         if (this.isUsingItem() && !this.isRiding()) {
             SlowDownEvent slowDownEvent = new SlowDownEvent();
             Tenacity.INSTANCE.getEventProtocol().handleEvent(slowDownEvent);

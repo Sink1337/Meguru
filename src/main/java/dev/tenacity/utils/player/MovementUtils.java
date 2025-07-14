@@ -114,6 +114,50 @@ public class MovementUtils implements Utils {
         moveEvent.setZ(forward * speed * mz - strafe * speed * mx);
     }
 
+    private static double getDirectionRadians() {
+        float yaw = mc.thePlayer.rotationYaw;
+        float strafeAngle = 45.0f;
+
+        if (mc.thePlayer.movementInput.moveForward < 0.0f) {
+            strafeAngle = -45.0f;
+            yaw += 180.0f;
+        }
+
+        if (mc.thePlayer.movementInput.moveStrafe > 0.0f) {
+            yaw -= strafeAngle;
+            if (mc.thePlayer.movementInput.moveForward == 0.0f) {
+                yaw -= 45.0f;
+            }
+        } else if (mc.thePlayer.movementInput.moveStrafe < 0.0f) {
+            yaw += strafeAngle;
+            if (mc.thePlayer.movementInput.moveForward == 0.0f) {
+                yaw += 45.0f;
+            }
+        }
+        return Math.toRadians(yaw);
+    }
+
+    public static void strafe(double speed) {
+        if(isMoving()) {
+            mc.thePlayer.motionZ = Math.cos(getDirectionRadians()) * speed;
+            mc.thePlayer.motionX = -Math.sin(getDirectionRadians()) * speed;
+        }
+    }
+
+    public static void strafe(double speed, boolean moving) {
+        if(!moving || isMoving()) {
+            mc.thePlayer.motionZ = Math.cos(getDirectionRadians()) * speed;
+            mc.thePlayer.motionX = -Math.sin(getDirectionRadians()) * speed;
+        }
+    }
+
+    public static void applyFriction() {
+        if (mc.thePlayer.isPotionActive(Potion.moveSpeed) ? MovementUtils.getSpeed() < 0.367 : MovementUtils.getSpeed() < 0.255) {
+            strafe(mc.thePlayer.isPotionActive(Potion.moveSpeed) ? 0.367 : 0.255);
+        }
+    }
+
+
     public static double getBaseMoveSpeed() {
         double baseSpeed = mc.thePlayer.capabilities.getWalkSpeed() * 2.873;
         if (mc.thePlayer.isPotionActive(Potion.moveSlowdown)) {
