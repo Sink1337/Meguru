@@ -174,7 +174,6 @@ public class Scaffold extends Module {
                     }
                     mc.thePlayer.setSprinting(true);
                 }else {
-                    mc.thePlayer.setSprinting(false);
                     BlinkUtils.stopBlink();
                 }
             } else {

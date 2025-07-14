@@ -4,6 +4,7 @@ import dev.tenacity.Tenacity;
 import dev.tenacity.commands.CommandHandler;
 import dev.tenacity.event.impl.player.*;
 import dev.tenacity.module.impl.exploit.Disabler;
+import dev.tenacity.utils.addons.rise.component.RotationComponent;
 import dev.tenacity.utils.addons.vector.Vector2f;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.audio.MovingSoundMinecartRiding;
@@ -246,6 +247,11 @@ public class EntityPlayerSP extends AbstractClientPlayer {
                     this.lastReportedYaw = rotationYaw;
                     this.lastReportedPitch = rotationPitch;
                 }
+            }
+            if(RotationComponent.active) {
+                RotationComponent.isRotationg = true;
+            }else{
+                RotationComponent.isRotationg = false;
             }
             motionEvent.setPost();
             Tenacity.INSTANCE.getEventProtocol().handleEvent(motionEvent);

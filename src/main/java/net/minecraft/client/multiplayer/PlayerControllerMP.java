@@ -413,19 +413,20 @@ public class PlayerControllerMP {
      * Attacks an entity
      */
     public void attackEntity(EntityPlayer playerIn, Entity targetEntity) {
-        boolean cancelled = false;
-        if (targetEntity instanceof EntityLivingBase) {
-            AttackEvent attackEvent = new AttackEvent((EntityLivingBase) targetEntity);
-            Tenacity.INSTANCE.getEventProtocol().handleEvent(attackEvent);
-            cancelled = attackEvent.isCancelled();
-        }
-        if (!cancelled) {
-            this.syncCurrentPlayItem();
-            this.netClientHandler.addToSendQueue(new C02PacketUseEntity(targetEntity, C02PacketUseEntity.Action.ATTACK));
+        if (!(targetEntity instanceof EntityLivingBase)) return;
+        AttackEvent event = new AttackEvent((EntityLivingBase) targetEntity);
 
-            if (this.currentGameType != WorldSettings.GameType.SPECTATOR) {
-                playerIn.attackTargetEntityWithCurrentItem(targetEntity);
-            }
+        Tenacity.INSTANCE.eventProtocol.handleEvent(event);
+
+        if(event.isCancelled())
+            return;
+
+        this.syncCurrentPlayItem();
+        this.netClientHandler.addToSendQueue(new C02PacketUseEntity(targetEntity, C02PacketUseEntity.Action.ATTACK));
+
+        if (this.currentGameType != WorldSettings.GameType.SPECTATOR)
+        {
+            playerIn.attackTargetEntityWithCurrentItem(targetEntity);
         }
     }
 

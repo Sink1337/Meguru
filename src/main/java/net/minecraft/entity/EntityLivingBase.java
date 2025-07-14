@@ -7,6 +7,7 @@ import dev.tenacity.Tenacity;
 import dev.tenacity.event.impl.player.JumpFixEvent;
 import dev.tenacity.event.impl.player.LivingDeathEvent;
 import dev.tenacity.module.impl.render.Animations;
+import dev.tenacity.utils.addons.rise.component.RotationComponent;
 import net.minecraft.block.Block;
 import net.minecraft.block.material.Material;
 import net.minecraft.block.state.IBlockState;
@@ -1218,7 +1219,6 @@ public abstract class EntityLivingBase extends Entity {
         if (!this.isSwingInProgress || this.swingProgressInt >= this.getArmSwingAnimationEnd() / 2 || this.swingProgressInt < 0) {
             this.swingProgressInt = -1;
             this.isSwingInProgress = true;
-
             if (this.worldObj instanceof WorldServer) {
                 ((WorldServer) this.worldObj).getEntityTracker().sendToAllTrackingEntity(this, new S0BPacketAnimation(this, 0));
             }
@@ -1633,6 +1633,10 @@ public abstract class EntityLivingBase extends Entity {
         }
 
         this.onLivingUpdate();
+
+        float yaw = this.rotationYaw;
+        if (this == Minecraft.getMinecraft().thePlayer) yaw = RotationComponent.rotations.x;
+
         double d0 = this.posX - this.prevPosX;
         double d1 = this.posZ - this.prevPosZ;
         float f = (float) (d0 * d0 + d1 * d1);
