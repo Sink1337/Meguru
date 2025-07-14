@@ -23,10 +23,13 @@ import dev.tenacity.utils.render.RenderUtil;
 import dev.tenacity.utils.server.PacketUtils;
 import dev.tenacity.utils.time.TimerUtil;
 import dev.tenacity.viamcp.utils.AttackOrder;
+import net.minecraft.enchantment.EnchantmentHelper;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.network.play.client.C07PacketPlayerDigging;
 import net.minecraft.network.play.client.C08PacketPlayerBlockPlacement;
+import net.minecraft.network.play.client.C0APacketAnimation;
+import net.minecraft.potion.Potion;
 import net.minecraft.util.BlockPos;
 import net.minecraft.util.EnumFacing;
 
@@ -61,7 +64,7 @@ public final class KillAura extends Module {
     private final ModeSetting autoblockMode = new ModeSetting("Autoblock Mode", "Watchdog", "Fake", "Verus", "Watchdog");
 
     private final BooleanSetting rotations = new BooleanSetting("Rotations", true);
-    private final ModeSetting rotationMode = new ModeSetting("Rotation Mode", "Vanilla", "Vanilla", "Smooth");
+    private final ModeSetting rotationMode = new ModeSetting("Rotation Mode", "Vanilla", "Vanilla", "Smooth","HVH");
     private final NumberSetting rotationSpeed = new NumberSetting("Rotation speed", 5, 10, 2, 0.1);
     public static final ModeSetting movementFix = new ModeSetting("Movement fix Mode", "Traditional", "Off", "Normal", "Traditional", "Backwards Sprint");
 
@@ -107,6 +110,20 @@ public final class KillAura extends Module {
         wasBlocking = false;
         currentTargetIndex = 0;
         super.onDisable();
+    }
+
+    @Override
+    public void onUpdateEvent(UpdateEvent event){
+        if (TargetManager.target != null) {
+            if (attackTimer.hasTimeElapsed(cps, true)) {
+                final int maxValue = (int) ((minCPS.getMaxValue() - maxCPS.getValue()) * 5.0);
+                final int minValue = (int) ((minCPS.getMaxValue() - minCPS.getValue()) * 5.0);
+                cps = MathUtils.getRandomInRange(minValue, maxValue);
+                AttackEvent attackEvent = new AttackEvent(TargetManager.target);
+                Tenacity.INSTANCE.getEventProtocol().handleEvent(attackEvent);
+                attack();
+            }
+        }
     }
 
     @Override
@@ -158,53 +175,18 @@ public final class KillAura extends Module {
                             case "Smooth":
                                 rotations = RotationUtils.getSmoothRotations(TargetManager.target);
                                 break;
+                            case "HVH":
+                                rotations = dev.tenacity.utils.addons.rise.RotationUtils.getHVHRotation(TargetManager.target);
+                                break;
                         }
                         yaw = event.getYaw();
                         RotationComponent.setRotations(new Vector2f(rotations[0], rotations[1]), rotationSpeed, MovementFix.values()[movementFix.modes.indexOf(movementFix.getMode())]);
                     }
 
-                    if (addons.getSetting("Ray Cast").isEnabled() && !RotationUtils.isMouseOver(event.getYaw(), event.getPitch(), TargetManager.target, reach.getValue().floatValue())) {
+                    if (!RotationComponent.isRotationg || mc.thePlayer.getDistanceToEntity(TargetManager.target) > reach.getValue() || (addons.getSetting("Ray Cast").isEnabled() && !RotationUtils.isMouseOver(event.getYaw(), event.getPitch(), TargetManager.target, reach.getValue().floatValue())))
                         return;
-                    }
-
-                    if (attackTimer.hasTimeElapsed(cps, true)) {
-                        final int currentMinCPS = minCPS.getValue().intValue();
-                        final int currentMaxCPS = maxCPS.getValue().intValue();
-
-                        int minDelayTicks = (int) (20.0 / Math.max(1, currentMaxCPS));
-                        int maxDelayTicks = (int) (20.0 / Math.max(1, currentMinCPS));
-
-                        if (minDelayTicks > maxDelayTicks) {
-                            int temp = minDelayTicks;
-                            minDelayTicks = maxDelayTicks;
-                            maxDelayTicks = temp;
-                        }
-
-                        int calculatedMinCPS = Math.max(1, currentMinCPS);
-                        int calculatedMaxCPS = Math.max(1, currentMaxCPS);
-
-                        cps = MathUtils.getRandomInRange(1000 / calculatedMaxCPS, 1000 / calculatedMinCPS);
 
 
-                        if (mode.is("Multi")) {
-                            for (int i = 0; i < Math.min(targets.size(), maxTargetAmount.getValue().intValue()); i++) {
-                                EntityLivingBase entityLivingBase = targets.get(i);
-                                AttackEvent attackEvent = new AttackEvent(entityLivingBase);
-                                Tenacity.INSTANCE.getEventProtocol().handleEvent(attackEvent);
-
-                                if (!attackEvent.isCancelled()) {
-                                    AttackOrder.sendFixedAttack(mc.thePlayer, entityLivingBase);
-                                }
-                            }
-                        } else {
-                            AttackEvent attackEvent = new AttackEvent(TargetManager.target);
-                            Tenacity.INSTANCE.getEventProtocol().handleEvent(attackEvent);
-
-                            if (!attackEvent.isCancelled()) {
-                                AttackOrder.sendFixedAttack(mc.thePlayer, TargetManager.target);
-                            }
-                        }
-                    }
                 }
             } else {
                 TargetManager.target = null;
@@ -324,4 +306,16 @@ public final class KillAura extends Module {
             }
         }
     }
+
+    private void attack() {
+        if (TargetManager.target != null) {
+            attackEntity(TargetManager.target);
+        }
+    }
+
+    private void attackEntity(final Entity target) {
+        AttackOrder.sendFixedAttack(mc.thePlayer, target);
+        attackTimer.reset();
+    }
+
 }
