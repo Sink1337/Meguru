@@ -174,7 +174,6 @@ public class Scaffold extends Module {
                     }
                     mc.thePlayer.setSprinting(true);
                 }else {
-                    mc.thePlayer.setSprinting(false);
                     BlinkUtils.stopBlink();
                 }
             } else {
@@ -350,12 +349,12 @@ public class Scaffold extends Module {
             }
             if (ticksOnAir > getRandom(0, 0) && RayCastUtil.overBlock(RotationComponent.lastServerRotations, enumFacingABC.getEnumFacing(), blockFace, false)) {
 //
-               Vec3 hitVec = this.getHitVec();
+                Vec3 hitVec = this.getHitVec();
 //
                 if (mc.playerController.onPlayerRightClick(mc.thePlayer, mc.theWorld, mc.thePlayer.getHeldItem(), blockFace, enumFacingABC.getEnumFacing(), hitVec)) {
                     mc.thePlayer.swingItem();
-               }
-               mc.rightClickDelayTimer = 0;
+                }
+                mc.rightClickDelayTimer = 0;
             }
             //For Same Y
             if (mc.thePlayer != null && keepY.isEnabled()) {

@@ -25,8 +25,10 @@ import dev.tenacity.utils.time.TimerUtil;
 import dev.tenacity.viamcp.utils.AttackOrder;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityLivingBase;
+import net.minecraft.network.play.client.C02PacketUseEntity;
 import net.minecraft.network.play.client.C07PacketPlayerDigging;
 import net.minecraft.network.play.client.C08PacketPlayerBlockPlacement;
+import net.minecraft.network.play.client.C09PacketHeldItemChange;
 import net.minecraft.util.BlockPos;
 import net.minecraft.util.EnumFacing;
 
@@ -46,6 +48,7 @@ public final class KillAura extends Module {
     private final TimerUtil attackTimer = new TimerUtil();
     private final TimerUtil switchTimer = new TimerUtil();
     private int currentTargetIndex = 0;
+    private int blocksmcTick;
 
     private final ModeSetting mode = new ModeSetting("Mode", "Single", "Single", "Switch", "Multi");
 
@@ -57,11 +60,10 @@ public final class KillAura extends Module {
     private final NumberSetting reach = new NumberSetting("Reach", 4, 6, 3, 0.1);
 
     private final BooleanSetting autoblock = new BooleanSetting("Autoblock", false);
-
-    private final ModeSetting autoblockMode = new ModeSetting("Autoblock Mode", "Watchdog", "Fake", "Verus", "Watchdog");
+    private final ModeSetting autoblockMode = new ModeSetting("Autoblock Mode", "Watchdog", "Fake", "Verus", "Watchdog", "Interact", "BlocksMC A", "BlocksMC B");
 
     private final BooleanSetting rotations = new BooleanSetting("Rotations", true);
-    private final ModeSetting rotationMode = new ModeSetting("Rotation Mode", "Vanilla", "Vanilla", "Smooth");
+    private final ModeSetting rotationMode = new ModeSetting("Rotation Mode", "Vanilla", "Vanilla", "Smooth", "HVH", "BlocksMC");
     private final NumberSetting rotationSpeed = new NumberSetting("Rotation speed", 5, 10, 2, 0.1);
     public static final ModeSetting movementFix = new ModeSetting("Movement fix Mode", "Traditional", "Off", "Normal", "Traditional", "Backwards Sprint");
 
@@ -92,7 +94,13 @@ public final class KillAura extends Module {
         maxTargetAmount.addParent(mode, m -> mode.is("Multi"));
         customColor.addParent(auraESP, r -> r.isEnabled("Custom Color"));
         this.addSettings(mode, maxTargetAmount, switchDelay, minCPS, maxCPS, reach, autoblock, autoblockMode,
-                rotations, rotationMode, rotationSpeed,movementFix ,sortMode, addons, auraESP, customColor);
+                rotations, rotationMode, rotationSpeed, movementFix, sortMode, addons, auraESP, customColor);
+    }
+
+    @Override
+    public void onEnable() {
+        blocksmcTick = 0;
+        super.onEnable();
     }
 
     @Override
@@ -106,7 +114,26 @@ public final class KillAura extends Module {
         }
         wasBlocking = false;
         currentTargetIndex = 0;
+        blocksmcTick = 0;
         super.onDisable();
+    }
+
+    @Override
+    public void onUpdateEvent(UpdateEvent event) {
+        if (autoblock.isEnabled() && autoblockMode.is("BlocksMC B")) {
+            return;
+        }
+
+        if (TargetManager.target != null) {
+            if (attackTimer.hasTimeElapsed(cps, true)) {
+                final int maxValue = (int) ((minCPS.getMaxValue() - maxCPS.getValue()) * 5.0);
+                final int minValue = (int) ((minCPS.getMaxValue() - minCPS.getValue()) * 5.0);
+                cps = MathUtils.getRandomInRange(minValue, maxValue);
+                AttackEvent attackEvent = new AttackEvent(TargetManager.target);
+                Tenacity.INSTANCE.getEventProtocol().handleEvent(attackEvent);
+                attack();
+            }
+        }
     }
 
     @Override
@@ -120,6 +147,47 @@ public final class KillAura extends Module {
         }
 
         sortTargets();
+
+        if (autoblock.isEnabled() && InventoryUtils.isHoldingSword() && autoblockMode.is("BlocksMC B") && !targets.isEmpty() && !Tenacity.INSTANCE.isEnabled(Scaffold.class)) {
+            if (event.isPre()) {
+                TargetManager.target = targets.get(0);
+
+                if (rotations.isEnabled()) {
+                    float[] rotations = RotationUtils.getRotationsNeeded(TargetManager.target);
+                    RotationComponent.setRotations(new Vector2f(rotations[0], rotations[1]), rotationSpeed, MovementFix.values()[movementFix.modes.indexOf(movementFix.getMode())]);
+                }
+
+                if (mc.thePlayer.getDistanceToEntity(TargetManager.target) > reach.getValue()) {
+                    TargetManager.target = null;
+                    blocksmcTick = 0;
+                    return;
+                }
+
+                if (blocksmcTick == 0) {
+                    PacketUtils.sendPacketNoEvent(new C07PacketPlayerDigging(C07PacketPlayerDigging.Action.RELEASE_USE_ITEM, BlockPos.ORIGIN, EnumFacing.DOWN));
+                    wasBlocking = false;
+                    blocksmcTick++;
+                } else if (blocksmcTick == 1) {
+                    if (attackTimer.hasTimeElapsed(cps, true)) {
+                        cps = (int) MathUtils.getRandomInRange(minCPS.getValue(), maxCPS.getValue());
+                        attackEntity(TargetManager.target);
+                    }
+                    blocksmcTick++;
+                } else if (blocksmcTick == 2) {
+                    blocksmcTick++;
+                } else if (blocksmcTick == 3) {
+                    if (attackTimer.hasTimeElapsed(cps, true)) {
+                        cps = (int) MathUtils.getRandomInRange(minCPS.getValue(), maxCPS.getValue());
+                        attackEntity(TargetManager.target);
+                    }
+                    PacketUtils.sendPacketNoEvent(new C08PacketPlayerBlockPlacement(mc.thePlayer.getHeldItem()));
+                    wasBlocking = true;
+                    blocksmcTick = 0;
+                }
+            }
+            return;
+        }
+
 
         if (event.isPre()) {
             attacking = !targets.isEmpty() && (addons.getSetting("Allow Scaffold").isEnabled() || !Tenacity.INSTANCE.isEnabled(Scaffold.class));
@@ -158,53 +226,24 @@ public final class KillAura extends Module {
                             case "Smooth":
                                 rotations = RotationUtils.getSmoothRotations(TargetManager.target);
                                 break;
+                            case "HVH":
+                                rotations = dev.tenacity.utils.addons.rise.RotationUtils.getHVHRotation(TargetManager.target);
+                                break;
+                            case "BlocksMC":
+                                rotations = RotationUtils.getRotationsNeeded(TargetManager.target);
+                                float mouseSensitivity = mc.gameSettings.mouseSensitivity * 0.6f + 0.2f;
+                                double multiplier = (mouseSensitivity * mouseSensitivity * mouseSensitivity * 8.0f) * 0.15D;
+                                rotations[0] = (float) (Math.round(rotations[0] / multiplier) * multiplier);
+                                rotations[1] = (float) (Math.round(rotations[1] / multiplier) * multiplier);
+                                break;
                         }
                         yaw = event.getYaw();
                         RotationComponent.setRotations(new Vector2f(rotations[0], rotations[1]), rotationSpeed, MovementFix.values()[movementFix.modes.indexOf(movementFix.getMode())]);
                     }
 
-                    if (addons.getSetting("Ray Cast").isEnabled() && !RotationUtils.isMouseOver(event.getYaw(), event.getPitch(), TargetManager.target, reach.getValue().floatValue())) {
+                    if (!RotationComponent.isRotationg || mc.thePlayer.getDistanceToEntity(TargetManager.target) > reach.getValue() || (addons.getSetting("Ray Cast").isEnabled() && !RotationUtils.isMouseOver(event.getYaw(), event.getPitch(), TargetManager.target, reach.getValue().floatValue())))
                         return;
-                    }
 
-                    if (attackTimer.hasTimeElapsed(cps, true)) {
-                        final int currentMinCPS = minCPS.getValue().intValue();
-                        final int currentMaxCPS = maxCPS.getValue().intValue();
-
-                        int minDelayTicks = (int) (20.0 / Math.max(1, currentMaxCPS));
-                        int maxDelayTicks = (int) (20.0 / Math.max(1, currentMinCPS));
-
-                        if (minDelayTicks > maxDelayTicks) {
-                            int temp = minDelayTicks;
-                            minDelayTicks = maxDelayTicks;
-                            maxDelayTicks = temp;
-                        }
-
-                        int calculatedMinCPS = Math.max(1, currentMinCPS);
-                        int calculatedMaxCPS = Math.max(1, currentMaxCPS);
-
-                        cps = MathUtils.getRandomInRange(1000 / calculatedMaxCPS, 1000 / calculatedMinCPS);
-
-
-                        if (mode.is("Multi")) {
-                            for (int i = 0; i < Math.min(targets.size(), maxTargetAmount.getValue().intValue()); i++) {
-                                EntityLivingBase entityLivingBase = targets.get(i);
-                                AttackEvent attackEvent = new AttackEvent(entityLivingBase);
-                                Tenacity.INSTANCE.getEventProtocol().handleEvent(attackEvent);
-
-                                if (!attackEvent.isCancelled()) {
-                                    AttackOrder.sendFixedAttack(mc.thePlayer, entityLivingBase);
-                                }
-                            }
-                        } else {
-                            AttackEvent attackEvent = new AttackEvent(TargetManager.target);
-                            Tenacity.INSTANCE.getEventProtocol().handleEvent(attackEvent);
-
-                            if (!attackEvent.isCancelled()) {
-                                AttackOrder.sendFixedAttack(mc.thePlayer, TargetManager.target);
-                            }
-                        }
-                    }
                 }
             } else {
                 TargetManager.target = null;
@@ -220,7 +259,6 @@ public final class KillAura extends Module {
                         PacketUtils.sendPacketNoEvent(new C07PacketPlayerDigging(C07PacketPlayerDigging.Action.RELEASE_USE_ITEM, BlockPos.ORIGIN, EnumFacing.DOWN));
                         wasBlocking = false;
                     }
-
                     if (event.isPost() && !wasBlocking) {
                         PacketUtils.sendPacketNoEvent(new C08PacketPlayerBlockPlacement(BlockPos.ORIGIN, 255, mc.thePlayer.getHeldItem(), 255, 255, 255));
                         wasBlocking = true;
@@ -238,10 +276,20 @@ public final class KillAura extends Module {
                         }
                     }
                     break;
+                case "BlocksMC A":
+                    if (event.isPre() && wasBlocking) {
+                        PacketUtils.sendPacketNoEvent(new C09PacketHeldItemChange((mc.thePlayer.inventory.currentItem + 1) % 9));
+                        PacketUtils.sendPacketNoEvent(new C09PacketHeldItemChange(mc.thePlayer.inventory.currentItem));
+                    }
+                    if (event.isPost()) {
+                        PacketUtils.sendPacketNoEvent(new C08PacketPlayerBlockPlacement(mc.thePlayer.getHeldItem()));
+                        wasBlocking = true;
+                    }
+                    break;
                 case "Fake":
                     break;
             }
-        } else if (wasBlocking && autoblockMode.is("Watchdog") && event.isPre()) {
+        } else if (wasBlocking) {
             PacketUtils.sendPacketNoEvent(new C07PacketPlayerDigging(C07PacketPlayerDigging.
                     Action.RELEASE_USE_ITEM, BlockPos.ORIGIN, EnumFacing.DOWN));
             wasBlocking = false;
@@ -291,6 +339,8 @@ public final class KillAura extends Module {
         }
     }
 
+
+
     private final Animation auraESPAnim = new DecelerateAnimation(300, 1);
 
     @Override
@@ -323,5 +373,49 @@ public final class KillAura extends Module {
                 RenderUtil.drawTracerLine(auraESPTarget, 2.5f, color, auraESPAnim.getOutput().floatValue());
             }
         }
+    }
+
+    private void attack() {
+        if (TargetManager.target != null) {
+            if (autoblockMode.is("Interact")) {
+                if (wasBlocking) {
+                    unblock();
+                }
+            }
+            attackEntity(TargetManager.target);
+            if (autoblockMode.is("Interact")) {
+                hypblock(true);
+            }
+        }
+    }
+
+    private void attackEntity(final Entity target) {
+        AttackOrder.sendFixedAttack(mc.thePlayer, target);
+        attackTimer.reset();
+    }
+
+    private void hypblock(boolean interact) {
+        if (wasBlocking)
+            return;
+        EntityLivingBase targetEntity = TargetManager.target;
+        if (interact)
+            PacketUtils.sendPacket(new C02PacketUseEntity(targetEntity, C02PacketUseEntity.Action.INTERACT));
+        PacketUtils.sendBlocking(true, false);
+        wasBlocking = true;
+    }
+
+    private void unblock() {
+        if (!this.wasBlocking)
+            return;
+        if (!mc.gameSettings.keyBindUseItem.isKeyDown()) {
+            PacketUtils.sendPacket(new C07PacketPlayerDigging(C07PacketPlayerDigging.Action.RELEASE_USE_ITEM, BlockPos.ORIGIN, EnumFacing.DOWN));
+        } else if (canAutoBlock()) {
+            mc.gameSettings.keyBindUseItem.pressed = false;
+        }
+        this.wasBlocking = false;
+    }
+
+    private boolean canAutoBlock() {
+        return (TargetManager.target != null && mc.thePlayer.getHeldItem() != null && mc.thePlayer.getHeldItem().getItem() instanceof net.minecraft.item.ItemSword && mc.thePlayer.getDistanceToEntity(TargetManager.target) < this.reach.getValue().doubleValue());
     }
 }
