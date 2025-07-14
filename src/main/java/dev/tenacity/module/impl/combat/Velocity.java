@@ -3,6 +3,8 @@ package dev.tenacity.module.impl.combat;
 import dev.tenacity.event.impl.game.WorldEvent;
 import dev.tenacity.event.impl.network.PacketReceiveEvent;
 import dev.tenacity.event.impl.network.PacketSendEvent;
+import dev.tenacity.event.impl.player.EventMoveInput;
+import dev.tenacity.event.impl.player.UpdateEvent;
 import dev.tenacity.module.Category;
 import dev.tenacity.module.Module;
 import dev.tenacity.module.settings.Setting;
@@ -21,21 +23,27 @@ import net.minecraft.network.play.server.S27PacketExplosion;
 
 public class Velocity extends Module {
 
-    private final ModeSetting mode = new ModeSetting("Mode", "Packet", "Packet", "Matrix", "Tick", "Stack", "C0F Cancel");
+    private final ModeSetting mode = new ModeSetting("Mode", "Packet", "Packet", "Matrix", "Tick", "Stack", "C0F Cancel","Hypixel");
     private final NumberSetting horizontal = new NumberSetting("Horizontal", 0, 100, 0, 1);
     private final NumberSetting vertical = new NumberSetting("Vertical", 0, 100, 0, 1);
     private final NumberSetting chance = new NumberSetting("Chance", 100, 100, 0, 1);
     private final BooleanSetting onlyWhileMoving = new BooleanSetting("Only while moving", false);
     private final BooleanSetting staffCheck = new BooleanSetting("Staff check", false);
 
+    public final BooleanSetting jumpValue = new BooleanSetting("Jump Rest", true);
+
     private long lastDamageTimestamp, lastAlertTimestamp;
     private boolean cancel;
     private int stack;
 
+    //hyp
+    private int counter = 0;
+
     public Velocity() {
         super("Velocity", Category.COMBAT, "Reduces your knockback");
         Setting.addParent(mode, m -> m.is("Packet"), horizontal, vertical, staffCheck);
-        this.addSettings(mode, horizontal, vertical, chance, onlyWhileMoving, staffCheck);
+        jumpValue.addParent(mode, m -> m.is("Hypixel"));
+        this.addSettings(mode,jumpValue, horizontal, vertical, chance, onlyWhileMoving, staffCheck);
     }
 
     @Override
@@ -125,6 +133,15 @@ public class Velocity extends Module {
     @Override
     public void onWorldEvent(WorldEvent event) {
         stack = 0;
+    }
+
+    @Override
+    public void onEventMoveInput(EventMoveInput event) {
+        if (mode.is("Hypixel")) {
+            if (this.jumpValue.isEnabled() && mc.thePlayer.hurtTime == 9 && mc.thePlayer.onGround && this.counter++ % 2 == 0) {
+                mc.thePlayer.movementInput.jump = true;
+            }
+        }
     }
 
     private boolean cancel(PacketReceiveEvent e) {

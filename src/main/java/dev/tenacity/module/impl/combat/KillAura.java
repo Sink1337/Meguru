@@ -23,13 +23,11 @@ import dev.tenacity.utils.render.RenderUtil;
 import dev.tenacity.utils.server.PacketUtils;
 import dev.tenacity.utils.time.TimerUtil;
 import dev.tenacity.viamcp.utils.AttackOrder;
-import net.minecraft.enchantment.EnchantmentHelper;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityLivingBase;
+import net.minecraft.network.play.client.C02PacketUseEntity;
 import net.minecraft.network.play.client.C07PacketPlayerDigging;
 import net.minecraft.network.play.client.C08PacketPlayerBlockPlacement;
-import net.minecraft.network.play.client.C0APacketAnimation;
-import net.minecraft.potion.Potion;
 import net.minecraft.util.BlockPos;
 import net.minecraft.util.EnumFacing;
 
@@ -61,7 +59,7 @@ public final class KillAura extends Module {
 
     private final BooleanSetting autoblock = new BooleanSetting("Autoblock", false);
 
-    private final ModeSetting autoblockMode = new ModeSetting("Autoblock Mode", "Watchdog", "Fake", "Verus", "Watchdog");
+    private final ModeSetting autoblockMode = new ModeSetting("Autoblock Mode", "Watchdog", "Fake", "Verus", "Watchdog","Interact");
 
     private final BooleanSetting rotations = new BooleanSetting("Rotations", true);
     private final ModeSetting rotationMode = new ModeSetting("Rotation Mode", "Vanilla", "Vanilla", "Smooth","HVH");
@@ -115,6 +113,7 @@ public final class KillAura extends Module {
     @Override
     public void onUpdateEvent(UpdateEvent event){
         if (TargetManager.target != null) {
+
             if (attackTimer.hasTimeElapsed(cps, true)) {
                 final int maxValue = (int) ((minCPS.getMaxValue() - maxCPS.getValue()) * 5.0);
                 final int minValue = (int) ((minCPS.getMaxValue() - minCPS.getValue()) * 5.0);
@@ -309,7 +308,15 @@ public final class KillAura extends Module {
 
     private void attack() {
         if (TargetManager.target != null) {
+            if (autoblockMode.is("Interact")){
+                if (wasBlocking) {
+                    unblock();
+                }
+            }
             attackEntity(TargetManager.target);
+            if (autoblockMode.is("Interact")){
+                hypblock(true);
+            }
         }
     }
 
@@ -318,4 +325,28 @@ public final class KillAura extends Module {
         attackTimer.reset();
     }
 
+    private void hypblock(boolean interact) {
+        if (wasBlocking)
+            return;
+        EntityLivingBase targetEntity = TargetManager.target;
+        if (interact)
+            PacketUtils.sendPacket(new C02PacketUseEntity(targetEntity, C02PacketUseEntity.Action.INTERACT));
+        PacketUtils.sendBlocking(true, false);
+        wasBlocking = true;
+    }
+
+    private void unblock() {
+        if (!this.wasBlocking)
+            return;
+        if (!mc.gameSettings.keyBindUseItem.isKeyDown()) {
+            PacketUtils.sendPacket(new C07PacketPlayerDigging(C07PacketPlayerDigging.Action.RELEASE_USE_ITEM, BlockPos.ORIGIN, EnumFacing.DOWN));
+        } else if (canAutoBlock()) {
+            mc.gameSettings.keyBindUseItem.pressed = false;
+        }
+        this.wasBlocking = false;
+    }
+
+    private boolean canAutoBlock() {
+        return (TargetManager.target != null && mc.thePlayer.getHeldItem() != null && mc.thePlayer.getHeldItem().getItem() instanceof net.minecraft.item.ItemSword && mc.thePlayer.getDistanceToEntity(TargetManager.target) < this.reach.getValue().doubleValue());
+    }
 }
