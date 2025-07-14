@@ -27,8 +27,6 @@ import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.network.play.client.C07PacketPlayerDigging;
 import net.minecraft.network.play.client.C08PacketPlayerBlockPlacement;
-import net.minecraft.network.play.client.C09PacketHeldItemChange;
-import net.minecraft.network.play.client.C0APacketAnimation;
 import net.minecraft.util.BlockPos;
 import net.minecraft.util.EnumFacing;
 
@@ -44,10 +42,6 @@ public final class KillAura extends Module {
     public static boolean wasBlocking;
     private float yaw = 0;
     private int cps;
-    private int blockTick, attack, asw;
-    private boolean b1, b2, b3;
-    private long lastAttackTime;
-    private float[] lastRotation;
     public static final List<EntityLivingBase> targets = new ArrayList<>();
     private final TimerUtil attackTimer = new TimerUtil();
     private final TimerUtil switchTimer = new TimerUtil();
@@ -55,7 +49,7 @@ public final class KillAura extends Module {
 
     private final ModeSetting mode = new ModeSetting("Mode", "Single", "Single", "Switch", "Multi");
 
-    private final NumberSetting switchDelay = new NumberSetting("Switch Delay", 50, 1000, 0, 25);
+    private final NumberSetting switchDelay = new NumberSetting("Switch Delay", 50, 500, 1, 1);
     private final NumberSetting maxTargetAmount = new NumberSetting("Max Target Amount", 3, 50, 2, 1);
 
     private final NumberSetting minCPS = new NumberSetting("Min CPS", 10, 20, 1, 1);
@@ -64,10 +58,10 @@ public final class KillAura extends Module {
 
     private final BooleanSetting autoblock = new BooleanSetting("Autoblock", false);
 
-    private final ModeSetting autoblockMode = new ModeSetting("Autoblock Mode", "Watchdog", "Fake", "Verus", "Watchdog", "BlocksMC A", "BlocksMC B");
+    private final ModeSetting autoblockMode = new ModeSetting("Autoblock Mode", "Watchdog", "Fake", "Verus", "Watchdog");
 
     private final BooleanSetting rotations = new BooleanSetting("Rotations", true);
-    private final ModeSetting rotationMode = new ModeSetting("Rotation Mode", "Vanilla", "Vanilla", "Smooth", "BlocksMC");
+    private final ModeSetting rotationMode = new ModeSetting("Rotation Mode", "Vanilla", "Vanilla", "Smooth");
     private final NumberSetting rotationSpeed = new NumberSetting("Rotation speed", 5, 10, 2, 0.1);
     public static final ModeSetting movementFix = new ModeSetting("Movement fix Mode", "Traditional", "Off", "Normal", "Traditional", "Backwards Sprint");
 
@@ -112,14 +106,6 @@ public final class KillAura extends Module {
         }
         wasBlocking = false;
         currentTargetIndex = 0;
-        blockTick = 0;
-        attack = 0;
-        asw = 0;
-        b1 = false;
-        b2 = false;
-        b3 = false;
-        lastAttackTime = 0;
-        lastRotation = null;
         super.onDisable();
     }
 
@@ -171,18 +157,6 @@ public final class KillAura extends Module {
                                 break;
                             case "Smooth":
                                 rotations = RotationUtils.getSmoothRotations(TargetManager.target);
-                                break;
-                            case "BlocksMC":
-                                float targetYaw = RotationUtils.getRotationsNeeded(TargetManager.target)[0];
-                                float targetPitch = RotationUtils.getRotationsNeeded(TargetManager.target)[1];
-                                float mouseSensitivity = mc.gameSettings.mouseSensitivity * 0.6f + 0.2f;
-                                double multiplier = (double)(mouseSensitivity * mouseSensitivity * mouseSensitivity * 8.0f) * 0.15D;
-                                targetYaw = (float) (Math.round(targetYaw / multiplier) * multiplier);
-                                targetPitch = (float)(Math.round(targetPitch / multiplier) * multiplier);
-                                if(lastRotation == null) {
-                                    lastRotation = new float[] {mc.thePlayer.rotationYaw, mc.thePlayer.rotationPitch};
-                                }
-                                rotations = new float[] {targetYaw, targetPitch};
                                 break;
                         }
                         yaw = event.getYaw();
@@ -250,69 +224,6 @@ public final class KillAura extends Module {
                     if (event.isPost() && !wasBlocking) {
                         PacketUtils.sendPacketNoEvent(new C08PacketPlayerBlockPlacement(BlockPos.ORIGIN, 255, mc.thePlayer.getHeldItem(), 255, 255, 255));
                         wasBlocking = true;
-                    }
-                    break;
-                case "BlocksMC A":
-                    if (event.isPre()) {
-                        long currentTime = System.currentTimeMillis();
-                        if (asw == 0) {
-                            ++asw;
-                            if (blocking) {
-                                PacketUtils.sendPacketNoEvent(new C09PacketHeldItemChange((mc.thePlayer.inventory.currentItem + 1) % 8));
-                                PacketUtils.sendPacketNoEvent(new C09PacketHeldItemChange(mc.thePlayer.inventory.currentItem));
-                                PacketUtils.sendPacketNoEvent(new C08PacketPlayerBlockPlacement(mc.thePlayer.getHeldItem()));
-                            }
-                            ++blockTick;
-                        } else if (asw == 1) {
-                            if (TargetManager.target != null && mc.thePlayer.getDistanceToEntity(TargetManager.target) <= reach.getValue() && rotations.isEnabled()) {
-                                AttackOrder.sendFixedAttack(mc.thePlayer, TargetManager.target);
-                                lastAttackTime = currentTime;
-                            }
-                            PacketUtils.sendPacketNoEvent(new C08PacketPlayerBlockPlacement(mc.thePlayer.getHeldItem()));
-                            asw = 0;
-                            if (!rotations.isEnabled()) {
-                                blockTick = 0;
-                            }
-                            if (blockTick >= 10) {
-                                blockTick = 0;
-                            }
-                        }
-                    }
-                    break;
-                case "BlocksMC B":
-                    if (event.isPre()) {
-                        long currentTime = System.currentTimeMillis();
-                        if (blockTick == 0) {
-                            blockTick++;
-                            PacketUtils.sendPacketNoEvent(new C07PacketPlayerDigging(C07PacketPlayerDigging.Action.RELEASE_USE_ITEM, BlockPos.ORIGIN, EnumFacing.DOWN));
-                            attack++;
-                            blockTick++;
-                        } else if (blockTick == 1) {
-                            if (attack < 7) {
-                                if (TargetManager.target != null && mc.thePlayer.getDistanceToEntity(TargetManager.target) <= reach.getValue()) {
-                                    AttackOrder.sendFixedAttack(mc.thePlayer, TargetManager.target);
-                                } else {
-                                    PacketUtils.sendPacketNoEvent(new C0APacketAnimation());
-                                }
-                            }
-                            blockTick++;
-                        } else if (blockTick == 2) {
-                            blockTick++;
-                        } else if (blockTick == 3) {
-                            if (attack < 7) {
-                                if (TargetManager.target != null && mc.thePlayer.getDistanceToEntity(TargetManager.target) <= reach.getValue()) {
-                                    AttackOrder.sendFixedAttack(mc.thePlayer, TargetManager.target);
-                                } else {
-                                    PacketUtils.sendPacketNoEvent(new C0APacketAnimation());
-                                }
-                            }
-                            PacketUtils.sendPacketNoEvent(new C08PacketPlayerBlockPlacement(mc.thePlayer.getHeldItem()));
-                            if (attack >= 7) {
-                                attack = 0;
-                            }
-                            lastAttackTime = currentTime;
-                            blockTick = 0;
-                        }
                     }
                     break;
                 case "Verus":

@@ -1,7 +1,6 @@
 package dev.tenacity.module.impl.player;
 
 import dev.tenacity.event.impl.player.MotionEvent;
-import dev.tenacity.event.impl.player.PreInputEvent;
 import dev.tenacity.event.impl.player.SlowDownEvent;
 import dev.tenacity.module.Category;
 import dev.tenacity.module.Module;
@@ -17,9 +16,8 @@ import net.minecraft.util.EnumFacing;
 
 public class NoSlow extends Module {
 
-    private final ModeSetting mode = new ModeSetting("Mode", "Watchdog", "Vanilla", "NCP", "Watchdog", "BlocksMC");
+    private final ModeSetting mode = new ModeSetting("Mode", "Watchdog", "Vanilla", "NCP", "Watchdog");
     private boolean synced;
-    private int tick;
 
     public NoSlow() {
         super("NoSlow", Category.PLAYER, "prevent item slowdown");
@@ -28,37 +26,14 @@ public class NoSlow extends Module {
 
     @Override
     public void onSlowDownEvent(SlowDownEvent event) {
-        if (mode.getMode().equalsIgnoreCase("BlocksMC") && mc.thePlayer.isUsingItem() && mc.thePlayer.getHeldItem() != null && mc.thePlayer.getHeldItem().getItem() instanceof ItemSword) {
-            event.cancel();
-        } else {
-            event.cancel();
-        }
+        if (!mode.is("Hypixel")) event.cancel();
+        if (mode.is("Hypixel") && mc.thePlayer.getHeldItem().getItem() instanceof ItemSword) event.cancel();
     }
 
     @Override
     public void onMotionEvent(MotionEvent e) {
         this.setSuffix(mode.getMode());
-
-        if (!mc.thePlayer.isUsingItem()) {
-            tick = 0;
-        }
-
         switch (mode.getMode()) {
-            case "Watchdog":
-                if (mc.thePlayer.onGround && mc.thePlayer.isUsingItem() && MovementUtils.isMoving()) {
-                    if (e.isPre()) {
-                        mc.thePlayer.sendQueue.addToSendQueue(new C09PacketHeldItemChange(mc.thePlayer.inventory.currentItem));
-                        synced = true;
-                    } else {
-                        mc.thePlayer.sendQueue.addToSendQueue(new C09PacketHeldItemChange(mc.thePlayer.inventory.currentItem < 8 ? mc.thePlayer.inventory.currentItem + 1 : mc.thePlayer.inventory.currentItem - 1));
-                        synced = false;
-                    }
-                }
-                if (!synced) {
-                    mc.thePlayer.sendQueue.addToSendQueue(new C09PacketHeldItemChange(mc.thePlayer.inventory.currentItem));
-                    synced = true;
-                }
-                break;
             case "NCP":
                 if (MovementUtils.isMoving() && mc.thePlayer.isUsingItem()) {
                     if (e.isPre()) {
@@ -66,32 +41,10 @@ public class NoSlow extends Module {
                     } else {
                         PacketUtils.sendPacket(new C08PacketPlayerBlockPlacement(mc.thePlayer.getCurrentEquippedItem()));
                     }
-                }
-                break;
-            case "BlocksMC":
-                if (mc.thePlayer.isUsingItem()) {
-                    if (mc.thePlayer.getHeldItem() != null && !(mc.thePlayer.getHeldItem().getItem() instanceof ItemSword)) {
-                        if (e.isPre()) {
-                            if (tick == 0) {
-                                PacketUtils.sendPacket(new C09PacketHeldItemChange((mc.thePlayer.inventory.currentItem + 1) % 9));
-                                PacketUtils.sendPacket(new C09PacketHeldItemChange(mc.thePlayer.inventory.currentItem));
-                                PacketUtils.sendPacket(new C08PacketPlayerBlockPlacement(new BlockPos(-1, -1, -1), 0, mc.thePlayer.getHeldItem(), 0, 0, 0));
-                            }
-                        }
-                    }
-                    tick++;
+
                 }
                 break;
         }
     }
 
-    @Override
-    public void onPreInput(PreInputEvent e) {
-        if (mc.thePlayer.isUsingItem() && mode.getMode().equalsIgnoreCase("BlocksMC")) {
-            if (mc.thePlayer.getHeldItem() != null && mc.thePlayer.getHeldItem().getItem() instanceof ItemSword) {
-                mc.thePlayer.movementInput.moveStrafe *= 0.2f;
-                mc.thePlayer.movementInput.moveForward *= 0.2f;
-            }
-        }
-    }
 }
