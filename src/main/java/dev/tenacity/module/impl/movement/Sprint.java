@@ -1,6 +1,7 @@
 package dev.tenacity.module.impl.movement;
 
 import dev.tenacity.Tenacity;
+import dev.tenacity.event.impl.game.TickEvent;
 import dev.tenacity.event.impl.player.MotionEvent;
 import dev.tenacity.module.Category;
 import dev.tenacity.module.Module;
@@ -16,13 +17,10 @@ public class Sprint extends Module {
         this.addSettings(omniSprint);
     }
 
+
     @Override
-    public void onMotionEvent(MotionEvent event) {
-        if (Tenacity.INSTANCE.getModuleCollection().get(Scaffold.class).isEnabled() && (!Scaffold.sprint.isEnabled() || Scaffold.isDownwards())) {
-            mc.gameSettings.keyBindSprint.pressed = false;
-            mc.thePlayer.setSprinting(false);
-            return;
-        }
+    public void onTickEvent(TickEvent event) {
+        if (mc.thePlayer == null) return;
         if (omniSprint.isEnabled()) {
             mc.thePlayer.setSprinting(true);
         } else {
@@ -42,5 +40,6 @@ public class Sprint extends Module {
         mc.gameSettings.keyBindSprint.pressed = false;
         super.onDisable();
     }
+
 
 }

@@ -13,9 +13,7 @@ public class AttackOrder {
     private static final int VER_1_8_ID = 47;
 
     public static void sendConditionalSwing(MovingObjectPosition mop) {
-        if (mop != null && mop.typeOfHit != MovingObjectPosition.MovingObjectType.ENTITY) {
-            mc.thePlayer.swingItem();
-        }
+        if (mop != null && mop.typeOfHit != MovingObjectPosition.MovingObjectType.ENTITY) mc.thePlayer.swingItem();
     }
 
     public static void sendFixedAttack(EntityPlayer entityIn, Entity target) {
