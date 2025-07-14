@@ -1,6 +1,5 @@
 package dev.tenacity.utils.font;
 
-import dev.tenacity.utils.render.ColorUtil;
 import dev.tenacity.utils.render.ColorUtils;
 import dev.tenacity.utils.render.GLUtils;
 import dev.tenacity.utils.render.RenderUtil;

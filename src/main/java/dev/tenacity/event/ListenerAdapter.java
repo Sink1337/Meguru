@@ -1,6 +1,5 @@
 package dev.tenacity.event;
 
-import dev.tenacity.Tenacity;
 import dev.tenacity.event.impl.game.*;
 import dev.tenacity.event.impl.network.PacketReceiveEvent;
 import dev.tenacity.event.impl.network.PacketSendEvent;

@@ -6,8 +6,8 @@ import dev.tenacity.event.impl.network.PacketReceiveEvent;
 import dev.tenacity.event.impl.network.PacketSendEvent;
 import dev.tenacity.module.Category;
 import dev.tenacity.module.Module;
+import dev.tenacity.module.impl.exploit.Disabler;
 import dev.tenacity.module.impl.movement.LongJump;
-import dev.tenacity.module.impl.movement.TerrainSpeed;
 import dev.tenacity.module.settings.impl.ModeSetting;
 import dev.tenacity.module.settings.impl.NumberSetting;
 import dev.tenacity.utils.server.PacketUtils;
@@ -116,9 +116,11 @@ public class AntiVoid extends Module {
             return;
         }
 
-        TerrainSpeed terrainSpeed = Tenacity.INSTANCE.getModuleCollection().getModule(TerrainSpeed.class);
-        if (terrainSpeed != null && terrainSpeed.flying && terrainSpeed.isEnabled() || LongJump.isBloxdFlying) {
-            return;
+        Disabler disabler = Tenacity.INSTANCE.getModuleCollection().getModule(Disabler.class);
+        if (disabler != null && disabler.isEnabled() && disabler.disablers.getSetting("Bloxd").isEnabled()) {
+            if (disabler.flying || LongJump.isBloxdFlying) {
+                return;
+            }
         }
 
         if (mode.is("Bloxd")) {

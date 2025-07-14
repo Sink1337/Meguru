@@ -23,8 +23,8 @@ import org.lwjgl.opengl.GL11;
 
 import java.awt.*;
 
-import static java.lang.Math.PI;
 import static dev.tenacity.utils.misc.MathUtils.interpolate;
+import static java.lang.Math.PI;
 import static net.minecraft.client.renderer.GlStateManager.disableBlend;
 import static org.lwjgl.opengl.GL11.*;
 

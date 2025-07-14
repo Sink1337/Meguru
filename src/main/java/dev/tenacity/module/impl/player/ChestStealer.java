@@ -9,7 +9,6 @@ import dev.tenacity.event.impl.render.RenderChestEvent;
 import dev.tenacity.module.Category;
 import dev.tenacity.module.Module;
 import dev.tenacity.module.impl.combat.KillAura;
-import dev.tenacity.module.impl.movement.Scaffold;
 import dev.tenacity.module.impl.render.HUDMod;
 import dev.tenacity.module.settings.ParentAttribute;
 import dev.tenacity.module.settings.impl.BooleanSetting;

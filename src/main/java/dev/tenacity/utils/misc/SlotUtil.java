@@ -15,7 +15,6 @@ import net.minecraft.item.ItemBlock;
 import net.minecraft.item.ItemStack;
 import net.minecraft.potion.Potion;
 import net.minecraft.util.BlockPos;
-import net.minecraft.util.Util;
 import net.minecraft.world.World;
 
 import java.util.Arrays;

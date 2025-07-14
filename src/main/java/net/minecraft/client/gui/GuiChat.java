@@ -9,7 +9,6 @@ import dev.tenacity.module.impl.render.SpotifyMod;
 import dev.tenacity.utils.animations.Animation;
 import dev.tenacity.utils.animations.Direction;
 import dev.tenacity.utils.animations.impl.DecelerateAnimation;
-import dev.tenacity.utils.font.AbstractFontRenderer;
 import dev.tenacity.utils.font.CustomFont;
 import dev.tenacity.utils.font.FontUtil;
 import dev.tenacity.utils.misc.HoveringUtil;

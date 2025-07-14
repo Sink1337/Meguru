@@ -1,7 +1,6 @@
 package net.minecraft.client.renderer;
 
 import dev.tenacity.Tenacity;
-import dev.tenacity.event.impl.render.CustomBlockRenderEvent;
 import dev.tenacity.module.impl.combat.KillAura;
 import dev.tenacity.module.impl.render.Animations;
 import dev.tenacity.utils.player.InventoryUtils;

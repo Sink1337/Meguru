@@ -2,16 +2,14 @@ package dev.tenacity.utils.addons.rise;
 
 import com.google.common.base.Predicates;
 import dev.tenacity.utils.Utils;
-import dev.tenacity.utils.addons.vector.Vector3d;
-
 import dev.tenacity.utils.addons.vector.Rotation;
 import dev.tenacity.utils.addons.vector.Vector2f;
+import dev.tenacity.utils.addons.vector.Vector3d;
 import dev.tenacity.utils.misc.MathUtils;
 import net.minecraft.client.Minecraft;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.item.EntityItemFrame;
-
 import net.minecraft.util.*;
 
 import java.util.Arrays;

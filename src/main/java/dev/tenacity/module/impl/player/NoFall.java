@@ -7,10 +7,10 @@ import dev.tenacity.module.Category;
 import dev.tenacity.module.Module;
 import dev.tenacity.module.impl.combat.KillAura;
 import dev.tenacity.module.settings.impl.ModeSetting;
+import dev.tenacity.utils.player.PlayerUtils;
 import dev.tenacity.utils.server.PacketUtils;
 import net.minecraft.network.play.client.C03PacketPlayer;
 import net.minecraft.util.AxisAlignedBB;
-import dev.tenacity.utils.player.PlayerUtils;
 
 @SuppressWarnings("unused")
 public final class NoFall extends Module {

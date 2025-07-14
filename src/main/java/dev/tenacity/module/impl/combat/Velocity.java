@@ -4,7 +4,6 @@ import dev.tenacity.event.impl.game.WorldEvent;
 import dev.tenacity.event.impl.network.PacketReceiveEvent;
 import dev.tenacity.event.impl.network.PacketSendEvent;
 import dev.tenacity.event.impl.player.EventMoveInput;
-import dev.tenacity.event.impl.player.UpdateEvent;
 import dev.tenacity.module.Category;
 import dev.tenacity.module.Module;
 import dev.tenacity.module.settings.Setting;

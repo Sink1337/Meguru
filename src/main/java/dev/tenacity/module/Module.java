@@ -20,7 +20,6 @@ import dev.tenacity.utils.misc.Multithreading;
 import dev.tenacity.utils.misc.SoundUtils;
 import lombok.Getter;
 import lombok.Setter;
-import net.minecraft.client.audio.PositionedSoundRecord;
 import net.minecraft.util.ResourceLocation;
 import org.lwjgl.input.Keyboard;
 import store.intent.intentguard.annotation.Exclude;

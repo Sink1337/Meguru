@@ -1,4 +1,4 @@
-package dev.tenacity.module.impl.movement;
+package dev.tenacity.module.impl.player;
 
 import dev.tenacity.event.impl.game.TickEvent;
 import dev.tenacity.event.impl.network.PacketSendEvent;
@@ -19,9 +19,7 @@ import dev.tenacity.utils.BlinkUtils;
 import dev.tenacity.utils.addons.rise.MovementFix;
 import dev.tenacity.utils.addons.rise.RayCastUtil;
 import dev.tenacity.utils.addons.rise.RotationUtil;
-import dev.tenacity.utils.addons.rise.component.RenderSlotComponent;
 import dev.tenacity.utils.addons.rise.component.RotationComponent;
-import dev.tenacity.utils.addons.vector.Rotation;
 import dev.tenacity.utils.addons.vector.Vector2f;
 import dev.tenacity.utils.animations.Animation;
 import dev.tenacity.utils.animations.Direction;
@@ -42,10 +40,7 @@ import net.minecraft.client.renderer.RenderHelper;
 import net.minecraft.client.settings.GameSettings;
 import net.minecraft.client.settings.KeyBinding;
 import net.minecraft.init.Blocks;
-import net.minecraft.item.ItemBlock;
 import net.minecraft.item.ItemStack;
-import net.minecraft.network.Packet;
-import net.minecraft.network.play.client.C03PacketPlayer;
 import net.minecraft.network.play.client.C09PacketHeldItemChange;
 import net.minecraft.network.play.client.C0APacketAnimation;
 import net.minecraft.network.play.client.C0BPacketEntityAction;
@@ -123,7 +118,7 @@ public class Scaffold extends Module {
     private float preYaw, strictPitch;
 
     public Scaffold() {
-        super("Scaffold", Category.MOVEMENT, "Automatically places blocks under you");
+        super("Scaffold", Category.PLAYER, "Automatically places blocks under you");
         this.addSettings(countMode, animationMode, rotations, rotationMode, placeType, keepYMode, sprintMode, towerMode, towerSpeed, swingMode, swapMode, delay, timer,
                 multiPlace, auto3rdPerson, speedSlowdown, speedSlowdownAmount, downwards, safewalk, sprint, sneak, tower, towerTimer,
                 swing, autoJump, hideJump, baseSpeed, keepY);

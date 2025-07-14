@@ -4,7 +4,7 @@ import dev.tenacity.Tenacity;
 import dev.tenacity.event.impl.player.MotionEvent;
 import dev.tenacity.module.Category;
 import dev.tenacity.module.Module;
-import dev.tenacity.module.impl.movement.Scaffold;
+import dev.tenacity.module.impl.player.Scaffold;
 import dev.tenacity.module.settings.impl.BooleanSetting;
 import dev.tenacity.module.settings.impl.NumberSetting;
 import dev.tenacity.utils.player.MovementUtils;

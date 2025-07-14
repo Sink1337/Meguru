@@ -1,13 +1,11 @@
 package dev.tenacity.utils;
 
-import dev.tenacity.event.impl.player.UpdateEvent;
 import dev.tenacity.utils.font.CustomFont;
 import dev.tenacity.utils.font.FontUtil;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.IFontRenderer;
 import net.minecraft.client.renderer.Tessellator;
 import net.minecraft.client.renderer.WorldRenderer;
-import net.minecraft.util.MovementInput;
 
 public interface Utils {
     Minecraft mc = Minecraft.getMinecraft();

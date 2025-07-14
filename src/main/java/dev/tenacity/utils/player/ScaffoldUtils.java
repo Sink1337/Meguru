@@ -1,7 +1,7 @@
 package dev.tenacity.utils.player;
 
 import dev.tenacity.Tenacity;
-import dev.tenacity.module.impl.movement.Scaffold;
+import dev.tenacity.module.impl.player.Scaffold;
 import dev.tenacity.module.impl.movement.Speed;
 import dev.tenacity.utils.Utils;
 import dev.tenacity.utils.addons.vector.Rotation;
@@ -90,11 +90,15 @@ public class ScaffoldUtils implements Utils {
 
     public static int getBlockCount() {
         int count = 0;
+        if (mc == null || mc.thePlayer == null || mc.thePlayer.inventory == null || mc.thePlayer.inventory.mainInventory == null) {
+            return 0;
+        }
+
         for (int i = 0; i < 9; i++) {
             final ItemStack itemStack = mc.thePlayer.inventory.mainInventory[i];
-            if (itemStack != null && itemStack.getItem() instanceof ItemBlock && itemStack.stackSize > 0) {
+            if (itemStack != null && itemStack.getItem() != null && itemStack.getItem() instanceof ItemBlock && itemStack.stackSize > 0) {
                 final ItemBlock itemBlock = (ItemBlock) itemStack.getItem();
-                if (isBlockValid(itemBlock.getBlock())) {
+                if (itemBlock.getBlock() != null && isBlockValid(itemBlock.getBlock())) {
                     count += itemStack.stackSize;
                 }
             }

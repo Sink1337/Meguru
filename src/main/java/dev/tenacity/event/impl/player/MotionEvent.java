@@ -1,8 +1,6 @@
 package dev.tenacity.event.impl.player;
 
 import dev.tenacity.event.Event;
-import store.intent.intentguard.annotation.Exclude;
-import store.intent.intentguard.annotation.Strategy;
 
 public class MotionEvent extends Event.StateEvent {
 

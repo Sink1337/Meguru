@@ -1,11 +1,8 @@
 package dev.tenacity.ui.notifications;
 
-import dev.tenacity.Tenacity;
-import dev.tenacity.module.impl.render.PostProcessing;
 import dev.tenacity.utils.Utils;
 import dev.tenacity.utils.animations.Animation;
 import dev.tenacity.utils.animations.impl.DecelerateAnimation;
-import dev.tenacity.utils.font.CustomFont;
 import dev.tenacity.utils.font.FontUtil;
 import dev.tenacity.utils.render.ColorUtil;
 import dev.tenacity.utils.render.RenderUtil;

@@ -8,11 +8,7 @@ import dev.tenacity.module.Category;
 import dev.tenacity.module.Module;
 import dev.tenacity.module.impl.render.HUDMod;
 import dev.tenacity.module.settings.ParentAttribute;
-import dev.tenacity.module.settings.impl.BooleanSetting;
-import dev.tenacity.module.settings.impl.ModeSetting;
-import dev.tenacity.module.settings.impl.MultipleBoolSetting;
-import dev.tenacity.module.settings.impl.NumberSetting;
-import dev.tenacity.module.settings.impl.ColorSetting;
+import dev.tenacity.module.settings.impl.*;
 import dev.tenacity.utils.animations.Animation;
 import dev.tenacity.utils.animations.Direction;
 import dev.tenacity.utils.animations.impl.DecelerateAnimation;
@@ -41,8 +37,8 @@ import net.minecraft.network.play.client.C07PacketPlayerDigging;
 import net.minecraft.potion.Potion;
 import net.minecraft.util.BlockPos;
 import net.minecraft.util.EnumFacing;
-import net.minecraft.util.Vec3;
 import net.minecraft.util.MovingObjectPosition;
+import net.minecraft.util.Vec3;
 
 import java.awt.*;
 

@@ -5,11 +5,8 @@ import dev.tenacity.utils.animations.Animation;
 import dev.tenacity.utils.animations.Direction;
 import dev.tenacity.utils.animations.impl.DecelerateAnimation;
 import dev.tenacity.utils.misc.HoveringUtil;
-import dev.tenacity.utils.render.RenderUtil;
 import dev.tenacity.utils.render.RoundedUtil;
 import dev.tenacity.utils.render.blur.GaussianBlur;
-import net.minecraft.network.play.client.C03PacketPlayer;
-import net.minecraft.util.ResourceLocation;
 
 import java.awt.*;
 

@@ -17,7 +17,6 @@ import dev.tenacity.event.impl.player.BlockEvent;
 import dev.tenacity.event.impl.player.BlockPlaceableEvent;
 import dev.tenacity.event.impl.player.ClickEvent;
 import dev.tenacity.event.impl.player.ClickEventRight;
-import dev.tenacity.module.impl.player.Breaker;
 import dev.tenacity.module.impl.render.ClickGUIMod;
 import dev.tenacity.module.impl.render.MotionBlur;
 import dev.tenacity.ui.SplashScreen;
@@ -578,7 +577,7 @@ public class Minecraft implements IThreadListener, IPlayerUsage {
 
     private void createDisplay() throws LWJGLException {
         Display.setResizable(true);
-        Display.setTitle("Minecraft 1.8.9");
+        Display.setTitle("Tenacity 7.21");
 
         try {
             Display.create((new PixelFormat()).withDepthBits(24));

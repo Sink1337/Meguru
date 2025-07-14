@@ -9,9 +9,9 @@ import dev.tenacity.module.Module;
 import dev.tenacity.module.api.TargetManager;
 import dev.tenacity.module.impl.movement.Flight;
 import dev.tenacity.module.impl.movement.Step;
-import dev.tenacity.module.impl.movement.TerrainSpeed.NoaPhysics;
 import dev.tenacity.module.settings.impl.ModeSetting;
 import dev.tenacity.module.settings.impl.NumberSetting;
+import dev.tenacity.utils.player.BloxdPhysicsUtils;
 import dev.tenacity.utils.server.PacketUtils;
 import dev.tenacity.utils.time.TimerUtil;
 import net.minecraft.network.play.client.C03PacketPlayer;
@@ -32,7 +32,7 @@ public final class Criticals extends Module {
     private final ModeSetting bloxdMode = new ModeSetting("Bloxd Mode", "LowHop", "LowHop", "Packet");
     private final NumberSetting delay = new NumberSetting("Delay", 1, 20, 0, 1);
     private final TimerUtil timer = new TimerUtil();
-    private final NoaPhysics bloxdPhysics = new NoaPhysics();
+    private final BloxdPhysicsUtils.NoaPhysics bloxdPhysics = new BloxdPhysicsUtils.NoaPhysics();
 
     public Criticals() {
         super("Criticals", Category.COMBAT, "Crit attacks");

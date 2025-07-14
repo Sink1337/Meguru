@@ -1,4 +1,4 @@
-package dev.tenacity.module.impl.player;
+package dev.tenacity.module.impl.movement;
 
 import dev.tenacity.event.impl.player.MotionEvent;
 import dev.tenacity.event.impl.player.PreInputEvent;
@@ -21,7 +21,7 @@ public class NoSlow extends Module {
     private int tick;
 
     public NoSlow() {
-        super("NoSlow", Category.PLAYER, "prevent item slowdown");
+        super("NoSlow", Category.MOVEMENT, "prevent item slowdown");
         this.addSettings(mode);
     }
 

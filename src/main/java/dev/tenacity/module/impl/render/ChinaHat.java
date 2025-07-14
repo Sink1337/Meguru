@@ -5,7 +5,7 @@ import dev.tenacity.event.impl.render.Render3DEvent;
 import dev.tenacity.module.Category;
 import dev.tenacity.module.Module;
 import dev.tenacity.module.impl.combat.KillAura;
-import dev.tenacity.module.impl.movement.Scaffold;
+import dev.tenacity.module.impl.player.Scaffold;
 import dev.tenacity.module.settings.impl.BooleanSetting;
 import dev.tenacity.module.settings.impl.ColorSetting;
 import dev.tenacity.module.settings.impl.ModeSetting;

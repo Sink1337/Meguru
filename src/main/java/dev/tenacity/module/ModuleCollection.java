@@ -116,11 +116,10 @@ public class ModuleCollection {
 
         // Movement
         modules.put(Sprint.class, new Sprint());
-        modules.put(Scaffold.class, new Scaffold());
         modules.put(Speed.class, new Speed());
-        modules.put(TerrainSpeed.class, new TerrainSpeed());
         modules.put(Flight.class, new Flight());
         modules.put(LongJump.class, new LongJump());
+        modules.put(NoSlow.class, new NoSlow());
         modules.put(Step.class, new Step());
         modules.put(TargetStrafe.class, new TargetStrafe());
         modules.put(FastLadder.class, new FastLadder());
@@ -139,12 +138,11 @@ public class ModuleCollection {
         modules.put(Breaker.class, new Breaker());
         modules.put(Timer.class, new Timer());
         modules.put(Freecam.class, new Freecam());
+        modules.put(Scaffold.class, new Scaffold());
         modules.put(FastPlace.class, new FastPlace());
         modules.put(SafeWalk.class, new SafeWalk());
-        modules.put(NoSlow.class, new NoSlow());
         modules.put(AutoTool.class, new AutoTool());
         modules.put(AntiVoid.class, new AntiVoid());
-        modules.put(KillEffects.class, new KillEffects());
 
         // Render
         modules.put(MotionBlur.class, new MotionBlur());
@@ -168,6 +166,7 @@ public class ModuleCollection {
         modules.put(TargetHUDMod.class, new TargetHUDMod());
         modules.put(Glint.class, new Glint());
         modules.put(Breadcrumbs.class, new Breadcrumbs());
+        modules.put(KillEffects.class, new KillEffects());
         modules.put(Trails.class, new Trails());
         modules.put(Streamer.class, new Streamer());
         modules.put(Hitmarkers.class, new Hitmarkers());

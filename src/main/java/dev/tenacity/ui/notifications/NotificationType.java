@@ -1,7 +1,6 @@
 package dev.tenacity.ui.notifications;
 
 import dev.tenacity.utils.font.FontUtil;
-import lombok.AllArgsConstructor;
 import lombok.Getter;
 
 import java.awt.*;

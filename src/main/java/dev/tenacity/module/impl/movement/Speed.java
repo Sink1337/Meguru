@@ -8,12 +8,13 @@ import dev.tenacity.event.impl.player.PlayerMoveUpdateEvent;
 import dev.tenacity.module.Category;
 import dev.tenacity.module.Module;
 import dev.tenacity.module.impl.combat.TargetStrafe;
-import dev.tenacity.module.impl.movement.TerrainSpeed.NoaPhysics;
+import dev.tenacity.module.impl.exploit.Disabler;
 import dev.tenacity.module.settings.impl.BooleanSetting;
 import dev.tenacity.module.settings.impl.ModeSetting;
 import dev.tenacity.module.settings.impl.NumberSetting;
 import dev.tenacity.ui.notifications.NotificationManager;
 import dev.tenacity.ui.notifications.NotificationType;
+import dev.tenacity.utils.player.BloxdPhysicsUtils;
 import dev.tenacity.utils.player.MovementUtils;
 import dev.tenacity.utils.time.TimerUtil;
 import net.minecraft.init.Blocks;
@@ -28,7 +29,7 @@ public final class Speed extends Module {
     public final ModeSetting mode = new ModeSetting("Mode", "Watchdog",
             "Watchdog", "Strafe", "Matrix", "HurtTime", "Vanilla", "BHop", "Verus", "Viper", "Vulcan", "Zonecraft", "Heatseeker", "Mineland", "Legit", "Bloxd", "BlocksMC");
     public final ModeSetting bloxdMode = new ModeSetting("Bloxd Mode", "LowHop", "LowHop", "Normal");
-    private final ModeSetting watchdogMode = new ModeSetting("Watchdog Mode", "Hop", "Hop", "Dev", "Low Hop", "Ground");
+    private final ModeSetting watchdogMode = new ModeSetting("Watchdog Mode", "Hop", "Dev", "Low Hop", "Ground");
     private final ModeSetting verusMode = new ModeSetting("Verus Mode", "Normal", "Low", "Normal");
     private final ModeSetting viperMode = new ModeSetting("Viper Mode", "Normal", "High", "Normal");
     private final BooleanSetting autoDisable = new BooleanSetting("Auto Disable", false);
@@ -48,7 +49,7 @@ public final class Speed extends Module {
     private boolean setTimer = true;
     private double moveSpeed;
     private int inAirTicks;
-    private final NoaPhysics bloxdPhysics = new NoaPhysics();
+    private final BloxdPhysicsUtils.NoaPhysics bloxdPhysics = new BloxdPhysicsUtils.NoaPhysics();
     private int blocksMCLoaded;
 
     public Speed() {
@@ -329,6 +330,7 @@ public final class Speed extends Module {
     @Override
     public void onMoveEvent(MoveEvent e) {
         TargetStrafe targetStrafeModule = Tenacity.INSTANCE.getModuleCollection().getModule(TargetStrafe.class);
+        Disabler disablerModule = Tenacity.INSTANCE.getModuleCollection().getModule(Disabler.class);
 
         if (targetStrafeModule != null && targetStrafeModule.active) {
             return;
@@ -361,8 +363,10 @@ public final class Speed extends Module {
                         if (MovementUtils.isMoving() && mc.thePlayer.onGround) {
                             bloxdPhysics.reset();
                             bloxdPhysics.getImpulseVector().add(0, 8, 0);
-                            if (TerrainSpeed.jumpfunny < 4) {
-                                TerrainSpeed.jumpfunny++;
+                            if (disablerModule != null && disablerModule.disablers.getSetting("Bloxd").isEnabled()) {
+                                if (Disabler.jumpFunny < 4) {
+                                    Disabler.jumpFunny++;
+                                }
                             }
                             bloxdPhysics.getMotionForTick();
                             e.setY(bloxdPhysics.getVelocityVector().getY() / 30.0);
@@ -430,11 +434,12 @@ public final class Speed extends Module {
     }
 
     public boolean shouldPreventJumping() {
-        TerrainSpeed terrainSpeed = Tenacity.INSTANCE.getModuleCollection().getModule(TerrainSpeed.class);
-        if (terrainSpeed != null && terrainSpeed.isEnabled()) {
-            return false;
+        Disabler disabler = Tenacity.INSTANCE.getModuleCollection().getModule(Disabler.class);
+        if (disabler != null && disabler.isEnabled() && disabler.disablers.getSetting("Bloxd").isEnabled()) {
+            if (disabler.bloxdDamageFlight.isEnabled() || disabler.bloxdDamageBoost.isEnabled()) {
+                return false;
+            }
         }
         return Tenacity.INSTANCE.isEnabled(Speed.class) && MovementUtils.isMoving() && !(mode.is("Watchdog") && watchdogMode.is("Ground")) && !(mode.is("Bloxd") && bloxdMode.is("LowHop")) && !(mode.is("BlocksMC"));
     }
-
 }

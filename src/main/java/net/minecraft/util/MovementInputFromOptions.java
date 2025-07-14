@@ -2,7 +2,6 @@ package net.minecraft.util;
 
 import dev.tenacity.Tenacity;
 import dev.tenacity.event.impl.player.EventMoveInput;
-import dev.tenacity.module.impl.movement.Speed;
 import net.minecraft.client.settings.GameSettings;
 
 public class MovementInputFromOptions extends MovementInput {

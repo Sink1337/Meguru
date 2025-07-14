@@ -1,7 +1,6 @@
 package dev.tenacity.utils.addons.rise;
 
 import com.google.common.base.Predicates;
-
 import dev.tenacity.utils.addons.vector.Vector2f;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.EntityPlayer;

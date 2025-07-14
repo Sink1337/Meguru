@@ -4,8 +4,8 @@ import dev.tenacity.Tenacity;
 import dev.tenacity.event.impl.render.Render2DEvent;
 import dev.tenacity.module.Category;
 import dev.tenacity.module.Module;
+import dev.tenacity.module.impl.exploit.Disabler;
 import dev.tenacity.module.impl.movement.LongJump;
-import dev.tenacity.module.impl.movement.TerrainSpeed;
 import dev.tenacity.module.settings.impl.BooleanSetting;
 import dev.tenacity.utils.animations.Animation;
 import dev.tenacity.utils.animations.Direction;
@@ -20,28 +20,28 @@ public class ProgressBar extends Module {
     private final BooleanSetting animationSetting = new BooleanSetting("Animation", true);
     private final BooleanSetting showLongJumpBow = new BooleanSetting("LongJump Bow", true);
     private final BooleanSetting showLongJumpDamage = new BooleanSetting("LongJump Damage", true);
-    private final BooleanSetting showTerrainSpeedDamageBoost = new BooleanSetting("TerrainSpeed Damage", true);
-    private final BooleanSetting showTerrainSpeedDamageFlight = new BooleanSetting("TerrainSpeed Flight", true);
+    private final BooleanSetting showDisablerDamageBoost = new BooleanSetting("Disabler Damage Boost", true);
+    private final BooleanSetting showDisablerDamageFlight = new BooleanSetting("Disabler Damage Flight", true);
 
     private final Dragging progressBarPos;
     private float currentRenderProgress = 0.0f;
     private final Animation progressBarOpenAnimation = new DecelerateAnimation(250, 1);
 
     private LongJump longJumpModule;
-    private TerrainSpeed terrainSpeedModule;
+    private Disabler disablerModule;
 
     public ProgressBar() {
         super("ProgressBar", Category.RENDER, "Displays progress bars for movement module states.");
         this.progressBarPos = Tenacity.INSTANCE.createDrag(this, "progressBar", 450, 300);
-        this.addSettings(animationSetting, showLongJumpBow, showLongJumpDamage, showTerrainSpeedDamageBoost, showTerrainSpeedDamageFlight);
+        this.addSettings(animationSetting, showLongJumpBow, showLongJumpDamage, showDisablerDamageBoost, showDisablerDamageFlight);
     }
 
     @Override
     public void onEnable() {
         longJumpModule = Tenacity.INSTANCE.getModuleCollection().getModule(LongJump.class);
-        terrainSpeedModule = Tenacity.INSTANCE.getModuleCollection().getModule(TerrainSpeed.class);
+        disablerModule = Tenacity.INSTANCE.getModuleCollection().getModule(Disabler.class);
 
-        if (longJumpModule == null && terrainSpeedModule == null) {
+        if (longJumpModule == null && disablerModule == null) {
             this.toggleSilent();
             return;
         }
@@ -96,23 +96,24 @@ public class ProgressBar extends Module {
             }
         }
 
-
-        if (!shouldRender && showTerrainSpeedDamageBoost.isEnabled() && terrainSpeedModule != null && terrainSpeedModule.isEnabled() &&
-                terrainSpeedModule.damageBoost != null && terrainSpeedModule.damageBoost.isEnabled() &&
-                terrainSpeedModule.damageBoostStartTime != 0L && terrainSpeedModule.damageTime != null) {
-            long totalDuration = terrainSpeedModule.damageTime.getValue().longValue();
-            long elapsedTime = System.currentTimeMillis() - terrainSpeedModule.damageBoostStartTime;
+        if (!shouldRender && showDisablerDamageBoost.isEnabled() && disablerModule != null && disablerModule.isEnabled() &&
+                disablerModule.disablers.getSetting("Bloxd").isEnabled() &&
+                disablerModule.bloxdDamageBoost.isEnabled() &&
+                disablerModule.damageBoostStartTime != 0L && disablerModule.bloxdDamageTime != null) {
+            long totalDuration = disablerModule.bloxdDamageTime.getValue().longValue();
+            long elapsedTime = System.currentTimeMillis() - disablerModule.damageBoostStartTime;
             if (elapsedTime >= 0 && elapsedTime <= totalDuration) {
                 targetProgress = (float) elapsedTime / totalDuration;
                 shouldRender = true;
             }
         }
 
-        if (!shouldRender && showTerrainSpeedDamageFlight.isEnabled() && terrainSpeedModule != null && terrainSpeedModule.isEnabled() &&
-                terrainSpeedModule.damageFlight != null && terrainSpeedModule.damageFlight.isEnabled() &&
-                terrainSpeedModule.damageFlightStartTime != 0L && terrainSpeedModule.damageTime != null) {
-            long totalDuration = terrainSpeedModule.damageTime.getValue().longValue();
-            long elapsedTime = System.currentTimeMillis() - terrainSpeedModule.damageFlightStartTime;
+        if (!shouldRender && showDisablerDamageFlight.isEnabled() && disablerModule != null && disablerModule.isEnabled() &&
+                disablerModule.disablers.getSetting("Bloxd").isEnabled() &&
+                disablerModule.bloxdDamageFlight.isEnabled() &&
+                disablerModule.damageFlightStartTime != 0L && disablerModule.bloxdDamageTime != null) {
+            long totalDuration = disablerModule.bloxdDamageTime.getValue().longValue();
+            long elapsedTime = System.currentTimeMillis() - disablerModule.damageFlightStartTime;
             if (elapsedTime >= 0 && elapsedTime <= totalDuration) {
                 targetProgress = (float) elapsedTime / totalDuration;
                 shouldRender = true;
@@ -171,8 +172,8 @@ public class ProgressBar extends Module {
                 Color startColor = Color.WHITE;
                 Color endColor = Color.LIGHT_GRAY;
                 if (HUDMod.getClientColors() != null) {
-                    startColor = HUDMod.getClientColors().getFirst();
-                    endColor = HUDMod.getClientColors().getSecond();
+                     startColor = HUDMod.getClientColors().getFirst();
+                     endColor = HUDMod.getClientColors().getSecond();
                 }
 
                 float filledWidth = barWidth * Math.max(0.0f, Math.min(1.0f, currentRenderProgress));

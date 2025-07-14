@@ -1,7 +1,6 @@
 package dev.tenacity.utils.addons.rise;
 
 import dev.tenacity.utils.Utils;
-
 import dev.tenacity.utils.addons.vector.Vec3;
 import net.minecraft.client.entity.AbstractClientPlayer;
 import net.minecraft.util.BlockPos;
