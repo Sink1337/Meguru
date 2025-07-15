@@ -2,6 +2,7 @@ package dev.tenacity.module.impl.combat;
 
 import dev.tenacity.Tenacity;
 import dev.tenacity.commands.impl.FriendCommand;
+import dev.tenacity.event.impl.game.TickEvent;
 import dev.tenacity.event.impl.player.AttackEvent;
 import dev.tenacity.event.impl.player.KeepSprintEvent;
 import dev.tenacity.event.impl.player.MotionEvent;
@@ -122,19 +123,20 @@ public final class KillAura extends Module {
     }
 
     @Override
-    public void onUpdateEvent(UpdateEvent event) {
+    public void onTickEvent(TickEvent event) {
         if (autoblock.isEnabled() && autoblockMode.is("BlocksMC B")) {
             return;
         }
-
-        if (TargetManager.target != null) {
-            if (attackTimer.hasTimeElapsed(cps, true)) {
-                final int maxValue = (int) ((minCPS.getMaxValue() - maxCPS.getValue()) * 5.0);
-                final int minValue = (int) ((minCPS.getMaxValue() - minCPS.getValue()) * 5.0);
-                cps = MathUtils.getRandomInRange(minValue, maxValue);
-                AttackEvent attackEvent = new AttackEvent(TargetManager.target);
-                Tenacity.INSTANCE.getEventProtocol().handleEvent(attackEvent);
-                attack();
+        if (event.isPost()) {
+            if (TargetManager.target != null) {
+                if (attackTimer.hasTimeElapsed(cps, true)) {
+                    final int maxValue = (int) ((minCPS.getMaxValue() - maxCPS.getValue()) * 5.0);
+                    final int minValue = (int) ((minCPS.getMaxValue() - minCPS.getValue()) * 5.0);
+                    cps = MathUtils.getRandomInRange(minValue, maxValue);
+                    AttackEvent attackEvent = new AttackEvent(TargetManager.target);
+                    Tenacity.INSTANCE.getEventProtocol().handleEvent(attackEvent);
+                    attack();
+                }
             }
         }
     }
