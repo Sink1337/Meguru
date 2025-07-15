@@ -104,9 +104,9 @@ public class CustomMainMenu extends GuiScreen {
         tenacityBoldFont80.drawCenteredString("Meguru", width / 2f, height / 2f - 110, textcolor);
         tenacityFont32.drawString(Tenacity.VERSION, width / 2f + tenacityBoldFont80.getStringWidth("Meguru") / 2f - (tenacityFont32.getStringWidth(Tenacity.VERSION) / 2f), height / 2f - 113, textcolor);
         if (Tenacity.is0721){
-            tenacityFont18.drawCenteredString("0721 Edition", width / 2f, height / 2f - 68 + 5, textcolor);
+            tenacityFont18.drawCenteredString("Edit by 0d00", width / 2f, height / 2f - 68 + 5, textcolor);
         }else {
-            tenacityFont18.drawCenteredString("Bloxd Edition", width / 2f, height / 2f - 68 + 5, textcolor);
+            tenacityFont18.drawCenteredString("Edit by Sink", width / 2f, height / 2f - 68 + 5, textcolor);
         }
 
         GL11.glEnable(GL11.GL_BLEND);
