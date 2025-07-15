@@ -61,8 +61,13 @@ public class Scaffold extends Module {
     private final ModeSetting rotationMode = new ModeSetting("Rotation Mode", "Watchdog", "Watchdog", "NCP", "Back", "45", "Enum", "Down", "0", "Simple", "SideA", "SideB", "Hypixel");
     private final ModeSetting placeType = new ModeSetting("Place Type", "Post", "Pre", "Post", "Legit", "Dynamic");
     public static ModeSetting keepYMode = new ModeSetting("Keep Y Mode", "Always", "Always", "Speed toggled");
+<<<<<<< HEAD:src/main/java/dev/merguru/module/impl/player/Scaffold.java
     public static ModeSetting sprintMode = new ModeSetting("Sprint Mode", "Vanilla", "Watchdog", "Cancel", "KeepyA", "KeepyB", "BlocksMC");
     public static ModeSetting towerMode = new ModeSetting("Tower Mode", "Watchdog", "Vanilla", "NCP", "Watchdog", "Verus", "Legit", "2tick", "3tick", "4tick", "Hypixel");
+=======
+    public static ModeSetting sprintMode = new ModeSetting("Sprint Mode", "Vanilla", "Watchdog", "Cancel");
+    public static ModeSetting towerMode = new ModeSetting("Tower Mode", "Watchdog", "Vanilla", "NCP", "Watchdog", "Verus", "Legit");
+>>>>>>> parent of 7f9ac9c (fix):src/main/java/dev/meguru/module/impl/player/Scaffold.java
     private final NumberSetting towerSpeed = new NumberSetting("Tower speed", 1, 10, 0, 0.1);
     public static ModeSetting swingMode = new ModeSetting("Swing Mode", "Client", "Client", "Silent");
     public static final ModeSetting swapMode = new ModeSetting("Swap Mode", "Normal", "Normal", "Spoof", "Lite Spoof");
@@ -85,24 +90,14 @@ public class Scaffold extends Module {
     public static BooleanSetting keepY = new BooleanSetting("Keep Y", false);
 
     private ScaffoldUtils.BlockCache blockCache, lastBlockCache;
-    private float y;
-    private float speed;
-    private final MouseFilter pitchMouseFilter = new MouseFilter();
     private final TimerUtil delayTimer = new TimerUtil();
     private final TimerUtil timerUtil = new TimerUtil();
     public static double keepYCoord;
-    private boolean shouldSendPacket;
-    private boolean shouldTower;
-    private boolean firstJump;
-    private boolean pre;
-    private int jumpTimer;
     private int blockPlacementSlot = -1;
     private int prevSlot;
     private float[] cachedRots = new float[2];
-    private int offGroundTicks = 0;
 
     private final Animation anim = new DecelerateAnimation(250, 1);
-    private boolean shouldrot;
 
     //hypixel bypasses
     public static Vec3 targetBlock;
@@ -151,6 +146,7 @@ public class Scaffold extends Module {
                     PacketUtils.sendPacketNoEvent(new C0BPacketEntityAction(mc.thePlayer, C0BPacketEntityAction.Action.STOP_SPRINTING));
                 }
                 break;
+<<<<<<< HEAD:src/main/java/dev/merguru/module/impl/player/Scaffold.java
             case "KeepyA":
                 if(MovementUtils.isMoving() && !mc.gameSettings.keyBindJump.isKeyDown()) {
                     cryptixSprintState = true;
@@ -214,6 +210,8 @@ public class Scaffold extends Module {
                     MovementUtils.strafe(mc.thePlayer.isPotionActive(Potion.moveSpeed) ? is % 11 == 0 ? 0.146 : 0.296 : 0.20);
                 }
                 break;
+=======
+>>>>>>> parent of 7f9ac9c (fix):src/main/java/dev/meguru/module/impl/player/Scaffold.java
             case "Cancel":
                 break;
         }
@@ -277,6 +275,14 @@ public class Scaffold extends Module {
                     float movementYaw = RotationUtils.getMovementYaw();
                     float finishedYaw = movementYaw + 45.0f;
 
+<<<<<<< HEAD:src/main/java/dev/merguru/module/impl/player/Scaffold.java
+=======
+                    float[][] fArrayArray = angleRanges;
+                    int n = angleRanges.length;
+                    int n2 = 0;
+                    float bodyYaw = 0;
+
+>>>>>>> parent of 7f9ac9c (fix):src/main/java/dev/meguru/module/impl/player/Scaffold.java
                     switch (rotationMode.getMode()) {
                         case "Simple":
                             if ((blockCache = ScaffoldUtils.getBlockInfo()) == null) {
@@ -390,7 +396,10 @@ public class Scaffold extends Module {
                             mc.thePlayer.motionY = 0.42f;
                             break;
                         case "Verus":
+<<<<<<< HEAD:src/main/java/dev/merguru/module/impl/player/Scaffold.java
                         case "2tick":
+=======
+>>>>>>> parent of 7f9ac9c (fix):src/main/java/dev/meguru/module/impl/player/Scaffold.java
                             double speed2 = towerSpeed.getValue() / 10.0 * (mc.thePlayer.isPotionActive(Potion.moveSpeed) ? 1.2 : 1.0);
                             if (Math.round(mc.thePlayer.posY % 1 * 100) == 0) {
                                 mc.thePlayer.setPosition(mc.thePlayer.posX, Math.floor(mc.thePlayer.posY), mc.thePlayer.posZ);
@@ -401,6 +410,7 @@ public class Scaffold extends Module {
                             }
                             MovementUtils.strafe();
                             towerTick++;
+<<<<<<< HEAD:src/main/java/dev/merguru/module/impl/player/Scaffold.java
                             break;
                         case "3tick":
                             double speed3 = towerSpeed.getValue() / 10 * (mc.thePlayer.isPotionActive(Potion.moveSpeed) ? 1.25 : 1);
@@ -439,6 +449,8 @@ public class Scaffold extends Module {
                             } else if (mc.thePlayer.offGroundTicks == 4 && towerTick == 1) {
                                 mc.thePlayer.motionY -= 0.07;
                             }
+=======
+>>>>>>> parent of 7f9ac9c (fix):src/main/java/dev/meguru/module/impl/player/Scaffold.java
                             break;
                         case "Watchdog":
                             if (!MovementUtils.isMoving() && mc.theWorld.getBlockState(new BlockPos(mc.thePlayer).down()).getBlock() != Blocks.air && lastBlockCache != null) {
@@ -1006,6 +1018,11 @@ public class Scaffold extends Module {
             x += r1;
         }
         return new Vec3i(x, y, z);
+    }
+
+    private boolean isDiagonal() {
+        float yaw = (mc.thePlayer.rotationYaw % 360.0f + 360.0f) % 360.0f > 180.0f ? (mc.thePlayer.rotationYaw % 360.0f + 360.0f) % 360.0f - 360.0f : (mc.thePlayer.rotationYaw % 360.0f + 360.0f) % 360.0f;
+        return !(!(yaw >= -170.0f) || !(yaw <= 170.0f) || yaw >= -10.0f && yaw <= 10.0f || yaw >= 80.0f && yaw <= 100.0f) && (!(yaw >= -100.0f) || !(yaw <= -80.0f));
     }
 
     public void calculateRotations() {
