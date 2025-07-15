@@ -3,8 +3,8 @@ package net.minecraft.entity.player;
 import com.google.common.base.Charsets;
 import com.google.common.collect.Lists;
 import com.mojang.authlib.GameProfile;
-import dev.merguru.Merguru;
-import dev.merguru.event.impl.player.KeepSprintEvent;
+import dev.meguru.Meguru;
+import dev.meguru.event.impl.player.KeepSprintEvent;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockBed;
 import net.minecraft.block.BlockDirectional;
@@ -1148,7 +1148,7 @@ public abstract class EntityPlayer extends EntityLivingBase {
                             targetEntity.addVelocity(-MathHelper.sin(this.rotationYaw * (float) Math.PI / 180.0F) * (float) i * 0.5F, 0.1D, MathHelper.cos(this.rotationYaw * (float) Math.PI / 180.0F) * (float) i * 0.5F);
 
                             KeepSprintEvent keepSprintEvent = new KeepSprintEvent();
-                            Merguru.INSTANCE.getEventProtocol().handleEvent(keepSprintEvent);
+                            Meguru.INSTANCE.getEventProtocol().handleEvent(keepSprintEvent);
                             if (!keepSprintEvent.isCancelled()) {
                                 this.motionX *= 0.6D;
                                 this.motionZ *= 0.6D;

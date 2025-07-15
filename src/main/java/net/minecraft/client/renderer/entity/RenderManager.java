@@ -1,8 +1,8 @@
 package net.minecraft.client.renderer.entity;
 
 import com.google.common.collect.Maps;
-import dev.merguru.module.impl.render.TargetHUDMod;
-import dev.merguru.utils.misc.MathUtils;
+import dev.meguru.module.impl.render.TargetHUDMod;
+import dev.meguru.utils.misc.MathUtils;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockBed;
 import net.minecraft.block.state.IBlockState;

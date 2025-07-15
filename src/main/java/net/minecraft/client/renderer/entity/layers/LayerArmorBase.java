@@ -1,12 +1,12 @@
 package net.minecraft.client.renderer.entity.layers;
 
 import com.google.common.collect.Maps;
-import dev.merguru.Merguru;
-import dev.merguru.module.impl.render.Animations;
-import dev.merguru.module.impl.render.CustomModel;
-import dev.merguru.module.impl.render.Glint;
-import dev.merguru.module.impl.render.GlowESP;
-import dev.merguru.utils.render.RenderUtil;
+import dev.meguru.Meguru;
+import dev.meguru.module.impl.render.Animations;
+import dev.meguru.module.impl.render.CustomModel;
+import dev.meguru.module.impl.render.Glint;
+import dev.meguru.module.impl.render.GlowESP;
+import dev.meguru.utils.render.RenderUtil;
 import net.minecraft.client.model.ModelBase;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.renderer.entity.RendererLivingEntity;
@@ -47,7 +47,7 @@ public abstract class LayerArmorBase<T extends ModelBase> implements LayerRender
     }
 
     public boolean shouldCombineTextures() {
-        return (Merguru.INSTANCE.isEnabled(Animations.class) && Animations.oldDamage.isEnabled());
+        return (Meguru.INSTANCE.isEnabled(Animations.class) && Animations.oldDamage.isEnabled());
     }
 
     private void renderLayer(EntityLivingBase entitylivingbaseIn, float p_177182_2_, float p_177182_3_, float partialTicks, float p_177182_5_, float p_177182_6_, float p_177182_7_, float scale, int armorSlot) {
@@ -127,7 +127,7 @@ public abstract class LayerArmorBase<T extends ModelBase> implements LayerRender
                 GlStateManager.blendFunc(768, 1);
                 float f2 = 0.76F;
 
-                Glint glint = (Glint) Merguru.INSTANCE.getModuleCollection().get(Glint.class);
+                Glint glint = (Glint) Meguru.INSTANCE.getModuleCollection().get(Glint.class);
                 if (glint.isEnabled()) {
                     int color = glint.getColor().getRGB();
                     RenderUtil.color(color, 1);
