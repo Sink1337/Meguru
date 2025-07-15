@@ -2,7 +2,7 @@ package net.minecraft.client.gui;
 
 import com.google.common.base.Charsets;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
-import dev.tenacity.utils.render.RenderUtil;
+import dev.merguru.utils.render.RenderUtil;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufInputStream;
 import io.netty.buffer.Unpooled;

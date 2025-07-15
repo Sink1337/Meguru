@@ -1,9 +1,9 @@
 package net.minecraft.client.entity;
 
 import com.mojang.authlib.GameProfile;
-import dev.tenacity.Tenacity;
-import dev.tenacity.event.impl.player.EventLook;
-import dev.tenacity.utils.addons.vector.Vector2f;
+import dev.merguru.Merguru;
+import dev.merguru.event.impl.player.EventLook;
+import dev.merguru.utils.addons.vector.Vector2f;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.network.NetworkPlayerInfo;
 import net.minecraft.client.renderer.ImageBufferDownload;
@@ -198,7 +198,7 @@ public abstract class AbstractClientPlayer extends EntityPlayer {
         float pitch = this.rotationPitch;
 
         EventLook lookEvent = new EventLook(new Vector2f(yaw, pitch));
-        Tenacity.INSTANCE.getEventProtocol().handleEvent(lookEvent);
+        Merguru.INSTANCE.getEventProtocol().handleEvent(lookEvent);
         yaw = lookEvent.getRotation().x;
         pitch = lookEvent.getRotation().y;
 

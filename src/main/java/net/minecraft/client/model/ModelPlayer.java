@@ -1,7 +1,7 @@
 package net.minecraft.client.model;
 
-import dev.tenacity.module.impl.render.CustomModel;
-import dev.tenacity.utils.render.RenderUtil;
+import dev.merguru.module.impl.render.CustomModel;
+import dev.merguru.utils.render.RenderUtil;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.entity.Entity;
 import net.minecraft.util.MathHelper;

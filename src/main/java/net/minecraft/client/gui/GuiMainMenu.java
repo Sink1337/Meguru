@@ -1,8 +1,8 @@
 package net.minecraft.client.gui;
 
 import com.google.common.collect.Lists;
-import dev.tenacity.Tenacity;
-import dev.tenacity.ui.mainmenu.CustomMainMenu;
+import dev.merguru.Merguru;
+import dev.merguru.ui.mainmenu.CustomMainMenu;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.renderer.OpenGlHelper;
@@ -273,7 +273,7 @@ public class GuiMainMenu extends GuiScreen implements GuiYesNoCallback {
         }
 
         if (button.id == 3) {
-            this.mc.displayGuiScreen(Tenacity.INSTANCE.getAltManager());
+            this.mc.displayGuiScreen(Merguru.INSTANCE.getAltManager());
         }
 
         if (button.id == 4) {

@@ -5,14 +5,13 @@ import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.viaversion.viaversion.api.connection.UserConnection;
 import com.viaversion.viaversion.connection.UserConnectionImpl;
 import com.viaversion.viaversion.protocol.ProtocolPipelineImpl;
-import dev.tenacity.Tenacity;
-import dev.tenacity.event.impl.network.PacketReceiveEvent;
-import dev.tenacity.event.impl.network.PacketSendEvent;
-import dev.tenacity.viamcp.ViaMCP;
-import dev.tenacity.viamcp.handler.CommonTransformer;
-import dev.tenacity.viamcp.handler.MCPDecodeHandler;
-import dev.tenacity.viamcp.handler.MCPEncodeHandler;
-import dev.tenacity.viamcp.utils.NettyUtil;
+import de.florianmichael.vialoadingbase.ViaLoadingBase;
+import de.florianmichael.vialoadingbase.netty.event.CompressionReorderEvent;
+import de.florianmichael.viamcp.MCPVLBPipeline;
+import de.florianmichael.viamcp.ViaMCP;
+import dev.merguru.Merguru;
+import dev.merguru.event.impl.network.PacketReceiveEvent;
+import dev.merguru.event.impl.network.PacketSendEvent;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.*;
 import io.netty.channel.epoll.Epoll;
@@ -134,7 +133,7 @@ public class NetworkManager extends SimpleChannelInboundHandler<Packet> {
         if (this.channel.isOpen()) {
             try {
                 PacketReceiveEvent e = new PacketReceiveEvent(p_channelRead0_2_);
-                Tenacity.INSTANCE.getEventProtocol().handleEvent(e);
+                Merguru.INSTANCE.getEventProtocol().handleEvent(e);
                 if (e.isCancelled()) return;
                 p_channelRead0_2_.processPacket(this.packetListener);
             } catch (ThreadQuickExitException ignored) {
@@ -160,10 +159,25 @@ public class NetworkManager extends SimpleChannelInboundHandler<Packet> {
         if (this.isChannelOpen()) {
             if (!silent) {
                 PacketSendEvent e = new PacketSendEvent(packetIn);
-                Tenacity.INSTANCE.getEventProtocol().handleEvent(e);
+                Merguru.INSTANCE.getEventProtocol().handleEvent(e);
                 if (e.isCancelled()) return;
                 packetIn = e.getPacket();
             }
+            this.flushOutboundQueue();
+            this.dispatchPacket(packetIn, null);
+        } else {
+            this.readWriteLock.writeLock().lock();
+
+            try {
+                this.outboundPacketsQueue.add(new NetworkManager.InboundHandlerTuplePacketListener(packetIn, (GenericFutureListener[]) null));
+            } finally {
+                this.readWriteLock.writeLock().unlock();
+            }
+        }
+    }
+
+    public void sendPacketNoEvent(Packet<?> packetIn) {
+        if (this.isChannelOpen()) {
             this.flushOutboundQueue();
             this.dispatchPacket(packetIn, null);
         } else {
@@ -318,10 +332,10 @@ public class NetworkManager extends SimpleChannelInboundHandler<Packet> {
                 }
 
                 p_initChannel_1_.pipeline().addLast("timeout", new ReadTimeoutHandler(30)).addLast("splitter", new MessageDeserializer2()).addLast("decoder", new MessageDeserializer(EnumPacketDirection.CLIENTBOUND)).addLast("prepender", new MessageSerializer2()).addLast("encoder", new MessageSerializer(EnumPacketDirection.SERVERBOUND)).addLast("packet_handler", networkmanager);
-                if (p_initChannel_1_ instanceof SocketChannel && ViaMCP.getInstance().getVersion() != ViaMCP.PROTOCOL_VERSION) {
-                    UserConnection user = new UserConnectionImpl(p_initChannel_1_, true);
+                if (p_initChannel_1_ instanceof SocketChannel && ViaLoadingBase.getInstance().getTargetVersion().getVersion() != ViaMCP.NATIVE_VERSION) {
+                    final UserConnection user = new UserConnectionImpl(p_initChannel_1_, true);
                     new ProtocolPipelineImpl(user);
-                    p_initChannel_1_.pipeline().addBefore("encoder", CommonTransformer.HANDLER_ENCODER_NAME, new MCPEncodeHandler(user)).addBefore("decoder", CommonTransformer.HANDLER_DECODER_NAME, new MCPDecodeHandler(user));
+                    p_initChannel_1_.pipeline().addLast(new MCPVLBPipeline(user));
                 }
             }
         }).channel(oclass).connect(address, serverPort).syncUninterruptibly();
@@ -390,27 +404,24 @@ public class NetworkManager extends SimpleChannelInboundHandler<Packet> {
     public void setCompressionTreshold(int treshold) {
         if (treshold >= 0) {
             if (this.channel.pipeline().get("decompress") instanceof NettyCompressionDecoder) {
-                ((NettyCompressionDecoder) this.channel.pipeline().get("decompress")).setCompressionTreshold(treshold);
+                ((NettyCompressionDecoder)this.channel.pipeline().get("decompress")).setCompressionTreshold(treshold);
             } else {
-//                this.channel.pipeline().addBefore("decoder", "decompress", new NettyCompressionDecoder(treshold));
-                NettyUtil.decodeEncodePlacement(channel.pipeline(), "decoder", "decompress", new NettyCompressionDecoder(treshold));
+                this.channel.pipeline().addBefore("decoder", "decompress", new NettyCompressionDecoder(treshold));
             }
-
             if (this.channel.pipeline().get("compress") instanceof NettyCompressionEncoder) {
-                ((NettyCompressionEncoder) this.channel.pipeline().get("decompress")).setCompressionTreshold(treshold);
+                ((NettyCompressionEncoder)this.channel.pipeline().get("decompress")).setCompressionTreshold(treshold);
             } else {
-//                this.channel.pipeline().addBefore("encoder", "compress", new NettyCompressionEncoder(treshold));
-                NettyUtil.decodeEncodePlacement(channel.pipeline(), "encoder", "compress", new NettyCompressionEncoder(treshold));
+                this.channel.pipeline().addBefore("encoder", "compress", new NettyCompressionEncoder(treshold));
             }
         } else {
             if (this.channel.pipeline().get("decompress") instanceof NettyCompressionDecoder) {
                 this.channel.pipeline().remove("decompress");
             }
-
             if (this.channel.pipeline().get("compress") instanceof NettyCompressionEncoder) {
                 this.channel.pipeline().remove("compress");
             }
         }
+        this.channel.pipeline().fireUserEventTriggered(new CompressionReorderEvent());
     }
 
     public void checkDisconnected() {

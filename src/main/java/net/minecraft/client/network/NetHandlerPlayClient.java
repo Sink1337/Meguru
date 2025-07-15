@@ -5,11 +5,11 @@ import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.mojang.authlib.GameProfile;
-import dev.tenacity.Tenacity;
-import dev.tenacity.event.impl.player.ChatReceivedEvent;
-import dev.tenacity.event.impl.player.TeleportEvent;
-import dev.tenacity.module.impl.movement.Flight;
-import dev.tenacity.utils.misc.Enhancements;
+import dev.merguru.Merguru;
+import dev.merguru.event.impl.player.ChatReceivedEvent;
+import dev.merguru.event.impl.player.TeleportEvent;
+import dev.merguru.module.impl.movement.Flight;
+import dev.merguru.utils.misc.Enhancements;
 import io.netty.buffer.Unpooled;
 import net.minecraft.block.Block;
 import net.minecraft.client.ClientBrandRetriever;
@@ -469,7 +469,7 @@ public class NetHandlerPlayClient implements INetHandlerPlayClient {
                 f1
         );
 
-        Tenacity.INSTANCE.getEventProtocol().handleEvent(event);
+        Merguru.INSTANCE.getEventProtocol().handleEvent(event);
 
         if (event.isCancelled()) {
             return;
@@ -622,6 +622,8 @@ public class NetHandlerPlayClient implements INetHandlerPlayClient {
         this.netManager.sendPacket(p_147297_1_);
     }
 
+    public void sendPacketNoEvent(Packet<?> p_147297_1_) {this.netManager.sendPacketNoEvent(p_147297_1_);}
+
     public void handleCollectItem(S0DPacketCollectItem packetIn) {
         PacketThreadUtil.checkThreadAndEnqueue(packetIn, this, this.gameController);
         Entity entity = this.clientWorldController.getEntityByID(packetIn.getCollectedItemEntityID());
@@ -651,7 +653,7 @@ public class NetHandlerPlayClient implements INetHandlerPlayClient {
 
         ChatReceivedEvent e = new ChatReceivedEvent(packetIn.getType(), packetIn.getChatComponent());
 
-        Tenacity.INSTANCE.getEventProtocol().handleEvent(e);
+        Merguru.INSTANCE.getEventProtocol().handleEvent(e);
         if (e.isCancelled() || e.message == null) return;
 
         if (packetIn.getType() == 2) {

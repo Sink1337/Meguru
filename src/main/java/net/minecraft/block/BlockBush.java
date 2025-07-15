@@ -1,6 +1,6 @@
 package net.minecraft.block;
 
-import dev.tenacity.module.impl.render.XRay;
+import dev.merguru.module.impl.render.XRay;
 import net.minecraft.block.material.MapColor;
 import net.minecraft.block.material.Material;
 import net.minecraft.block.state.IBlockState;

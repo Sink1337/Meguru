@@ -1,7 +1,7 @@
 package net.minecraft.client.gui.inventory;
 
 import com.google.common.collect.Lists;
-import dev.tenacity.utils.render.GLUtil;
+import dev.merguru.utils.render.GLUtil;
 import net.minecraft.client.gui.GuiButton;
 import net.minecraft.client.gui.GuiTextField;
 import net.minecraft.client.gui.achievement.GuiAchievements;

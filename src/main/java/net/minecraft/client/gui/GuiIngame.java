@@ -2,20 +2,20 @@ package net.minecraft.client.gui;
 
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
-import dev.tenacity.Tenacity;
-import dev.tenacity.event.impl.render.PreRenderEvent;
-import dev.tenacity.event.impl.render.Render2DEvent;
-import dev.tenacity.module.impl.render.HUDMod;
-import dev.tenacity.module.impl.render.NotificationsMod;
-import dev.tenacity.module.impl.render.PostProcessing;
-import dev.tenacity.module.impl.render.ScoreboardMod;
-import dev.tenacity.utils.Utils;
-import dev.tenacity.utils.animations.ContinualAnimation;
-import dev.tenacity.utils.font.AbstractFontRenderer;
-import dev.tenacity.utils.render.ColorUtil;
-import dev.tenacity.utils.render.GLUtil;
-import dev.tenacity.utils.render.RenderUtil;
-import dev.tenacity.utils.render.RoundedUtil;
+import dev.merguru.Merguru;
+import dev.merguru.event.impl.render.PreRenderEvent;
+import dev.merguru.event.impl.render.Render2DEvent;
+import dev.merguru.module.impl.render.HUDMod;
+import dev.merguru.module.impl.render.NotificationsMod;
+import dev.merguru.module.impl.render.PostProcessing;
+import dev.merguru.module.impl.render.ScoreboardMod;
+import dev.merguru.utils.Utils;
+import dev.merguru.utils.animations.ContinualAnimation;
+import dev.merguru.utils.font.AbstractFontRenderer;
+import dev.merguru.utils.render.ColorUtil;
+import dev.merguru.utils.render.GLUtil;
+import dev.merguru.utils.render.RenderUtil;
+import dev.merguru.utils.render.RoundedUtil;
 import net.minecraft.block.material.Material;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.GlStateManager;
@@ -187,15 +187,15 @@ public class GuiIngame extends Gui implements Utils {
             }
         }
 
-        Tenacity.INSTANCE.getEventProtocol().handleEvent(new PreRenderEvent());
+        Merguru.INSTANCE.getEventProtocol().handleEvent(new PreRenderEvent());
 
 
-        PostProcessing postProcessing = (PostProcessing) Tenacity.INSTANCE.getModuleCollection().get(PostProcessing.class);
+        PostProcessing postProcessing = (PostProcessing) Merguru.INSTANCE.getModuleCollection().get(PostProcessing.class);
         postProcessing.blurScreen();
 
 
-        Tenacity.INSTANCE.getEventProtocol().handleEvent(new Render2DEvent(scaledresolution.getScaledWidth(), scaledresolution.getScaledHeight()));
-        NotificationsMod notif = Tenacity.INSTANCE.getModuleCollection().getModule(NotificationsMod.class);
+        Merguru.INSTANCE.getEventProtocol().handleEvent(new Render2DEvent(scaledresolution.getScaledWidth(), scaledresolution.getScaledHeight()));
+        NotificationsMod notif = Merguru.INSTANCE.getModuleCollection().getModule(NotificationsMod.class);
         if (notif.isEnabled()) {
             notif.render();
         }
@@ -350,7 +350,7 @@ public class GuiIngame extends Gui implements Utils {
 
         ScoreObjective scoreobjective1 = scoreobjective != null ? scoreobjective : scoreboard.getObjectiveInDisplaySlot(1);
 
-        if (scoreobjective1 != null && Tenacity.INSTANCE.isEnabled(ScoreboardMod.class)) {
+        if (scoreobjective1 != null && Merguru.INSTANCE.isEnabled(ScoreboardMod.class)) {
             this.renderScoreboard(scoreobjective1, scaledresolution);
         }
 
@@ -561,7 +561,7 @@ public class GuiIngame extends Gui implements Utils {
             }
         }
         ScoreObjective objective = scoreobjective != null ? scoreobjective : scoreboardOBJ.getObjectiveInDisplaySlot(1);
-        if (objective != null && Tenacity.INSTANCE.isEnabled(ScoreboardMod.class)) {
+        if (objective != null && Merguru.INSTANCE.isEnabled(ScoreboardMod.class)) {
 
             Scoreboard scoreboard = objective.getScoreboard();
             Collection<Score> collection = scoreboard.getSortedScores(objective);
@@ -1310,7 +1310,7 @@ public class GuiIngame extends Gui implements Utils {
     }
 
     public AbstractFontRenderer getScoreboardFontRenderer() {
-        ScoreboardMod scoreboardMod = Tenacity.INSTANCE.getModuleCollection().getModule(ScoreboardMod.class);
+        ScoreboardMod scoreboardMod = Merguru.INSTANCE.getModuleCollection().getModule(ScoreboardMod.class);
         if (scoreboardMod.fontMode.is("Minecraft")) {
             return this.mc.fontRendererObj;
         }

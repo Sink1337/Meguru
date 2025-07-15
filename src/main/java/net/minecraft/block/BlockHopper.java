@@ -1,7 +1,7 @@
 package net.minecraft.block;
 
 import com.google.common.base.Predicate;
-import dev.tenacity.utils.render.betterfps.HopperLogic;
+import dev.merguru.utils.render.betterfps.HopperLogic;
 import net.minecraft.block.material.MapColor;
 import net.minecraft.block.material.Material;
 import net.minecraft.block.properties.IProperty;

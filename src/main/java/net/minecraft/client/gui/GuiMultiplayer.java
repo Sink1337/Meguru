@@ -2,8 +2,8 @@ package net.minecraft.client.gui;
 
 import com.google.common.base.Splitter;
 import com.google.common.collect.Lists;
-import dev.tenacity.utils.server.ServerUtils;
-import dev.tenacity.viamcp.gui.GuiProtocolSelector;
+import de.florianmichael.viamcp.gui.GuiProtocolSelector;
+import dev.merguru.utils.server.ServerUtils;
 import net.minecraft.client.multiplayer.GuiConnecting;
 import net.minecraft.client.multiplayer.ServerData;
 import net.minecraft.client.multiplayer.ServerList;

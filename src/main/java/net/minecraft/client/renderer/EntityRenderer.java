@@ -2,12 +2,12 @@ package net.minecraft.client.renderer;
 
 import com.google.common.base.Predicates;
 import com.google.gson.JsonSyntaxException;
-import dev.tenacity.Tenacity;
-import dev.tenacity.event.impl.render.HurtCamEvent;
-import dev.tenacity.event.impl.render.Render3DEvent;
-import dev.tenacity.module.impl.player.ChestStealer;
-import dev.tenacity.module.impl.render.Ambience;
-import dev.tenacity.utils.render.EntityCulling;
+import dev.merguru.Merguru;
+import dev.merguru.event.impl.render.HurtCamEvent;
+import dev.merguru.event.impl.render.Render3DEvent;
+import dev.merguru.module.impl.player.ChestStealer;
+import dev.merguru.module.impl.render.Ambience;
+import dev.merguru.utils.render.EntityCulling;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockBed;
 import net.minecraft.block.material.Material;
@@ -583,7 +583,7 @@ public class EntityRenderer implements IResourceManagerReloadListener {
     private void hurtCameraEffect(float partialTicks) {
         if (this.mc.getRenderViewEntity() instanceof EntityLivingBase) {
             HurtCamEvent hurtCamEvent = new HurtCamEvent();
-            Tenacity.INSTANCE.getEventProtocol().handleEvent(hurtCamEvent);
+            Merguru.INSTANCE.getEventProtocol().handleEvent(hurtCamEvent);
 
             if (!hurtCamEvent.isCancelled()) {
                 EntityLivingBase entitylivingbase = (EntityLivingBase) this.mc.getRenderViewEntity();
@@ -1398,7 +1398,7 @@ public class EntityRenderer implements IResourceManagerReloadListener {
         GlStateManager.shadeModel(7424);
         GlStateManager.alphaFunc(516, 0.1F);
 
-        Tenacity.INSTANCE.getEventProtocol().handleEvent(new Render3DEvent(partialTicks));
+        Merguru.INSTANCE.getEventProtocol().handleEvent(new Render3DEvent(partialTicks));
 
         if (!this.debugView) {
             GlStateManager.matrixMode(5888);

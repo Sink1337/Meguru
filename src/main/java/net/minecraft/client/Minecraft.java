@@ -11,20 +11,20 @@ import com.mojang.authlib.GameProfile;
 import com.mojang.authlib.minecraft.MinecraftSessionService;
 import com.mojang.authlib.properties.PropertyMap;
 import com.mojang.authlib.yggdrasil.YggdrasilAuthenticationService;
-import dev.tenacity.Tenacity;
-import dev.tenacity.event.impl.game.*;
-import dev.tenacity.event.impl.player.BlockEvent;
-import dev.tenacity.event.impl.player.BlockPlaceableEvent;
-import dev.tenacity.event.impl.player.ClickEvent;
-import dev.tenacity.event.impl.player.ClickEventRight;
-import dev.tenacity.module.impl.render.ClickGUIMod;
-import dev.tenacity.module.impl.render.MotionBlur;
-import dev.tenacity.ui.SplashScreen;
-import dev.tenacity.ui.clickguis.dropdown.DropdownClickGUI;
-import dev.tenacity.ui.mainmenu.CustomMainMenu;
-import dev.tenacity.utils.font.FontUtil;
-import dev.tenacity.utils.misc.SoundUtils;
-import dev.tenacity.viamcp.utils.AttackOrder;
+import de.florianmichael.viamcp.fixes.AttackOrder;
+import dev.merguru.Merguru;
+import dev.merguru.event.impl.game.*;
+import dev.merguru.event.impl.player.BlockEvent;
+import dev.merguru.event.impl.player.BlockPlaceableEvent;
+import dev.merguru.event.impl.player.ClickEvent;
+import dev.merguru.event.impl.player.ClickEventRight;
+import dev.merguru.module.impl.render.ClickGUIMod;
+import dev.merguru.module.impl.render.MotionBlur;
+import dev.merguru.ui.SplashScreen;
+import dev.merguru.ui.clickguis.dropdown.DropdownClickGUI;
+import dev.merguru.ui.mainmenu.CustomMainMenu;
+import dev.merguru.utils.font.FontUtil;
+import dev.merguru.utils.misc.SoundUtils;
 import net.minecraft.block.Block;
 import net.minecraft.block.material.Material;
 import net.minecraft.client.audio.MusicTicker;
@@ -458,7 +458,7 @@ public class Minecraft implements IThreadListener, IPlayerUsage {
         FontUtil.setupFonts();
         MonthDay today = MonthDay.now();
         MonthDay july21 = MonthDay.of(7, 21);
-        Tenacity.is0721 = (today.equals(july21));
+        Merguru.is0721 = (today.equals(july21));
 
         SplashScreen.continueCount();
         this.skinManager = new SkinManager(this.renderEngine, new File(this.fileAssets, "skins"), this.sessionService);
@@ -528,15 +528,15 @@ public class Minecraft implements IThreadListener, IPlayerUsage {
         this.ingameGUI = new GuiIngame(this);
 
 
-        Tenacity.INSTANCE.start();
+        Merguru.INSTANCE.start();
 
         SplashScreen.continueCount(false);
 
         this.gameSettings.guiScale = 2;
         if (LocalDate.now().equals(LocalDate.of(LocalDate.now().getYear(), 7, 21))) {
-            SoundUtils.playSound(new ResourceLocation("Tenacity/Sounds/goodday.wav"), .9f);
+            SoundUtils.playSound(new ResourceLocation("merguru/sounds/goodday.wav"), .9f);
         } else {
-            SoundUtils.playSound(new ResourceLocation("Tenacity/Sounds/opening.wav"), .8f);
+            SoundUtils.playSound(new ResourceLocation("merguru/sounds/opening.wav"), .8f);
         }
         SplashScreen.drawScreen();
 
@@ -577,7 +577,7 @@ public class Minecraft implements IThreadListener, IPlayerUsage {
 
     private void createDisplay() throws LWJGLException {
         Display.setResizable(true);
-        Display.setTitle(Tenacity.NAME + " " + Tenacity.VERSION);
+        Display.setTitle(Merguru.NAME + " " + Merguru.VERSION);
 
         try {
             Display.create((new PixelFormat()).withDepthBits(24));
@@ -1000,12 +1000,12 @@ public class Minecraft implements IThreadListener, IPlayerUsage {
 
         if (!this.skipRenderWorld) {
             RenderTickEvent renderTickEvent = new RenderTickEvent(this.timer.renderPartialTicks);
-            Tenacity.INSTANCE.getEventProtocol().handleEvent(renderTickEvent);
+            Merguru.INSTANCE.getEventProtocol().handleEvent(renderTickEvent);
             this.mcProfiler.endStartSection("gameRenderer");
             this.entityRenderer.updateCameraAndRender(this.timer.renderPartialTicks, i);
             this.mcProfiler.endSection();
             renderTickEvent.setPost();
-            Tenacity.INSTANCE.getEventProtocol().handleEvent(renderTickEvent);
+            Merguru.INSTANCE.getEventProtocol().handleEvent(renderTickEvent);
         }
 
         this.mcProfiler.endSection();
@@ -1250,7 +1250,7 @@ public class Minecraft implements IThreadListener, IPlayerUsage {
      * Called when the window is closing. Sets 'running' to false which allows the game loop to exit cleanly.
      */
     public void shutdown() {
-        Tenacity.INSTANCE.getEventProtocol().handleEvent(new GameCloseEvent());
+        Merguru.INSTANCE.getEventProtocol().handleEvent(new GameCloseEvent());
         this.running = false;
     }
 
@@ -1328,7 +1328,7 @@ public class Minecraft implements IThreadListener, IPlayerUsage {
         if (this.leftClickCounter <= 0) {
             final ClickEvent e = new ClickEvent(false);
 
-            Tenacity.INSTANCE.getEventProtocol().handleEvent(e);
+            Merguru.INSTANCE.getEventProtocol().handleEvent(e);
 
 //            this.thePlayer.swingItem();
             AttackOrder.sendConditionalSwing(this.objectMouseOver);
@@ -1367,7 +1367,7 @@ public class Minecraft implements IThreadListener, IPlayerUsage {
     @SuppressWarnings("incomplete-switch")
 
     public void rightClickMouse() {
-        Tenacity.INSTANCE.getEventProtocol().handleEvent(new ClickEventRight());
+        Merguru.INSTANCE.getEventProtocol().handleEvent(new ClickEventRight());
 
         if (!this.playerController.getIsHittingBlock()) {
             this.rightClickDelayTimer = 4;
@@ -1572,7 +1572,7 @@ public class Minecraft implements IThreadListener, IPlayerUsage {
         }
 
         TickEvent tickEvent = new TickEvent(ticks);
-        Tenacity.INSTANCE.getEventProtocol().handleEvent(tickEvent);
+        Merguru.INSTANCE.getEventProtocol().handleEvent(tickEvent);
 
         this.mcProfiler.startSection("gui");
 
@@ -1711,7 +1711,7 @@ public class Minecraft implements IThreadListener, IPlayerUsage {
                     if (this.currentScreen != null) {
                         this.currentScreen.handleKeyboardInput();
                     } else {
-                        Tenacity.INSTANCE.getEventProtocol().handleEvent(new KeyPressEvent(k));
+                        Merguru.INSTANCE.getEventProtocol().handleEvent(new KeyPressEvent(k));
 
                         if (k == 1) {
                             this.displayInGameMenu();
@@ -1862,7 +1862,7 @@ public class Minecraft implements IThreadListener, IPlayerUsage {
 
             if (this.thePlayer.isUsingItem()) {
                 BlockEvent blockEvent = new BlockEvent();
-                Tenacity.INSTANCE.getEventProtocol().handleEvent(blockEvent);
+                Merguru.INSTANCE.getEventProtocol().handleEvent(blockEvent);
                 if (!this.gameSettings.keyBindUseItem.isKeyDown() && !blockEvent.isCancelled()) {
                     this.playerController.onStoppedUsingItem(this.thePlayer);
                 }
@@ -1894,7 +1894,7 @@ public class Minecraft implements IThreadListener, IPlayerUsage {
                 this.rightClickMouse();
             }
 
-            Tenacity.INSTANCE.getEventProtocol().handleEvent(new BlockPlaceableEvent());
+            Merguru.INSTANCE.getEventProtocol().handleEvent(new BlockPlaceableEvent());
             this.sendClickBlockToController(this.currentScreen == null && this.gameSettings.keyBindAttack.isKeyDown() && this.inGameHasFocus);
         }
 
@@ -1979,14 +1979,14 @@ public class Minecraft implements IThreadListener, IPlayerUsage {
         }
 
         tickEvent.setPost();
-        Tenacity.INSTANCE.getEventProtocol().handleEvent(tickEvent);
+        Merguru.INSTANCE.getEventProtocol().handleEvent(tickEvent);
 
         this.mcProfiler.endSection();
         this.systemTime = getSystemTime();
 
         try {
             if (Minecraft.getMinecraft().thePlayer != null && Shaders.configAntialiasingLevel == 0) {
-                MotionBlur motionBlur = Tenacity.INSTANCE.getModuleCollection().getModule(MotionBlur.class);
+                MotionBlur motionBlur = Merguru.INSTANCE.getModuleCollection().getModule(MotionBlur.class);
                 if (motionBlur.isEnabled()) {
                     if (Minecraft.getMinecraft().entityRenderer.getShaderGroup() == null) {
                         Minecraft.getMinecraft().entityRenderer.loadShader(new ResourceLocation("minecraft", "shaders/post/lunar_motionblur.json"));
@@ -2077,7 +2077,7 @@ public class Minecraft implements IThreadListener, IPlayerUsage {
         }
         if (theWorld != null) {
             WorldEvent e = new WorldEvent.Unload(theWorld);
-            Tenacity.INSTANCE.getEventProtocol().handleEvent(e);
+            Merguru.INSTANCE.getEventProtocol().handleEvent(e);
         }
         if (worldClientIn == null) {
             NetHandlerPlayClient nethandlerplayclient = this.getNetHandler();

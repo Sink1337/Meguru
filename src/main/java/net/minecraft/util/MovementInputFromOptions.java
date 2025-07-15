@@ -1,7 +1,7 @@
 package net.minecraft.util;
 
-import dev.tenacity.Tenacity;
-import dev.tenacity.event.impl.player.EventMoveInput;
+import dev.merguru.Merguru;
+import dev.merguru.event.impl.player.EventMoveInput;
 import net.minecraft.client.settings.GameSettings;
 
 public class MovementInputFromOptions extends MovementInput {
@@ -34,7 +34,7 @@ public class MovementInputFromOptions extends MovementInput {
 
 
         final EventMoveInput moveInputEvent = new EventMoveInput(moveForward, moveStrafe, jump, sneak, 0.3D);
-        Tenacity.INSTANCE.getEventProtocol().handleEvent(moveInputEvent);
+        Merguru.INSTANCE.getEventProtocol().handleEvent(moveInputEvent);
 
         final double sneakMultiplier = moveInputEvent.getSneakSlowDownMultiplier();
         this.moveForward = moveInputEvent.getForward();

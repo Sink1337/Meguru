@@ -1,10 +1,10 @@
 package net.minecraft.block;
 
-import dev.tenacity.Tenacity;
-import dev.tenacity.event.impl.player.BoundingBoxEvent;
-import dev.tenacity.module.impl.movement.Flight;
-import dev.tenacity.module.impl.render.XRay;
-import dev.tenacity.utils.player.BlockUtils;
+import dev.merguru.Merguru;
+import dev.merguru.event.impl.player.BoundingBoxEvent;
+import dev.merguru.module.impl.movement.Flight;
+import dev.merguru.module.impl.render.XRay;
+import dev.merguru.utils.player.BlockUtils;
 import net.minecraft.block.material.MapColor;
 import net.minecraft.block.material.Material;
 import net.minecraft.block.properties.IProperty;
@@ -467,7 +467,7 @@ public class Block {
 
         if (collidingEntity == Minecraft.getMinecraft().thePlayer) {
             BoundingBoxEvent boundingBoxEvent = new BoundingBoxEvent(this, pos, axisalignedbb);
-            Tenacity.INSTANCE.getEventProtocol().handleEvent(boundingBoxEvent);
+            Merguru.INSTANCE.getEventProtocol().handleEvent(boundingBoxEvent);
             axisalignedbb = boundingBoxEvent.getBoundingBox();
         }
 

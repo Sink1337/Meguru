@@ -5,7 +5,7 @@ import net.minecraft.client.settings.GameSettings;
 import net.minecraft.src.Config;
 import org.lwjgl.opengl.*;
 import oshi.SystemInfo;
-import oshi.hardware.Processor;
+import oshi.hardware.CentralProcessor;
 
 import java.nio.ByteBuffer;
 import java.nio.FloatBuffer;
@@ -291,8 +291,8 @@ public class OpenGlHelper {
         }
 
         try {
-            Processor[] aprocessor = (new SystemInfo()).getHardware().getProcessors();
-            cpu = String.format("%dx %s", new Object[]{Integer.valueOf(aprocessor.length), aprocessor[0]}).replaceAll("\\s+", " ");
+            CentralProcessor[] aprocessor = new CentralProcessor[]{(new SystemInfo()).getHardware().getProcessor()};
+            cpu = String.format("%dx %s", aprocessor.length, aprocessor[0]).replaceAll("\\s+", " ");
         } catch (Throwable var5) {
             ;
         }

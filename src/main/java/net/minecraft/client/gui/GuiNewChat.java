@@ -1,10 +1,10 @@
 package net.minecraft.client.gui;
 
 import com.google.common.collect.Lists;
-import dev.tenacity.module.impl.render.HUDMod;
-import dev.tenacity.utils.font.AbstractFontRenderer;
-import dev.tenacity.utils.render.ColorUtil;
-import dev.tenacity.utils.render.GLUtil;
+import dev.merguru.module.impl.render.HUDMod;
+import dev.merguru.utils.font.AbstractFontRenderer;
+import dev.merguru.utils.render.ColorUtil;
+import dev.merguru.utils.render.GLUtil;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.entity.player.EntityPlayer;

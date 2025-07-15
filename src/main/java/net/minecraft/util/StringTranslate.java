@@ -19,7 +19,7 @@ public class StringTranslate {
     private static final Pattern numericVariablePattern = Pattern.compile("%(\\d+\\$)?[\\d\\.]*[df]");
 
     /**
-     * A Splitter that splits a string on the first "=".  For example, "a=b=c" would split into ["a", "b=c"].
+     * A Splitter that splits a string on the first "=". For example, "a=b=c" would split into ["a", "b=c"].
      */
     private static final Splitter equalSignSplitter = Splitter.on('=').limit(2);
 
@@ -35,10 +35,14 @@ public class StringTranslate {
     private long lastUpdateTimeInMilliseconds;
 
     public StringTranslate() {
+        InputStream inputstream = null;
         try {
-            InputStream inputstream = StringTranslate.class.getResourceAsStream("/assets/minecraft/lang/en_US.lang");
+            inputstream = StringTranslate.class.getResourceAsStream("/assets/minecraft/lang/en_US.lang");
 
-            assert inputstream != null;
+            if (inputstream == null) {
+                throw new IOException("Default language file (en_US.lang) not found in resources.");
+            }
+
             for (String s : IOUtils.readLines(inputstream, Charsets.UTF_8)) {
                 if (!s.isEmpty() && s.charAt(0) != 35) {
                     String[] astring = Iterables.toArray(equalSignSplitter.split(s), String.class);
@@ -53,7 +57,10 @@ public class StringTranslate {
 
             this.lastUpdateTimeInMilliseconds = System.currentTimeMillis();
         } catch (IOException var7) {
+            System.err.println("Error loading default language file:");
             var7.printStackTrace();
+        } finally {
+            IOUtils.closeQuietly(inputstream);
         }
     }
 

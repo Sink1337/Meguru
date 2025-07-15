@@ -1,9 +1,9 @@
 package net.minecraft.client.renderer;
 
-import dev.tenacity.Tenacity;
-import dev.tenacity.module.impl.combat.KillAura;
-import dev.tenacity.module.impl.render.Animations;
-import dev.tenacity.utils.player.InventoryUtils;
+import dev.merguru.Merguru;
+import dev.merguru.module.impl.combat.KillAura;
+import dev.merguru.module.impl.render.Animations;
+import dev.merguru.utils.player.InventoryUtils;
 import net.minecraft.block.Block;
 import net.minecraft.block.material.Material;
 import net.minecraft.block.state.IBlockState;
@@ -283,7 +283,7 @@ public class ItemRenderer {
      * Performs transformations prior to the rendering of a held item in first person.
      */
     private void transformFirstPersonItem(float equipProgress, float swingProgress) {
-        boolean animations = Tenacity.INSTANCE.isEnabled(Animations.class);
+        boolean animations = Merguru.INSTANCE.isEnabled(Animations.class);
 
         double x = .56;
         double y = .52;
@@ -397,7 +397,7 @@ public class ItemRenderer {
                             break;
 
                         case BLOCK:
-                            if (Tenacity.INSTANCE.isEnabled(Animations.class)) {
+                            if (Merguru.INSTANCE.isEnabled(Animations.class)) {
                                 switch (Animations.mode.getMode()) {
                                     case "Push":
                                         GlStateManager.translate(0.56F, -0.52F, -0.71999997F);

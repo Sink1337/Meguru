@@ -1,8 +1,8 @@
 package net.minecraft.client.renderer.entity;
 
 import com.google.common.collect.Maps;
-import dev.tenacity.module.impl.render.TargetHUDMod;
-import dev.tenacity.utils.misc.MathUtils;
+import dev.merguru.module.impl.render.TargetHUDMod;
+import dev.merguru.utils.misc.MathUtils;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockBed;
 import net.minecraft.block.state.IBlockState;

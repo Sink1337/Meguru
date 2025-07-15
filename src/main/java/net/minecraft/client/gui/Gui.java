@@ -1,10 +1,10 @@
 package net.minecraft.client.gui;
 
-import dev.tenacity.module.impl.render.HUDMod;
-import dev.tenacity.utils.font.AbstractFontRenderer;
-import dev.tenacity.utils.font.FontUtil;
-import dev.tenacity.utils.render.GLUtil;
-import dev.tenacity.utils.render.RenderUtil;
+import dev.merguru.module.impl.render.HUDMod;
+import dev.merguru.utils.font.AbstractFontRenderer;
+import dev.merguru.utils.font.FontUtil;
+import dev.merguru.utils.render.GLUtil;
+import dev.merguru.utils.render.RenderUtil;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.renderer.Tessellator;

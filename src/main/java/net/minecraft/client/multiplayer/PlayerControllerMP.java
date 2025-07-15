@@ -1,9 +1,9 @@
 package net.minecraft.client.multiplayer;
 
-import dev.tenacity.Tenacity;
-import dev.tenacity.event.impl.player.AttackEvent;
-import dev.tenacity.module.impl.combat.KillAura;
-import dev.tenacity.module.impl.movement.Flight;
+import dev.merguru.Merguru;
+import dev.merguru.event.impl.player.AttackEvent;
+import dev.merguru.module.impl.combat.KillAura;
+import dev.merguru.module.impl.movement.Flight;
 import lombok.Setter;
 import net.minecraft.block.Block;
 import net.minecraft.block.material.Material;
@@ -416,13 +416,31 @@ public class PlayerControllerMP {
         if (!(targetEntity instanceof EntityLivingBase)) return;
         AttackEvent event = new AttackEvent((EntityLivingBase) targetEntity);
 
-        Tenacity.INSTANCE.eventProtocol.handleEvent(event);
+        Merguru.INSTANCE.eventProtocol.handleEvent(event);
 
         if(event.isCancelled())
             return;
 
         this.syncCurrentPlayItem();
         this.netClientHandler.addToSendQueue(new C02PacketUseEntity(targetEntity, C02PacketUseEntity.Action.ATTACK));
+
+        if (this.currentGameType != WorldSettings.GameType.SPECTATOR)
+        {
+            playerIn.attackTargetEntityWithCurrentItem(targetEntity);
+        }
+    }
+
+    public void attackEntityNoPacketEvent(EntityPlayer playerIn, Entity targetEntity) {
+        if (!(targetEntity instanceof EntityLivingBase)) return;
+        AttackEvent event = new AttackEvent((EntityLivingBase) targetEntity);
+
+        Merguru.INSTANCE.eventProtocol.handleEvent(event);
+
+        if(event.isCancelled())
+            return;
+
+        this.syncCurrentPlayItem();
+        this.netClientHandler.sendPacketNoEvent(new C02PacketUseEntity(targetEntity, C02PacketUseEntity.Action.ATTACK));
 
         if (this.currentGameType != WorldSettings.GameType.SPECTATOR)
         {
@@ -493,7 +511,7 @@ public class PlayerControllerMP {
     }
 
     public void onStoppedUsingItem(EntityPlayer playerIn) {
-        if (Tenacity.INSTANCE.isEnabled(KillAura.class)) {
+        if (Merguru.INSTANCE.isEnabled(KillAura.class)) {
             if (KillAura.blocking) {
                 return;
             }
