@@ -1,8 +1,8 @@
 package net.minecraft.client.renderer.entity;
 
-import dev.merguru.Merguru;
-import dev.merguru.module.impl.render.ItemPhysics;
-import dev.merguru.utils.render.EntityCulling;
+import dev.meguru.Meguru;
+import dev.meguru.module.impl.render.ItemPhysics;
+import dev.meguru.utils.render.EntityCulling;
 import net.minecraft.block.BlockTrapDoor;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.GlStateManager;
@@ -32,7 +32,7 @@ public class RenderEntityItem extends Render<EntityItem> {
     private int func_177077_a(EntityItem itemIn, double p_177077_2_, double p_177077_4_, double p_177077_6_, float p_177077_8_, IBakedModel p_177077_9_) {
         Minecraft mc = Minecraft.getMinecraft();
 
-        boolean itemPhysics = Merguru.INSTANCE.isEnabled(ItemPhysics.class);
+        boolean itemPhysics = Meguru.INSTANCE.isEnabled(ItemPhysics.class);
 
         ItemStack itemstack = itemIn.getEntityItem();
         Item item = itemstack.getItem();

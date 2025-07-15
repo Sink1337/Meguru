@@ -1,10 +1,10 @@
 package net.minecraft.entity;
 
-import dev.merguru.Merguru;
-import dev.merguru.event.impl.player.PlayerMoveUpdateEvent;
-import dev.merguru.event.impl.player.SafeWalkEvent;
-import dev.merguru.event.impl.player.StepConfirmEvent;
-import dev.merguru.module.impl.movement.Flight;
+import dev.meguru.Meguru;
+import dev.meguru.event.impl.player.PlayerMoveUpdateEvent;
+import dev.meguru.event.impl.player.SafeWalkEvent;
+import dev.meguru.event.impl.player.StepConfirmEvent;
+import dev.meguru.module.impl.movement.Flight;
 import net.minecraft.block.*;
 import net.minecraft.block.material.Material;
 import net.minecraft.block.state.IBlockState;
@@ -672,7 +672,7 @@ public abstract class Entity implements ICommandSender {
             double d5 = z;
 
             SafeWalkEvent safeWalkEvent = new SafeWalkEvent();
-            Merguru.INSTANCE.getEventProtocol().handleEvent(safeWalkEvent);
+            Meguru.INSTANCE.getEventProtocol().handleEvent(safeWalkEvent);
 
             boolean flag = this.onGround && (this.isSneaking() || safeWalkEvent.isSafe()) && this instanceof EntityPlayer;
 
@@ -822,7 +822,7 @@ public abstract class Entity implements ICommandSender {
                     z = d8;
                     this.setEntityBoundingBox(axisalignedbb3);
                 } else {
-                    Merguru.INSTANCE.getEventProtocol().handleEvent(new StepConfirmEvent());
+                    Meguru.INSTANCE.getEventProtocol().handleEvent(new StepConfirmEvent());
                 }
             }
 
@@ -1172,7 +1172,7 @@ public abstract class Entity implements ICommandSender {
     public void moveFlying(float strafe, float forward, float friction) {
         PlayerMoveUpdateEvent playerMovementEvent = new PlayerMoveUpdateEvent(strafe, forward, friction, this.rotationYaw, this.rotationPitch);
         if (this instanceof EntityPlayerSP) {
-            Merguru.INSTANCE.getEventProtocol().handleEvent(playerMovementEvent);
+            Meguru.INSTANCE.getEventProtocol().handleEvent(playerMovementEvent);
         }
         if (playerMovementEvent.isCancelled()) return;
 
@@ -2527,7 +2527,7 @@ public abstract class Entity implements ICommandSender {
         return this.getVectorForRotation(pitch, yaw);
     }
 
-    public dev.merguru.utils.addons.vector.Vector3d getCustomPositionVector() {
-        return new dev.merguru.utils.addons.vector.Vector3d(posX, posY, posZ);
+    public dev.meguru.utils.addons.vector.Vector3d getCustomPositionVector() {
+        return new dev.meguru.utils.addons.vector.Vector3d(posX, posY, posZ);
     }
 }

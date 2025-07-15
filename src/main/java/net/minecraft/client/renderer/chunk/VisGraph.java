@@ -1,6 +1,6 @@
 package net.minecraft.client.renderer.chunk;
 
-import dev.merguru.module.impl.render.XRay;
+import dev.meguru.module.impl.render.XRay;
 import net.minecraft.util.BlockPos;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.IntegerCache;

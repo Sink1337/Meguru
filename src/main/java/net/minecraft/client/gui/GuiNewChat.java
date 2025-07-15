@@ -1,10 +1,10 @@
 package net.minecraft.client.gui;
 
 import com.google.common.collect.Lists;
-import dev.merguru.module.impl.render.HUDMod;
-import dev.merguru.utils.font.AbstractFontRenderer;
-import dev.merguru.utils.render.ColorUtil;
-import dev.merguru.utils.render.GLUtil;
+import dev.meguru.module.impl.render.HUDMod;
+import dev.meguru.utils.font.AbstractFontRenderer;
+import dev.meguru.utils.render.ColorUtil;
+import dev.meguru.utils.render.GLUtil;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.entity.player.EntityPlayer;

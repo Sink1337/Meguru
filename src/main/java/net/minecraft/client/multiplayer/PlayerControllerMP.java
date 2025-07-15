@@ -1,9 +1,9 @@
 package net.minecraft.client.multiplayer;
 
-import dev.merguru.Merguru;
-import dev.merguru.event.impl.player.AttackEvent;
-import dev.merguru.module.impl.combat.KillAura;
-import dev.merguru.module.impl.movement.Flight;
+import dev.meguru.Meguru;
+import dev.meguru.event.impl.player.AttackEvent;
+import dev.meguru.module.impl.combat.KillAura;
+import dev.meguru.module.impl.movement.Flight;
 import lombok.Setter;
 import net.minecraft.block.Block;
 import net.minecraft.block.material.Material;
@@ -416,7 +416,7 @@ public class PlayerControllerMP {
         if (!(targetEntity instanceof EntityLivingBase)) return;
         AttackEvent event = new AttackEvent((EntityLivingBase) targetEntity);
 
-        Merguru.INSTANCE.eventProtocol.handleEvent(event);
+        Meguru.INSTANCE.eventProtocol.handleEvent(event);
 
         if(event.isCancelled())
             return;
@@ -434,7 +434,7 @@ public class PlayerControllerMP {
         if (!(targetEntity instanceof EntityLivingBase)) return;
         AttackEvent event = new AttackEvent((EntityLivingBase) targetEntity);
 
-        Merguru.INSTANCE.eventProtocol.handleEvent(event);
+        Meguru.INSTANCE.eventProtocol.handleEvent(event);
 
         if(event.isCancelled())
             return;
@@ -511,7 +511,7 @@ public class PlayerControllerMP {
     }
 
     public void onStoppedUsingItem(EntityPlayer playerIn) {
-        if (Merguru.INSTANCE.isEnabled(KillAura.class)) {
+        if (Meguru.INSTANCE.isEnabled(KillAura.class)) {
             if (KillAura.blocking) {
                 return;
             }

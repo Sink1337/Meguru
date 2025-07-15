@@ -2,12 +2,12 @@ package net.minecraft.client.renderer;
 
 import com.google.common.base.Predicates;
 import com.google.gson.JsonSyntaxException;
-import dev.merguru.Merguru;
-import dev.merguru.event.impl.render.HurtCamEvent;
-import dev.merguru.event.impl.render.Render3DEvent;
-import dev.merguru.module.impl.player.ChestStealer;
-import dev.merguru.module.impl.render.Ambience;
-import dev.merguru.utils.render.EntityCulling;
+import dev.meguru.Meguru;
+import dev.meguru.event.impl.render.HurtCamEvent;
+import dev.meguru.event.impl.render.Render3DEvent;
+import dev.meguru.module.impl.player.ChestStealer;
+import dev.meguru.module.impl.render.Ambience;
+import dev.meguru.utils.render.EntityCulling;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockBed;
 import net.minecraft.block.material.Material;
@@ -583,7 +583,7 @@ public class EntityRenderer implements IResourceManagerReloadListener {
     private void hurtCameraEffect(float partialTicks) {
         if (this.mc.getRenderViewEntity() instanceof EntityLivingBase) {
             HurtCamEvent hurtCamEvent = new HurtCamEvent();
-            Merguru.INSTANCE.getEventProtocol().handleEvent(hurtCamEvent);
+            Meguru.INSTANCE.getEventProtocol().handleEvent(hurtCamEvent);
 
             if (!hurtCamEvent.isCancelled()) {
                 EntityLivingBase entitylivingbase = (EntityLivingBase) this.mc.getRenderViewEntity();
@@ -1398,7 +1398,7 @@ public class EntityRenderer implements IResourceManagerReloadListener {
         GlStateManager.shadeModel(7424);
         GlStateManager.alphaFunc(516, 0.1F);
 
-        Merguru.INSTANCE.getEventProtocol().handleEvent(new Render3DEvent(partialTicks));
+        Meguru.INSTANCE.getEventProtocol().handleEvent(new Render3DEvent(partialTicks));
 
         if (!this.debugView) {
             GlStateManager.matrixMode(5888);
