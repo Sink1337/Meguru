@@ -11,7 +11,7 @@ public class ChatUtil implements Utils {
 
     public static void print(boolean prefix, String message) {
         if (mc.thePlayer != null) {
-            if (prefix) message = "§7[§d§lTENACITY§r§7] " + message;
+            if (prefix) message = "§7[§d§lM§r§7] " + message;
             mc.thePlayer.addChatMessage(new ChatComponentText(message));
         }
     }

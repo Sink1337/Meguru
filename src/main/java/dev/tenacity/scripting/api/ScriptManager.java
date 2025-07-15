@@ -20,7 +20,7 @@ import java.util.*;
 @Getter
 public class ScriptManager implements Utils {
 
-    private final File scriptDirectory = new File(mc.mcDataDir, "/Tenacity/Scripts");
+    private final File scriptDirectory = new File(mc.mcDataDir, "/Meguru/Scripts");
     private final List<Script> scripts = new ArrayList<>();
 
     public ScriptManager() {

@@ -15,7 +15,7 @@ public class HelpCommand extends Command {
 
     @Override
     public void execute(String[] args) {
-        ChatComponentText response = new ChatComponentText("\n§l§dTenacity §r§d" + Tenacity.VERSION + "§l " + Tenacity.RELEASE.getName() + " §7- §r§6Hover to see command usages.");
+        ChatComponentText response = new ChatComponentText("\n§l§dMeguru §r§d" + Tenacity.VERSION + "§l " + Tenacity.RELEASE.getName() + " §7- §r§6Hover to see command usages.");
         ChatComponentText temp = new ChatComponentText("");
         float maxLength = 0;
         for (Command cmd : Tenacity.INSTANCE.getCommandHandler().getCommands()) {

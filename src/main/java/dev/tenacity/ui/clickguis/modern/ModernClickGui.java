@@ -207,9 +207,9 @@ public class ModernClickGui extends GuiScreen {
 
 
         float xAdjust = 10 * expandedAnimation.getOutput().floatValue();
-        FontUtil.tenacityFont20.drawString("Tenacity", x + 35 + xAdjust, y + 13, -1);
+        FontUtil.tenacityFont20.drawString("Meguru", x + 35 + xAdjust, y + 13, -1);
 
-        FontUtil.tenacityFont14.drawString(Tenacity.VERSION, x + 41 + FontUtil.tenacityFont18.getStringWidth("Tenacity") + xAdjust, y + 15.5f,
+        FontUtil.tenacityFont14.drawString(Tenacity.VERSION, x + 41 + FontUtil.tenacityFont18.getStringWidth("Meguru") + xAdjust, y + 15.5f,
                 new Color(98, 98, 98));
 
 

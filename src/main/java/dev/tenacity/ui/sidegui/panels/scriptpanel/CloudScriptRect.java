@@ -127,7 +127,7 @@ public class CloudScriptRect implements Screen {
 
                         String name = script.getName();
                         String scriptContent = object.get("body").getAsString();
-                        File scriptFile = new File(Minecraft.getMinecraft().mcDataDir + "/Tenacity/Scripts/" + name + ".js");
+                        File scriptFile = new File(Minecraft.getMinecraft().mcDataDir + "/Meguru/Scripts/" + name + ".js");
 
                         Multithreading.runAsync(() -> downloadScriptToFile(scriptFile, scriptContent));
 

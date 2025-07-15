@@ -30,7 +30,7 @@ public class ConfigManager {
     public static final List<LocalConfig> localConfigs = new ArrayList<>();
     public static boolean loadVisuals;
     public static File defaultConfig;
-    public final File file = new File(Minecraft.getMinecraft().mcDataDir, "/Tenacity/Configs");
+    public final File file = new File(Minecraft.getMinecraft().mcDataDir, "/Meguru/Configs");
     private final Gson gson = new GsonBuilder().excludeFieldsWithoutExposeAnnotation().setPrettyPrinting().create();
 
     public void collectConfigs() {

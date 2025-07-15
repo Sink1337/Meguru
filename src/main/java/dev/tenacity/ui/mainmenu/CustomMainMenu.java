@@ -97,12 +97,12 @@ public class CustomMainMenu extends GuiScreen {
 //
 
         if (animatedOpen) {
-            //    tenacityFont80.drawCenteredString("Tenacity", width / 2f, height / 2f - 110, Color.WHITE.getRGB());
-            //    tenacityFont32.drawString(Tenacity.VERSION, width / 2f + tenacityFont80.getStringWidth("Tenacity") / 2f - (tenacityFont32.getStringWidth(Tenacity.VERSION) / 2f), height / 2f - 113, Color.WHITE.getRGB());
+            //    tenacityFont80.drawCenteredString("Meguru", width / 2f, height / 2f - 110, Color.WHITE.getRGB());
+            //    tenacityFont32.drawString(Tenacity.VERSION, width / 2f + tenacityFont80.getStringWidth("Meguru") / 2f - (tenacityFont32.getStringWidth(Tenacity.VERSION) / 2f), height / 2f - 113, Color.WHITE.getRGB());
         }
         Color textcolor =new Color(255,255,255,255);
-        tenacityBoldFont80.drawCenteredString("Tenacity", width / 2f, height / 2f - 110, textcolor);
-        tenacityFont32.drawString(Tenacity.VERSION, width / 2f + tenacityBoldFont80.getStringWidth("Tenacity") / 2f - (tenacityFont32.getStringWidth(Tenacity.VERSION) / 2f), height / 2f - 113, textcolor);
+        tenacityBoldFont80.drawCenteredString("Meguru", width / 2f, height / 2f - 110, textcolor);
+        tenacityFont32.drawString(Tenacity.VERSION, width / 2f + tenacityBoldFont80.getStringWidth("Meguru") / 2f - (tenacityFont32.getStringWidth(Tenacity.VERSION) / 2f), height / 2f - 113, textcolor);
         if (Tenacity.is0721){
             tenacityFont18.drawCenteredString("0721 Edition", width / 2f, height / 2f - 68 + 5, textcolor);
         }else {

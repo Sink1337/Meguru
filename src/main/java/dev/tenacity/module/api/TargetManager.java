@@ -10,6 +10,9 @@ import net.minecraft.client.network.NetworkPlayerInfo;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.item.ItemArmor;
+import net.minecraft.item.ItemSkull;
+import net.minecraft.item.ItemStack;
 import net.minecraft.scoreboard.Scoreboard;
 import net.minecraft.scoreboard.Team;
 import net.minecraft.util.EnumChatFormatting;
@@ -32,7 +35,7 @@ public class TargetManager extends Module {
             "Team Detection Modes",
             new BooleanSetting("Color", true),
             new BooleanSetting("Scoreboard", true),
-            new BooleanSetting("Prefix/Suffix", false)
+            new BooleanSetting("Armor", false)
     );
 
     public static MultipleBoolSetting botDetectionModes = new MultipleBoolSetting(
@@ -63,23 +66,19 @@ public class TargetManager extends Module {
             if (!targetType.isEnabled("Teams") && isPlayerTeammate) {
                 return false;
             }
-            if (isPlayerTeammate) {
-                if (!targetType.isEnabled("Teams")) {
-                    return false;
-                }
-            } else {
-                if (!targetType.isEnabled("Players")) {
-                    return false;
-                }
+
+            if (!isPlayerTeammate && !targetType.isEnabled("Players")) {
+                return false;
             }
 
             if (isBot(entity) && !targetType.isEnabled("Bots")) {
                 return false;
             }
+        } else {
+            if (entity.getClass().getPackage().getName().contains("monster") && !targetType.isEnabled("Mobs")) return false;
+            if (entity.getClass().getPackage().getName().contains("passive") && !targetType.isEnabled("Animals")) return false;
         }
 
-        if (entity.getClass().getPackage().getName().contains("monster") && !targetType.isEnabled("Mobs")) return false;
-        if (entity.getClass().getPackage().getName().contains("passive") && !targetType.isEnabled("Animals")) return false;
         return !entity.isInvisible() || targetType.isEnabled("Invisibles");
     }
 
@@ -148,15 +147,8 @@ public class TargetManager extends Module {
     }
 
     public static boolean isTeammate(EntityPlayer player) {
-        // 不需要在这里判断 player == mc.thePlayer，因为在 checkEntity 中已经处理了
-        // 如果是队友，且“Teams”选项开启，则可以攻击。
-        // 如果是队友，但“Teams”选项关闭，则不攻击。
-
-        // 以下是判断是否是队友的逻辑，与之前保持一致
-        if (teamDetectionModes.isEnabled("Color")) {
-            if (isTeammateByColor(player)) {
-                return true;
-            }
+        if (mc.thePlayer == null || mc.theWorld == null || player == null) {
+            return false;
         }
 
         if (teamDetectionModes.isEnabled("Scoreboard")) {
@@ -165,8 +157,14 @@ public class TargetManager extends Module {
             }
         }
 
-        if (teamDetectionModes.isEnabled("Prefix/Suffix")) {
-            if (isTeammateByPrefixSuffix(player)) {
+        if (teamDetectionModes.isEnabled("Armor")) {
+            if (isTeammateByArmor(player)) {
+                return true;
+            }
+        }
+
+        if (teamDetectionModes.isEnabled("Color")) {
+            if (isTeammateByColor(player)) {
                 return true;
             }
         }
@@ -175,8 +173,8 @@ public class TargetManager extends Module {
     }
 
     private static boolean isTeammateByColor(EntityPlayer player) {
-        String selfName = mc.thePlayer.getDisplayName().getFormattedText();
-        String playerName = player.getDisplayName().getFormattedText();
+        String selfName = mc.thePlayer.getDisplayName().getFormattedText().replace("§r", "");
+        String playerName = player.getDisplayName().getFormattedText().replace("§r", "");
 
         if (selfName.length() > 1 && playerName.length() > 1) {
             char selfColorCode = selfName.charAt(1);
@@ -198,14 +196,21 @@ public class TargetManager extends Module {
         return selfTeam != null && playerTeam != null && selfTeam.isSameTeam(playerTeam);
     }
 
-    private static boolean isTeammateByPrefixSuffix(EntityPlayer player) {
-        // String playerName = player.getName();
-        // return playerName.startsWith("[TEAM]") || playerName.endsWith(" (Team)");
+    private static boolean isTeammateByArmor(EntityPlayer entityPlayer) {
+        ItemStack myHead = mc.thePlayer.inventory.armorInventory[3];
+        ItemStack entityHead = entityPlayer.inventory.armorInventory[3];
 
-        String formattedName = player.getDisplayName().getFormattedText();
-        // if (formattedName.contains("§a[Team]")) {
-        //     return true;
-        // }
+        if (myHead != null && entityHead != null &&
+                myHead.getItem() instanceof ItemArmor &&
+                entityHead.getItem() instanceof ItemArmor) {
+
+            if (entityHead.getItem() instanceof ItemSkull) return false;
+
+            ItemArmor myItemArmor = (ItemArmor) myHead.getItem();
+            ItemArmor entityItemArmor = (ItemArmor) entityHead.getItem();
+
+            return myItemArmor.getColor(myHead) == entityItemArmor.getColor(entityHead);
+        }
         return false;
     }
 }

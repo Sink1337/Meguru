@@ -49,8 +49,8 @@ public class Tenacity implements Utils {
 
     public static final Tenacity INSTANCE = new Tenacity();
 
-    public static final String NAME = "Tenacity";
-    public static final String VERSION = "7.21";
+    public static final String NAME = "Meguru";
+    public static final String VERSION = "1.0";
     public static boolean is0721 = false;
     public static final ReleaseType RELEASE = ReleaseType.DEV;
     public static final Logger LOGGER = LogManager.getLogger(NAME);
@@ -175,7 +175,7 @@ public class Tenacity implements Utils {
 
 
         Tenacity.INSTANCE.setConfigManager(new ConfigManager());
-        ConfigManager.defaultConfig = new File(Minecraft.getMinecraft().mcDataDir + "/Tenacity/Config.json");
+        ConfigManager.defaultConfig = new File(Minecraft.getMinecraft().mcDataDir + "/Meguru/Config.json");
         Tenacity.INSTANCE.getConfigManager().collectConfigs();
         if (ConfigManager.defaultConfig.exists()) {
             Tenacity.INSTANCE.getConfigManager().loadConfig(Tenacity.INSTANCE.getConfigManager().readConfigData(ConfigManager.defaultConfig.toPath()), true);

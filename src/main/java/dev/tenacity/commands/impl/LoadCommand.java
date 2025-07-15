@@ -40,7 +40,7 @@ public class LoadCommand extends Command {
 
 
                 if (isScript) {
-                    File scriptFile = new File(Minecraft.getMinecraft().mcDataDir + "/Tenacity/Scripts/" + name + ".js");
+                    File scriptFile = new File(Minecraft.getMinecraft().mcDataDir + "/Meguru/Scripts/" + name + ".js");
 
                     downloadScriptToFile(scriptFile, objectData);
 

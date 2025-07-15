@@ -72,8 +72,8 @@ public class SideGUIHotbar implements Screen {
         Color textColor = ColorUtil.applyOpacity(Color.WHITE, alpha);
 
 
-        tenacityBoldFont32.drawString("Tenacity", x + 9.5f, y + tenacityBoldFont32.getMiddleOfBox(height), textColor);
-        tenacityFont18.drawString(Tenacity.VERSION, x + 9.5f + tenacityBoldFont32.getStringWidth("Tenacity") - 2,
+        tenacityBoldFont32.drawString("Meguru", x + 9.5f, y + tenacityBoldFont32.getMiddleOfBox(height), textColor);
+        tenacityFont18.drawString(Tenacity.VERSION, x + 9.5f + tenacityBoldFont32.getStringWidth("Meguru") - 2,
                 y + tenacityBoldFont32.getMiddleOfBox(height) - 2.5f, ColorUtil.applyOpacity(textColor, .5f));
 
         searchAnimation.setDirection(searchField.isFocused() || !searchField.getText().equals("") ? Direction.FORWARDS : Direction.BACKWARDS);

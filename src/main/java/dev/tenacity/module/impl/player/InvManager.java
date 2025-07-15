@@ -65,7 +65,7 @@ public class InvManager extends Module {
     private final List<Integer> badPotionIDs = new ArrayList<>(Arrays.asList(Potion.moveSlowdown.getId(), Potion.weakness.getId(), Potion.poison.getId(), Potion.harm.getId()));
 
     private final TimerUtil timer = new TimerUtil();
-    private boolean isInvOpen;
+    public boolean isInvOpen;
 
     public InvManager() {
         super("InvManager", Category.PLAYER, "cleans up your inventory");

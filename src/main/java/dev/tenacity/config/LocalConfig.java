@@ -13,6 +13,6 @@ public class LocalConfig {
 
     public LocalConfig(String name) {
         this.name = name;
-        this.file = new File(Minecraft.getMinecraft().mcDataDir + "/Tenacity/Configs/" + name + ".json");
+        this.file = new File(Minecraft.getMinecraft().mcDataDir + "/Meguru/Configs/" + name + ".json");
     }
 }

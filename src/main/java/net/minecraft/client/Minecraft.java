@@ -577,7 +577,7 @@ public class Minecraft implements IThreadListener, IPlayerUsage {
 
     private void createDisplay() throws LWJGLException {
         Display.setResizable(true);
-        Display.setTitle("Tenacity 7.21");
+        Display.setTitle(Tenacity.NAME + " " + Tenacity.VERSION);
 
         try {
             Display.create((new PixelFormat()).withDepthBits(24));
