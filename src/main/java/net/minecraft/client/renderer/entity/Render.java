@@ -1,6 +1,6 @@
 package net.minecraft.client.renderer.entity;
 
-import dev.meguru.module.impl.render.TargetHUDMod;
+import dev.merguru.module.impl.render.TargetHUDMod;
 import net.minecraft.block.Block;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.IFontRenderer;

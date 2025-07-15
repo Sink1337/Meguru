@@ -1,6 +1,6 @@
 package net.minecraft.tileentity;
 
-import dev.meguru.utils.render.betterfps.HopperLogic;
+import dev.merguru.utils.render.betterfps.HopperLogic;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockChest;
 import net.minecraft.block.BlockHopper;

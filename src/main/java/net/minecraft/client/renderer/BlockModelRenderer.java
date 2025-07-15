@@ -1,7 +1,7 @@
 package net.minecraft.client.renderer;
 
-import dev.meguru.module.impl.movement.Flight;
-import dev.meguru.module.impl.render.XRay;
+import dev.merguru.module.impl.movement.Flight;
+import dev.merguru.module.impl.render.XRay;
 import net.minecraft.block.Block;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.Minecraft;

@@ -1,6 +1,6 @@
 package net.minecraft.client.renderer.entity.layers;
 
-import dev.meguru.module.impl.render.CustomModel;
+import dev.merguru.module.impl.render.CustomModel;
 import net.minecraft.block.Block;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.model.ModelBiped;

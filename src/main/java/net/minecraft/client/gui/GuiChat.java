@@ -1,22 +1,22 @@
 package net.minecraft.client.gui;
 
 import com.google.common.collect.Lists;
-import dev.meguru.Meguru;
-import dev.meguru.config.DragManager;
-import dev.meguru.module.impl.render.ArrayListMod;
-import dev.meguru.module.impl.render.HUDMod;
-import dev.meguru.module.impl.render.SpotifyMod;
-import dev.meguru.utils.animations.Animation;
-import dev.meguru.utils.animations.Direction;
-import dev.meguru.utils.animations.impl.DecelerateAnimation;
-import dev.meguru.utils.font.CustomFont;
-import dev.meguru.utils.font.FontUtil;
-import dev.meguru.utils.misc.HoveringUtil;
-import dev.meguru.utils.misc.Multithreading;
-import dev.meguru.utils.objects.Dragging;
-import dev.meguru.utils.render.ColorUtil;
-import dev.meguru.utils.render.RoundedUtil;
-import dev.meguru.utils.tuples.Pair;
+import dev.merguru.Merguru;
+import dev.merguru.config.DragManager;
+import dev.merguru.module.impl.render.ArrayListMod;
+import dev.merguru.module.impl.render.HUDMod;
+import dev.merguru.module.impl.render.SpotifyMod;
+import dev.merguru.utils.animations.Animation;
+import dev.merguru.utils.animations.Direction;
+import dev.merguru.utils.animations.impl.DecelerateAnimation;
+import dev.merguru.utils.font.CustomFont;
+import dev.merguru.utils.font.FontUtil;
+import dev.merguru.utils.misc.HoveringUtil;
+import dev.merguru.utils.misc.Multithreading;
+import dev.merguru.utils.objects.Dragging;
+import dev.merguru.utils.render.ColorUtil;
+import dev.merguru.utils.render.RoundedUtil;
+import dev.merguru.utils.tuples.Pair;
 import net.minecraft.network.play.client.C14PacketTabComplete;
 import net.minecraft.util.*;
 import org.apache.commons.lang3.StringUtils;
@@ -153,8 +153,8 @@ public class GuiChat extends GuiScreen {
     public void initGui() {
 
         if (spotifyMod == null) {
-            spotifyMod = (SpotifyMod) Meguru.INSTANCE.getModuleCollection().get(SpotifyMod.class);
-            arraylistMod = (ArrayListMod) Meguru.INSTANCE.getModuleCollection().get(ArrayListMod.class);
+            spotifyMod = (SpotifyMod) Merguru.INSTANCE.getModuleCollection().get(SpotifyMod.class);
+            arraylistMod = (ArrayListMod) Merguru.INSTANCE.getModuleCollection().get(ArrayListMod.class);
         }
 
         for (Dragging dragging : DragManager.draggables.values()) {
@@ -208,7 +208,7 @@ public class GuiChat extends GuiScreen {
             }
         });
 
-        HUDMod hudMod = (HUDMod) Meguru.INSTANCE.getModuleCollection().get(HUDMod.class);
+        HUDMod hudMod = (HUDMod) Merguru.INSTANCE.getModuleCollection().get(HUDMod.class);
 
         Pair<Color, Color> colors = HUDMod.getClientColors();
 

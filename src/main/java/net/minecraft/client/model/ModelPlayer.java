@@ -1,7 +1,7 @@
 package net.minecraft.client.model;
 
-import dev.meguru.module.impl.render.CustomModel;
-import dev.meguru.utils.render.RenderUtil;
+import dev.merguru.module.impl.render.CustomModel;
+import dev.merguru.utils.render.RenderUtil;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.entity.Entity;
 import net.minecraft.util.MathHelper;

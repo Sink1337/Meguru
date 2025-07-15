@@ -1,13 +1,13 @@
 package net.minecraft.client.renderer.entity;
 
 import com.google.common.collect.Lists;
-import dev.meguru.Meguru;
-import dev.meguru.event.impl.render.NametagRenderEvent;
-import dev.meguru.event.impl.render.RenderModelEvent;
-import dev.meguru.event.impl.render.RendererLivingEntityEvent;
-import dev.meguru.module.impl.render.CustomModel;
-import dev.meguru.module.impl.render.ESP2D;
-import dev.meguru.module.impl.render.TargetHUDMod;
+import dev.merguru.Merguru;
+import dev.merguru.event.impl.render.NametagRenderEvent;
+import dev.merguru.event.impl.render.RenderModelEvent;
+import dev.merguru.event.impl.render.RendererLivingEntityEvent;
+import dev.merguru.module.impl.render.CustomModel;
+import dev.merguru.module.impl.render.ESP2D;
+import dev.merguru.module.impl.render.TargetHUDMod;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.entity.EntityPlayerSP;
 import net.minecraft.client.gui.IFontRenderer;
@@ -104,7 +104,7 @@ public abstract class RendererLivingEntity<T extends EntityLivingBase> extends R
      */
     public void doRender(T entity, double x, double y, double z, float entityYaw, float partialTicks) {
         RendererLivingEntityEvent event = new RendererLivingEntityEvent(entity, this, partialTicks, x, y, z);
-        Meguru.INSTANCE.getEventProtocol().handleEvent(event);
+        Merguru.INSTANCE.getEventProtocol().handleEvent(event);
         if (event.isCancelled()) return;
 
 
@@ -253,7 +253,7 @@ public abstract class RendererLivingEntity<T extends EntityLivingBase> extends R
         }
 
         event.setPost();
-        Meguru.INSTANCE.getEventProtocol().handleEvent(event);
+        Merguru.INSTANCE.getEventProtocol().handleEvent(event);
     }
 
     protected boolean setScoreTeamColor(T entityLivingBaseIn) {
@@ -317,14 +317,14 @@ public abstract class RendererLivingEntity<T extends EntityLivingBase> extends R
                     () -> this.renderLayers(entitylivingbaseIn, x, y, partialTicks, z, entityYaw, entityPitch, scaleFactor));
 
 
-            Meguru.INSTANCE.getEventProtocol().handleEvent(renderModelEvent);
+            Merguru.INSTANCE.getEventProtocol().handleEvent(renderModelEvent);
 
             GL11.glEnable(GL11.GL_ALPHA_TEST);
 
             renderModelEvent.drawModel();
 
             renderModelEvent.setPost();
-            Meguru.INSTANCE.getEventProtocol().handleEvent(renderModelEvent);
+            Merguru.INSTANCE.getEventProtocol().handleEvent(renderModelEvent);
 
 
             if (flag1) {
@@ -572,11 +572,11 @@ public abstract class RendererLivingEntity<T extends EntityLivingBase> extends R
     public void renderName(T entity, double x, double y, double z) {
         if (entity instanceof EntityPlayer) {
             NametagRenderEvent nametagRenderEvent = new NametagRenderEvent();
-            Meguru.INSTANCE.getEventProtocol().handleEvent(nametagRenderEvent);
+            Merguru.INSTANCE.getEventProtocol().handleEvent(nametagRenderEvent);
             if (nametagRenderEvent.isCancelled()) return;
         }
         if (esp2D == null) {
-            esp2D = Meguru.INSTANCE.getModuleCollection().getModule(ESP2D.class);
+            esp2D = Merguru.INSTANCE.getModuleCollection().getModule(ESP2D.class);
         }
 
         if (this.canRenderName(entity)) {

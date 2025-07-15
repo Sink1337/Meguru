@@ -1,7 +1,7 @@
 package net.minecraft.client.renderer.tileentity;
 
-import dev.meguru.Meguru;
-import dev.meguru.event.impl.render.RenderChestEvent;
+import dev.merguru.Merguru;
+import dev.merguru.event.impl.render.RenderChestEvent;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockChest;
 import net.minecraft.client.model.ModelChest;
@@ -154,7 +154,7 @@ public class TileEntityChestRenderer extends TileEntitySpecialRenderer<TileEntit
 
             if (!renderingInInventory) {
                 RenderChestEvent renderChestEvent = new RenderChestEvent(te, modelchest::renderAll);
-                Meguru.INSTANCE.getEventProtocol().handleEvent(renderChestEvent);
+                Merguru.INSTANCE.getEventProtocol().handleEvent(renderChestEvent);
 
                 if (!renderChestEvent.isCancelled()) {
                     renderChestEvent.drawChest();

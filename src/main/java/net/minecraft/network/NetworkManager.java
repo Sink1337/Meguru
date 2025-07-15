@@ -9,9 +9,9 @@ import de.florianmichael.vialoadingbase.ViaLoadingBase;
 import de.florianmichael.vialoadingbase.netty.event.CompressionReorderEvent;
 import de.florianmichael.viamcp.MCPVLBPipeline;
 import de.florianmichael.viamcp.ViaMCP;
-import dev.meguru.Meguru;
-import dev.meguru.event.impl.network.PacketReceiveEvent;
-import dev.meguru.event.impl.network.PacketSendEvent;
+import dev.merguru.Merguru;
+import dev.merguru.event.impl.network.PacketReceiveEvent;
+import dev.merguru.event.impl.network.PacketSendEvent;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.*;
 import io.netty.channel.epoll.Epoll;
@@ -133,7 +133,7 @@ public class NetworkManager extends SimpleChannelInboundHandler<Packet> {
         if (this.channel.isOpen()) {
             try {
                 PacketReceiveEvent e = new PacketReceiveEvent(p_channelRead0_2_);
-                Meguru.INSTANCE.getEventProtocol().handleEvent(e);
+                Merguru.INSTANCE.getEventProtocol().handleEvent(e);
                 if (e.isCancelled()) return;
                 p_channelRead0_2_.processPacket(this.packetListener);
             } catch (ThreadQuickExitException ignored) {
@@ -159,7 +159,7 @@ public class NetworkManager extends SimpleChannelInboundHandler<Packet> {
         if (this.isChannelOpen()) {
             if (!silent) {
                 PacketSendEvent e = new PacketSendEvent(packetIn);
-                Meguru.INSTANCE.getEventProtocol().handleEvent(e);
+                Merguru.INSTANCE.getEventProtocol().handleEvent(e);
                 if (e.isCancelled()) return;
                 packetIn = e.getPacket();
             }

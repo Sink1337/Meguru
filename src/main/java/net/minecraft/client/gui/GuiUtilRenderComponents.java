@@ -1,7 +1,7 @@
 package net.minecraft.client.gui;
 
 import com.google.common.collect.Lists;
-import dev.meguru.utils.font.AbstractFontRenderer;
+import dev.merguru.utils.font.AbstractFontRenderer;
 import net.minecraft.client.Minecraft;
 import net.minecraft.util.ChatComponentText;
 import net.minecraft.util.EnumChatFormatting;

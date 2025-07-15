@@ -3,11 +3,11 @@ package net.minecraft.entity;
 import com.google.common.base.Predicate;
 import com.google.common.base.Predicates;
 import com.google.common.collect.Maps;
-import dev.meguru.Meguru;
-import dev.meguru.event.impl.player.JumpFixEvent;
-import dev.meguru.event.impl.player.LivingDeathEvent;
-import dev.meguru.module.impl.render.Animations;
-import dev.meguru.utils.addons.rise.component.RotationComponent;
+import dev.merguru.Merguru;
+import dev.merguru.event.impl.player.JumpFixEvent;
+import dev.merguru.event.impl.player.LivingDeathEvent;
+import dev.merguru.module.impl.render.Animations;
+import dev.merguru.utils.addons.rise.component.RotationComponent;
 import net.minecraft.block.Block;
 import net.minecraft.block.material.Material;
 import net.minecraft.block.state.IBlockState;
@@ -940,7 +940,7 @@ public abstract class EntityLivingBase extends Entity {
 
         if (entity != null) {
             if (entity instanceof EntityLivingBase) {
-                Meguru.INSTANCE.getEventProtocol().handleEvent(new LivingDeathEvent(this, cause));
+                Merguru.INSTANCE.getEventProtocol().handleEvent(new LivingDeathEvent(this, cause));
             }
             entity.onKillEntity(this);
         }
@@ -1205,8 +1205,8 @@ public abstract class EntityLivingBase extends Entity {
      * progress indicator. Takes dig speed enchantments into account.
      */
     public int getArmSwingAnimationEnd() {
-        if (Meguru.INSTANCE.getModuleCollection().getModule(Animations.class).isEnabled() && this == Minecraft.getMinecraft().thePlayer) {
-            return (int) (6 + Meguru.INSTANCE.getModuleCollection().getModule(Animations.class).slowdown.getValue());
+        if (Merguru.INSTANCE.getModuleCollection().getModule(Animations.class).isEnabled() && this == Minecraft.getMinecraft().thePlayer) {
+            return (int) (6 + Merguru.INSTANCE.getModuleCollection().getModule(Animations.class).slowdown.getValue());
         } else {
             return this.isPotionActive(Potion.digSpeed) ? 6 - (1 + this.getActivePotionEffect(Potion.digSpeed).getAmplifier()) : this.isPotionActive(Potion.digSlowdown) ? 6 + (1 + this.getActivePotionEffect(Potion.digSlowdown).getAmplifier()) * 2 : 6;
         }
@@ -1416,7 +1416,7 @@ public abstract class EntityLivingBase extends Entity {
             JumpFixEvent jumpFixEvent = new JumpFixEvent(this.rotationYaw);
 
             if (this instanceof EntityPlayerSP) {
-                Meguru.INSTANCE.getEventProtocol().handleEvent(jumpFixEvent);
+                Merguru.INSTANCE.getEventProtocol().handleEvent(jumpFixEvent);
             }
 
             float f = jumpFixEvent.getYaw() * 0.017453292F;

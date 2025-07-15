@@ -2,10 +2,10 @@ package net.minecraft.client.gui;
 
 import com.google.common.base.Predicate;
 import com.google.common.base.Predicates;
-import dev.meguru.Meguru;
-import dev.meguru.module.impl.render.HUDMod;
-import dev.meguru.utils.font.AbstractFontRenderer;
-import dev.meguru.utils.font.FontUtil;
+import dev.merguru.Merguru;
+import dev.merguru.module.impl.render.HUDMod;
+import dev.merguru.utils.font.AbstractFontRenderer;
+import dev.merguru.utils.font.FontUtil;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.renderer.Tessellator;
@@ -84,7 +84,7 @@ public class GuiTextField extends Gui {
     }
 
     protected AbstractFontRenderer getFont() {
-        HUDMod hudMod = Meguru.INSTANCE.getModuleCollection().getModule(HUDMod.class);
+        HUDMod hudMod = Merguru.INSTANCE.getModuleCollection().getModule(HUDMod.class);
         if (hudMod != null && hudMod.fontChat.isEnabled()) {
             if (hudMod.customFontMode.is("Inter")) {
                 return FontUtil.idkFont18;

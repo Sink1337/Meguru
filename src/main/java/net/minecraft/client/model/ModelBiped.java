@@ -1,6 +1,6 @@
 package net.minecraft.client.model;
 
-import dev.meguru.module.impl.render.TargetHUDMod;
+import dev.merguru.module.impl.render.TargetHUDMod;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.entity.Entity;
 import net.minecraft.util.MathHelper;

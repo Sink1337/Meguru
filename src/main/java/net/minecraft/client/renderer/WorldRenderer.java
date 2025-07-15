@@ -1,8 +1,8 @@
 package net.minecraft.client.renderer;
 
 import com.google.common.primitives.Floats;
-import dev.meguru.module.impl.render.XRay;
-import dev.meguru.utils.render.ColorUtil;
+import dev.merguru.module.impl.render.XRay;
+import dev.merguru.utils.render.ColorUtil;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.client.renderer.vertex.VertexFormat;

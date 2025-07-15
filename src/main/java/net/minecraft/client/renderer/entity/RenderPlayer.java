@@ -1,9 +1,9 @@
 package net.minecraft.client.renderer.entity;
 
-import dev.meguru.Meguru;
-import dev.meguru.module.impl.combat.KillAura;
-import dev.meguru.module.impl.render.BrightPlayers;
-import dev.meguru.module.impl.render.CustomModel;
+import dev.merguru.Merguru;
+import dev.merguru.module.impl.combat.KillAura;
+import dev.merguru.module.impl.render.BrightPlayers;
+import dev.merguru.module.impl.render.CustomModel;
 import net.minecraft.client.entity.AbstractClientPlayer;
 import net.minecraft.client.entity.EntityPlayerSP;
 import net.minecraft.client.model.ModelPlayer;
@@ -50,7 +50,7 @@ public class RenderPlayer extends RendererLivingEntity<AbstractClientPlayer> {
         if (!entity.isUser() || this.renderManager.livingPlayer == entity) {
             double d0 = y;
 
-            if (Meguru.INSTANCE.isEnabled(BrightPlayers.class)) {
+            if (Merguru.INSTANCE.isEnabled(BrightPlayers.class)) {
                 GlStateManager.disableLighting();
             }
 

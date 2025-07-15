@@ -1,7 +1,7 @@
 package net.minecraft.client.gui;
 
-import dev.meguru.module.impl.render.Streamer;
-import dev.meguru.utils.font.AbstractFontRenderer;
+import dev.merguru.module.impl.render.Streamer;
+import dev.merguru.utils.font.AbstractFontRenderer;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.renderer.Tessellator;

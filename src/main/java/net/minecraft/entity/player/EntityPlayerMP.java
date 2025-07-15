@@ -3,8 +3,8 @@ package net.minecraft.entity.player;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.mojang.authlib.GameProfile;
-import dev.meguru.Meguru;
-import dev.meguru.event.impl.player.LivingDeathEvent;
+import dev.merguru.Merguru;
+import dev.merguru.event.impl.player.LivingDeathEvent;
 import io.netty.buffer.Unpooled;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockFence;
@@ -441,7 +441,7 @@ public class EntityPlayerMP extends EntityPlayer implements ICrafting {
 
             entitylivingbase.addToPlayerScore(this, this.scoreValue);
 
-            Meguru.INSTANCE.getEventProtocol().handleEvent(new LivingDeathEvent(this, cause));
+            Merguru.INSTANCE.getEventProtocol().handleEvent(new LivingDeathEvent(this, cause));
         }
 
         this.triggerAchievement(StatList.deathsStat);
