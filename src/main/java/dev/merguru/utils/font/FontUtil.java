@@ -84,18 +84,13 @@ public class FontUtil implements Utils {
         private final int[] sizes;
 
         FontType(String fontName, String boldName, int... sizes) {
-<<<<<<< HEAD:src/main/java/dev/merguru/utils/font/FontUtil.java
-            this.location = new ResourceLocation("merguru/fonts/" + fontName + ".ttf");
-            this.boldLocation = new ResourceLocation("merguru/fonts/" + boldName + ".ttf");
-=======
-            this.location = new ResourceLocation("meguru/fonts/" + fontName + ".ttf");
-            this.boldLocation = new ResourceLocation("v/fonts/" + boldName + ".ttf");
->>>>>>> parent of 7f9ac9c (fix):src/main/java/dev/meguru/utils/font/FontUtil.java
+            this.location = new ResourceLocation("Merguru/fonts/" + fontName + ".ttf");
+            this.boldLocation = new ResourceLocation("Merguru/fonts/" + boldName + ".ttf");
             this.sizes = sizes;
         }
 
         FontType(String fontName, int... sizes) {
-            this.location = new ResourceLocation("merguru/fonts/" + fontName + ".ttf");
+            this.location = new ResourceLocation("Merguru/fonts/" + fontName + ".ttf");
             this.boldLocation = null;
             this.sizes = sizes;
         }

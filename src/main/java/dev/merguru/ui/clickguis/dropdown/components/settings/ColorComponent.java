@@ -183,13 +183,13 @@ public class ColorComponent extends SettingComponent<ColorSetting> {
             Color whiteColor = ColorUtil.applyOpacity(Color.WHITE, colorAlpha);
             RenderUtil.color(whiteColor.getRGB());
             GLUtil.startBlend();
-            RenderUtil.drawImage(new ResourceLocation("merguru/colorpicker2.png"), pickerX, pickerY, 4, 4);
+            RenderUtil.drawImage(new ResourceLocation("Merguru/colorpicker2.png"), pickerX, pickerY, 4, 4);
             GLUtil.endBlend();
 
             float hueY = gradientY + gradientHeight + 5;
             float hueHeight = 4;
             RenderUtil.resetColor();
-            mc.getTextureManager().bindTexture(new ResourceLocation("merguru/hue.png"));
+            mc.getTextureManager().bindTexture(new ResourceLocation("Merguru/hue.png"));
             RoundedUtil.drawRoundTextured(gradientX, hueY, gradientWidth, hueHeight, 1.5f, colorAlpha);
 
 

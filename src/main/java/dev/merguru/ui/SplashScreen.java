@@ -29,7 +29,7 @@ public class SplashScreen implements Utils {
     private static Framebuffer framebuffer;
 
 
-    static ResourceLocation image = new ResourceLocation("merguru/splashscreen.png");
+    static ResourceLocation image = new ResourceLocation("Merguru/splashscreen.png");
 
     private static int count;
 
@@ -239,7 +239,7 @@ public class SplashScreen implements Utils {
     public static void drawSplashBackground(float width, float height, float alpha) {
         RenderUtil.resetColor();
         GlStateManager.color(1, 1, 1, alpha);
-        mc.getTextureManager().bindTexture(new ResourceLocation("merguru/splashscreen.png"));
+        mc.getTextureManager().bindTexture(new ResourceLocation("Merguru/splashscreen.png"));
         Gui.drawModalRectWithCustomSizedTexture(0, 0, 0, 0, width, height, width, height);
     }
 

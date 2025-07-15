@@ -96,7 +96,7 @@ public class ModuleRect extends Component {
         GL11.glScaled(rectScale, rectScale, 0);
         GL11.glTranslatef(-(x + 17), -(y + 17), 0);
         GL11.glEnable(GL11.GL_BLEND);
-        //  mc.getTextureManager().bindTexture(new ResourceLocation("merguru/gradient.png"));
+        //  mc.getTextureManager().bindTexture(new ResourceLocation("Merguru/gradient.png"));
         //Gui.drawModalRectWithCustomSizedTexture(x, y, 0, 0, 35, 35, 35, 35);
         float width = 35;
         float height = 35;

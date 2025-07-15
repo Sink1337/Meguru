@@ -19,8 +19,8 @@ import java.util.Map;
  */
 public class CustomModel extends Module {
 
-    public static final ResourceLocation amongusModel = new ResourceLocation("merguru/models/amogus.png");
-    public static final ResourceLocation rabbitModel = new ResourceLocation("merguru/models/rabbit.png");
+    public static final ResourceLocation amongusModel = new ResourceLocation("Merguru/models/amogus.png");
+    public static final ResourceLocation rabbitModel = new ResourceLocation("Merguru/models/rabbit.png");
 
     public static boolean enabled = false;
 

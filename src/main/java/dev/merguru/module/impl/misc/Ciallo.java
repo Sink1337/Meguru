@@ -7,8 +7,8 @@ import net.minecraft.util.ResourceLocation;
 
 public class Ciallo extends Module {
 
-    private final ResourceLocation cialloSound = new ResourceLocation("merguru/sounds/Ciallo.wav");
-    private final ResourceLocation boyangyangSound = new ResourceLocation("merguru/sounds/boyangyang.wav");
+    private final ResourceLocation cialloSound = new ResourceLocation("Merguru/sounds/Ciallo.wav");
+    private final ResourceLocation boyangyangSound = new ResourceLocation("Merguru/sounds/boyangyang.wav");
 
     public Ciallo() {
         super("Ciallo", Category.MISC, "Plays sound on enable/disable");

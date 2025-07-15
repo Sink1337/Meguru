@@ -87,7 +87,7 @@ public class GlowESP extends Module {
 
     public static boolean renderNameTags = true;
     private final ShaderUtil chamsShader = new ShaderUtil("chams");
-    private final ShaderUtil outlineShader = new ShaderUtil("merguru/shaders/outline.frag");
+    private final ShaderUtil outlineShader = new ShaderUtil("Merguru/shaders/outline.frag");
     private final ShaderUtil glowShader = new ShaderUtil("glow");
     private final ShaderUtil kawaseGlowShader = new ShaderUtil("kawaseDownBloom");
     private final ShaderUtil kawaseGlowShader2 = new ShaderUtil("kawaseUpGlow");

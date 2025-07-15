@@ -57,10 +57,10 @@ public class Module extends ListenerAdapter implements Utils {
 
     private final KeybindSetting keybind = new KeybindSetting(Keyboard.KEY_NONE);
 
-    private final ResourceLocation enableSound1 = new ResourceLocation("merguru/sounds/enable.wav");
-    private final ResourceLocation disableSound1 = new ResourceLocation("merguru/sounds/disable.wav");
-    private final ResourceLocation enableSound2 = new ResourceLocation("merguru/sounds/ciallo.wav");
-    private final ResourceLocation disableSound2 = new ResourceLocation("merguru/sounds/boyangyang.wav");
+    private final ResourceLocation enableSound1 = new ResourceLocation("Merguru/sounds/enable.wav");
+    private final ResourceLocation disableSound1 = new ResourceLocation("Merguru/sounds/disable.wav");
+    private final ResourceLocation enableSound2 = new ResourceLocation("Merguru/sounds/ciallo.wav");
+    private final ResourceLocation disableSound2 = new ResourceLocation("Merguru/sounds/boyangyang.wav");
 
     public Module(String name, Category category, String description) {
         this.name = name;

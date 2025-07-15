@@ -20,7 +20,7 @@ public class ScriptFilter implements ClassFilter {
                 s.contains("java.util.stream.Collectors") ||
                 s.contains("java.util.UUID") ||
                 s.contains("org.lwjgl.input.Mouse") ||
-                s.startsWith("dev.merguru.utils.tuples");
+                s.startsWith("dev.Merguru.utils.tuples");
     }
 
 }

@@ -31,7 +31,7 @@ public class AutoPlay extends Module {
     private final NumberSetting autoPlayDelay = new NumberSetting("AutoPlay Delay", 2.5, 8, 1, 0.5);
     private final StringSetting autoGGMessage = new StringSetting("AutoGG Message", "gg");
 
-    private static final ResourceLocation sound = new ResourceLocation("merguru/sounds/0721.wav");
+    private static final ResourceLocation sound = new ResourceLocation("Merguru/sounds/0721.wav");
 
     public AutoPlay() {
         super("AutoPlay", Category.MISC, "Auto Queue Next Game");

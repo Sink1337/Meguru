@@ -35,8 +35,8 @@ public class GuiAltManager extends GuiScreen {
     public final TextField searchField = new TextField(tenacityFont20);
     public final ToggleButton filterBanned = new ToggleButton("Filter banned accounts");
     private final AltPanel.AltRect altRect = new AltPanel.AltRect(null);
-    private static final ResourceLocation successfullysound = new ResourceLocation("merguru/sounds/successfully.wav");
-    private static final ResourceLocation failedsound = new ResourceLocation("merguru/sounds/failed.wav");
+    private static final ResourceLocation successfullysound = new ResourceLocation("Merguru/sounds/successfully.wav");
+    private static final ResourceLocation failedsound = new ResourceLocation("Merguru/sounds/failed.wav");
 
     public GuiAltManager() {
         if (panels == null) {

@@ -15,7 +15,6 @@ import de.florianmichael.vialoadingbase.platform.viaversion.VLBViaCommandHandler
 import de.florianmichael.vialoadingbase.platform.viaversion.VLBViaInjector;
 import de.florianmichael.vialoadingbase.platform.viaversion.VLBViaProviders;
 import de.florianmichael.vialoadingbase.util.JLoggerToLog4j;
-import kotlin.collections.CollectionsKt;
 import org.apache.logging.log4j.LogManager;
 
 import java.io.File;
@@ -157,7 +156,7 @@ public class ViaLoadingBase {
     }
 
     public static ComparableProtocolVersion fromProtocolId(final int protocolId) {
-        return CollectionsKt.firstOrNull(PROTOCOLS.values(), protocol -> protocol.getVersion() == protocolId);
+        return PROTOCOLS.values().stream().filter(protocol -> protocol.getVersion() == protocolId).findFirst().orElse(null);
     }
 
     public static List<ProtocolVersion> getProtocols() {

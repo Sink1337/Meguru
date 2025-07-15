@@ -358,7 +358,7 @@ public class AltPanel extends Panel {
                     RenderUtil.resetColor();
                     GLUtil.startBlend();
                     RenderUtil.color(-1, 1 - credsAnim);
-                    mc.getTextureManager().bindTexture(new ResourceLocation("merguru/mojang.png"));
+                    mc.getTextureManager().bindTexture(new ResourceLocation("Merguru/mojang.png"));
                     Gui.drawModalRectWithCustomSizedTexture(typeX + 2, usernameY - 1, 0, 0, size, size, size, size);
                     RenderUtil.resetColor();
                     break;
@@ -479,7 +479,7 @@ public class AltPanel extends Panel {
             Merguru.INSTANCE.getAltManager().getUtils().getHead(alt);
             GLUtil.startBlend();
             RenderUtil.setAlphaLimit(0);
-            mc.getTextureManager().bindTexture(alt.head != null ? alt.head : new ResourceLocation("merguru/X-Steve.png"));
+            mc.getTextureManager().bindTexture(alt.head != null ? alt.head : new ResourceLocation("Merguru/X-Steve.png"));
             Gui.drawModalRectWithCustomSizedTexture(x, y, 0, 0, size, size, size, size);
             GLUtil.endBlend();
         }

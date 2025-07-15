@@ -114,7 +114,7 @@ public class Merguru implements Utils {
         if (!backGroundFile.exists()) {
             LOGGER.warn("Local background file not found. Copying from resources...");
 
-            String resourcePath = "/assets/minecraft/merguru/Background/" + fileName;
+            String resourcePath = "/assets/minecraft/Merguru/Background/" + fileName;
 
             try (InputStream inputStream = Merguru.class.getResourceAsStream(resourcePath)) {
                 if (inputStream == null) {

@@ -134,7 +134,7 @@ public class HUDMod extends Module {
             float WH = 110 / 2f;
             switch (watermarkMode.getMode()) {
                 case "Moon":
-                    mc.getTextureManager().bindTexture(new ResourceLocation("merguru/Moonlogo.png"));
+                    mc.getTextureManager().bindTexture(new ResourceLocation("Merguru/Moonlogo.png"));
                     Gui.drawModalRectWithCustomSizedTexture(7, 7, 0, 0, WH, WH, WH, WH);
                     break;
                 case "Logo":
@@ -149,7 +149,7 @@ public class HUDMod extends Module {
 
 
                     GradientUtil.applyGradientCornerLR(27, 23, WH - 28, WH - 28, 1, clientColors.getSecond(), clientColors.getFirst(), () -> {
-                        mc.getTextureManager().bindTexture(new ResourceLocation("merguru/watermarkBack.png"));
+                        mc.getTextureManager().bindTexture(new ResourceLocation("Merguru/watermarkBack.png"));
                         Gui.drawModalRectWithCustomSizedTexture(7, 7, 0, 0, WH, WH, WH, WH);
                     });
                     break;
@@ -245,13 +245,13 @@ public class HUDMod extends Module {
                 RenderUtil.color(Color.BLUE.getRGB());
 
                 GradientUtil.applyGradientCornerLR(27, 23, WH - 28, WH - 28, 1, clientColors.getSecond(), clientColors.getFirst(), () -> {
-                    mc.getTextureManager().bindTexture(new ResourceLocation("merguru/watermarkBack.png"));
+                    mc.getTextureManager().bindTexture(new ResourceLocation("Merguru/watermarkBack.png"));
                     Gui.drawModalRectWithCustomSizedTexture(7, 7, 0, 0, WH, WH, WH, WH);
                 });
 
                 RenderUtil.color(-1);
                 GLUtil.startBlend();
-                mc.getTextureManager().bindTexture(new ResourceLocation("merguru/watermarkT.png"));
+                mc.getTextureManager().bindTexture(new ResourceLocation("Merguru/watermarkT.png"));
                 Gui.drawModalRectWithCustomSizedTexture(7, 7, 0, 0, WH, WH, WH, WH);
 
                 break;
@@ -398,7 +398,7 @@ public class HUDMod extends Module {
                 }
                 FontUtil.idkFont.boldSize(18).drawStringWithShadow(stringBuilder1.toString(), 2, 2, clientColors.getFirst().getRGB());
             case "Moon":
-                mc.getTextureManager().bindTexture(new ResourceLocation("merguru/Moonlogo.png"));
+                mc.getTextureManager().bindTexture(new ResourceLocation("Merguru/Moonlogo.png"));
                 Gui.drawModalRectWithCustomSizedTexture(7, 7, 0, 0, WH, WH, WH, WH);
                 break;
         }

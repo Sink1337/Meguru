@@ -59,7 +59,7 @@ public class OptionButton implements Screen {
             float iconWidth = 38 / 2f;
             float iconHeight = 27 / 2f;
             GLUtil.startBlend();
-            mc.getTextureManager().bindTexture(new ResourceLocation("merguru/mainMenu/discord.png"));
+            mc.getTextureManager().bindTexture(new ResourceLocation("Merguru/mainMenu/discord.png"));
             Gui.drawModalRectWithCustomSizedTexture(x + 20, middle + iconAdjustY, 0, 0, iconWidth, iconHeight, iconWidth, iconHeight);
             GLUtil.endBlend();
         }

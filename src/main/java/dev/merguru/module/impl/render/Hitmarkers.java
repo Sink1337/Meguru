@@ -40,7 +40,7 @@ public class Hitmarkers extends Module {
 
     private final Animation animation = new DecelerateAnimation(200, 1);
 
-    private final ResourceLocation skeet = new ResourceLocation("merguru/sounds/skeethit.wav");
+    private final ResourceLocation skeet = new ResourceLocation("Merguru/sounds/skeethit.wav");
     private Entity lastAttackedEntity;
 
     public Hitmarkers() {

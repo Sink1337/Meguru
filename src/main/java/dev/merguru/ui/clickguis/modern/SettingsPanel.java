@@ -268,7 +268,7 @@ public class SettingsPanel extends Panel {
 
                 /*Draw.colorRGBA(colorSetting.getColor().getRGB());
                 GL11.glEnable(GL11.GL_BLEND);
-                mc.getTextureManager().bindTexture(new ResourceLocation("merguru/booleanslider1.png"));
+                mc.getTextureManager().bindTexture(new ResourceLocation("Merguru/booleanslider1.png"));
                 Gui.drawModalRectWithCustomSizedTexture(x + 98, settingY, 0, 0, 20, 10, 20, 10);*/
                 //RenderUtil.renderRoundedRect(x + 95, settingY, 20, 10, 3, colorSetting.getColor().getRGB());
 
@@ -314,7 +314,7 @@ public class SettingsPanel extends Panel {
 
                 GL11.glEnable(GL11.GL_BLEND);
                 RenderUtil.color(-1);
-                mc.getTextureManager().bindTexture(new ResourceLocation("merguru/colorpicker2.png"));
+                mc.getTextureManager().bindTexture(new ResourceLocation("Merguru/colorpicker2.png"));
                 Gui.drawModalRectWithCustomSizedTexture(pickerX, pickerY, 0, 0, 4, 4, 4, 4);
 
 
@@ -324,7 +324,7 @@ public class SettingsPanel extends Panel {
 
                 // Hue bar
                 RenderUtil.color(-1);
-                mc.getTextureManager().bindTexture(new ResourceLocation("merguru/hue.png"));
+                mc.getTextureManager().bindTexture(new ResourceLocation("Merguru/hue.png"));
                 Gui.drawModalRectWithCustomSizedTexture(gradientX, gradientY + gradientHeight + 4.5f, 0, 0, gradientWidth + 10, 4, gradientWidth + 10, 4);
                 GlStateManager.color(1, 1, 1, 1);
 

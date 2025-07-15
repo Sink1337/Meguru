@@ -534,9 +534,9 @@ public class Minecraft implements IThreadListener, IPlayerUsage {
 
         this.gameSettings.guiScale = 2;
         if (LocalDate.now().equals(LocalDate.of(LocalDate.now().getYear(), 7, 21))) {
-            SoundUtils.playSound(new ResourceLocation("merguru/sounds/goodday.wav"), .9f);
+            SoundUtils.playSound(new ResourceLocation("Merguru/sounds/goodday.wav"), .9f);
         } else {
-            SoundUtils.playSound(new ResourceLocation("merguru/sounds/opening.wav"), .8f);
+            SoundUtils.playSound(new ResourceLocation("Merguru/sounds/opening.wav"), .8f);
         }
         SplashScreen.drawScreen();
 

@@ -42,9 +42,9 @@ public class CustomMainMenu extends GuiScreen {
         add(new TextButton("Discord"));
     }};
 
-    private final ResourceLocation backgroundResource = new ResourceLocation("merguru/mainMenu/funny.png");
-    private final ResourceLocation blurredRect = new ResourceLocation("merguru/mainMenu/rect-test.png");
-    private final ResourceLocation hoverCircle = new ResourceLocation("merguru/mainMenu/hover-circle.png");
+    private final ResourceLocation backgroundResource = new ResourceLocation("Merguru/mainMenu/funny.png");
+    private final ResourceLocation blurredRect = new ResourceLocation("Merguru/mainMenu/rect-test.png");
+    private final ResourceLocation hoverCircle = new ResourceLocation("Merguru/mainMenu/hover-circle.png");
 
     private static boolean firstInit = false;
 

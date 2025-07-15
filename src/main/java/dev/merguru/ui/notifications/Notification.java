@@ -70,7 +70,7 @@ public class Notification implements Utils {
         float percentage = Math.min((timerUtil.getTime() / getTime()), 1);
         Gui.drawRect2(x + (width * percentage), y + height - 1, width - (width * percentage), 1, getNotificationType().getColor().getRGB());
 
-        RenderUtil.drawImage(new ResourceLocation("merguru/noti/" + getNotificationType().getName() + ".png"), x + 2f, y + 3f, 18, 18);
+        RenderUtil.drawImage(new ResourceLocation("Merguru/noti/" + getNotificationType().getName() + ".png"), x + 2f, y + 3f, 18, 18);
 
         idkBoldFont18.drawString(getTitle(), x + 22f, (float)(y + 6), Color.WHITE);
         idkFont14.drawString(getDescription(), x + 22f, (float)(y + 16), Color.WHITE);

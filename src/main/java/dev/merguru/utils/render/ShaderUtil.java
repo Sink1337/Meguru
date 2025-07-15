@@ -90,7 +90,7 @@ public class ShaderUtil implements Utils {
         int fragmentShaderID = createShader(new ByteArrayInputStream(fragmentShadersrc.getBytes()), GL_FRAGMENT_SHADER);
         int vertexShaderID = 0;
         try {
-            vertexShaderID = createShader(mc.getResourceManager().getResource(new ResourceLocation("merguru/shaders/vertex.vsh")).getInputStream(), GL_VERTEX_SHADER);
+            vertexShaderID = createShader(mc.getResourceManager().getResource(new ResourceLocation("Merguru/shaders/vertex.vsh")).getInputStream(), GL_VERTEX_SHADER);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -109,7 +109,7 @@ public class ShaderUtil implements Utils {
     }
 
     public ShaderUtil(String fragmentShaderLoc) {
-        this(fragmentShaderLoc, "merguru/shaders/vertex.vsh");
+        this(fragmentShaderLoc, "Merguru/shaders/vertex.vsh");
     }
 
 

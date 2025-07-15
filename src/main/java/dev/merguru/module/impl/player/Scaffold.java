@@ -58,22 +58,15 @@ public class Scaffold extends Module {
     private final ModeSetting countMode = new ModeSetting("Block Counter", "Tenacity", "None", "Tenacity", "Basic", "Polar", "Exhibition");
     private final ModeSetting animationMode = new ModeSetting("Animation Mode", "Normal", "None", "Normal");
     private final BooleanSetting rotations = new BooleanSetting("Rotations", true);
-    private final ModeSetting rotationMode = new ModeSetting("Rotation Mode", "Watchdog", "Watchdog", "NCP", "Back", "45", "Enum", "Down", "0", "Simple", "SideA", "SideB", "Hypixel");
+    private final ModeSetting rotationMode = new ModeSetting("Rotation Mode", "Watchdog", "Watchdog", "NCP", "Back", "45", "Enum", "Down", "0");
     private final ModeSetting placeType = new ModeSetting("Place Type", "Post", "Pre", "Post", "Legit", "Dynamic");
     public static ModeSetting keepYMode = new ModeSetting("Keep Y Mode", "Always", "Always", "Speed toggled");
-<<<<<<< HEAD:src/main/java/dev/merguru/module/impl/player/Scaffold.java
-    public static ModeSetting sprintMode = new ModeSetting("Sprint Mode", "Vanilla", "Watchdog", "Cancel", "KeepyA", "KeepyB", "BlocksMC");
-    public static ModeSetting towerMode = new ModeSetting("Tower Mode", "Watchdog", "Vanilla", "NCP", "Watchdog", "Verus", "Legit", "2tick", "3tick", "4tick", "Hypixel");
-=======
-    public static ModeSetting sprintMode = new ModeSetting("Sprint Mode", "Vanilla", "Watchdog", "Cancel");
+    public static ModeSetting sprintMode = new ModeSetting("Sprint Mode", "Vanilla", "Vanilla", "Watchdog", "Cancel");
     public static ModeSetting towerMode = new ModeSetting("Tower Mode", "Watchdog", "Vanilla", "NCP", "Watchdog", "Verus", "Legit");
->>>>>>> parent of 7f9ac9c (fix):src/main/java/dev/meguru/module/impl/player/Scaffold.java
-    private final NumberSetting towerSpeed = new NumberSetting("Tower speed", 1, 10, 0, 0.1);
     public static ModeSetting swingMode = new ModeSetting("Swing Mode", "Client", "Client", "Silent");
     public static final ModeSetting swapMode = new ModeSetting("Swap Mode", "Normal", "Normal", "Spoof", "Lite Spoof");
     public static NumberSetting delay = new NumberSetting("Delay", 0, 2, 0, 0.05);
     private final NumberSetting timer = new NumberSetting("Timer", 1, 5, 0.1, 0.1);
-    private final BooleanSetting multiPlace = new BooleanSetting("Multi Place", true);
     public static final BooleanSetting auto3rdPerson = new BooleanSetting("Auto 3rd Person", false);
     public static final BooleanSetting speedSlowdown = new BooleanSetting("Speed Slowdown", true);
     public static final NumberSetting speedSlowdownAmount = new NumberSetting("Slowdown Amount", 0.1, 0.2, 0.01, 0.01);
@@ -90,14 +83,24 @@ public class Scaffold extends Module {
     public static BooleanSetting keepY = new BooleanSetting("Keep Y", false);
 
     private ScaffoldUtils.BlockCache blockCache, lastBlockCache;
+    private float y;
+    private float speed;
+    private final MouseFilter pitchMouseFilter = new MouseFilter();
     private final TimerUtil delayTimer = new TimerUtil();
     private final TimerUtil timerUtil = new TimerUtil();
     public static double keepYCoord;
+    private boolean shouldSendPacket;
+    private boolean shouldTower;
+    private boolean firstJump;
+    private boolean pre;
+    private int jumpTimer;
     private int blockPlacementSlot = -1;
     private int prevSlot;
     private float[] cachedRots = new float[2];
+    private int offGroundTicks = 0;
 
     private final Animation anim = new DecelerateAnimation(250, 1);
+    private boolean shouldrot;
 
     //hypixel bypasses
     public static Vec3 targetBlock;
@@ -108,19 +111,14 @@ public class Scaffold extends Module {
     private float targetPitch;
     double startY;
 
-    private boolean cryptixSprintState, ground, tower25;
-    private int towerTick, is, rotationTick, floatTick;
-    private float preYaw, strictPitch;
-
     public Scaffold() {
-        super("Scaffold", Category.PLAYER, "Automatically places blocks under you");
-        this.addSettings(countMode, animationMode, rotations, rotationMode, placeType, keepYMode, sprintMode, towerMode, towerSpeed, swingMode, swapMode, delay, timer,
-                multiPlace, auto3rdPerson, speedSlowdown, speedSlowdownAmount, downwards, safewalk, sprint, sneak, tower, towerTimer,
+        super("Scaffold", Category.MOVEMENT, "Automatically places blocks under you");
+        this.addSettings(countMode, animationMode, rotations, rotationMode, placeType, keepYMode, sprintMode, towerMode, swingMode, swapMode, delay, timer,
+                auto3rdPerson, speedSlowdown, speedSlowdownAmount, downwards, safewalk, sprint, sneak, tower, towerTimer,
                 swing, autoJump, hideJump, baseSpeed, keepY);
         rotationMode.addParent(rotations, ParentAttribute.BOOLEAN_CONDITION);
         sprintMode.addParent(sprint, ParentAttribute.BOOLEAN_CONDITION);
         towerMode.addParent(tower, ParentAttribute.BOOLEAN_CONDITION);
-        towerSpeed.addParent(tower, ParentAttribute.BOOLEAN_CONDITION);
         swingMode.addParent(swing, ParentAttribute.BOOLEAN_CONDITION);
         towerTimer.addParent(tower, ParentAttribute.BOOLEAN_CONDITION);
         keepYMode.addParent(keepY, ParentAttribute.BOOLEAN_CONDITION);
@@ -128,95 +126,6 @@ public class Scaffold extends Module {
         speedSlowdownAmount.addParent(speedSlowdown, ParentAttribute.BOOLEAN_CONDITION);
         animationMode.addParent(countMode, modeSetting -> !modeSetting.is("None"));
     }
-
-    private void handleSprint() {
-        if (!sprint.isEnabled()) {
-            mc.thePlayer.setSprinting(false);
-            return;
-        }
-
-        switch (sprintMode.getMode()) {
-            case "Vanilla":
-                mc.thePlayer.setSprinting(MovementUtils.isMoving());
-                break;
-            case "Watchdog":
-                if (mc.thePlayer.onGround && MovementUtils.isMoving()) {
-                    PacketUtils.sendPacketNoEvent(new C0BPacketEntityAction(mc.thePlayer, C0BPacketEntityAction.Action.START_SPRINTING));
-                } else if (!MovementUtils.isMoving()) {
-                    PacketUtils.sendPacketNoEvent(new C0BPacketEntityAction(mc.thePlayer, C0BPacketEntityAction.Action.STOP_SPRINTING));
-                }
-                break;
-<<<<<<< HEAD:src/main/java/dev/merguru/module/impl/player/Scaffold.java
-            case "KeepyA":
-                if(MovementUtils.isMoving() && !mc.gameSettings.keyBindJump.isKeyDown()) {
-                    cryptixSprintState = true;
-                    if(mc.thePlayer.onGround) {
-                        mc.thePlayer.jump();
-                    }
-                    mc.thePlayer.setSprinting(true);
-                }else {
-                    keepYCoord = (int) mc.thePlayer.posY;
-                    mc.thePlayer.setSprinting(false);
-                }
-                break;
-            case "KeepyB":
-                if(MovementUtils.isMoving() && !mc.gameSettings.keyBindJump.isKeyDown()) {
-                    is++;
-                    cryptixSprintState = true;
-                    if(mc.thePlayer.onGround) {
-                        mc.thePlayer.jump();
-                        MovementUtils.strafe(mc.thePlayer.isPotionActive(Potion.moveSpeed) ? 0.65 : 0.48);
-                        ground = false;
-                    }
-                    if(!ground && mc.thePlayer.offGroundTicks == 4) {
-                        mc.thePlayer.motionY = -0.09800000190734863;
-                    }
-                    mc.thePlayer.setSprinting(true);
-                    MovementUtils.applyFriction();
-                    MovementUtils.strafe();
-                }else {
-                    is = 0;
-                    ground = true;
-                    keepYCoord = (int) mc.thePlayer.posY;
-                    mc.thePlayer.setSprinting(false);
-                }
-                break;
-            case "BlocksMC":
-                if(MovementUtils.isMoving()) {
-                    is++;
-                    if(ground && mc.thePlayer.onGround) {
-                        mc.thePlayer.motionY = 0.42F;
-                        MovementUtils.strafe(0.47);
-                        ground = false;
-                        return;
-                    }
-                    mc.thePlayer.setSprinting(true);
-                }else {
-                    ground = true;
-                    is = 0;
-                    floatTick = 0;
-                    return;
-                }
-                if(mc.thePlayer.onGround && !mc.gameSettings.keyBindJump.isKeyDown() && !ground) {
-                    if(floatTick < -5) {
-                        ground = true;
-                        is = 0;
-                        return;
-                    }
-                    cryptixSprintState = true;
-                    if(mc.thePlayer.onGroundTicks % 2 == 0 && floatTick > 0) {
-                        mc.thePlayer.setPosition(mc.thePlayer.posX, mc.thePlayer.posY + 0.0522, mc.thePlayer.posZ);
-                    }
-                    MovementUtils.strafe(mc.thePlayer.isPotionActive(Potion.moveSpeed) ? is % 11 == 0 ? 0.146 : 0.296 : 0.20);
-                }
-                break;
-=======
->>>>>>> parent of 7f9ac9c (fix):src/main/java/dev/meguru/module/impl/player/Scaffold.java
-            case "Cancel":
-                break;
-        }
-    }
-
 
     @Override
     public void onMotionEvent(MotionEvent e) {
@@ -226,10 +135,6 @@ public class Scaffold extends Module {
             mc.timer.timerSpeed = tower.isEnabled() ? towerTimer.getValue().floatValue() : 1;
         }
 
-        if (mc.thePlayer.onGround) {
-            cryptixSprintState = false;
-        }
-
         if (e.isPre()) {
             if (rotations.isEnabled() && rotationMode.is("Watchdog") && sprintMode.is("Watchdog")) {
                 if (PlayerUtil.blockRelativeToPlayer(0, -1, 0) instanceof BlockAir) {
@@ -237,10 +142,12 @@ public class Scaffold extends Module {
                 } else {
                     ticksOnAir = 0;
                 }
+                // Gets block to place
                 targetBlock = PlayerUtil.getPlacePossibility(0,0,0,(int) 5);;
                 if (targetBlock == null) {
                     return;
                 }
+                //Gets EnumFacing
                 enumFacingABC = PlayerUtil.getEnumFacing(targetBlock);
                 if (enumFacingABC == null) {
                     return;
@@ -262,57 +169,16 @@ public class Scaffold extends Module {
                     }
                     mc.thePlayer.setSprinting(true);
                 }else {
+                    mc.thePlayer.setSprinting(false);
                     BlinkUtils.stopBlink();
                 }
             } else {
-                handleSprint();
                 if (baseSpeed.isEnabled()) {
                     MovementUtils.setSpeed(MovementUtils.getBaseMoveSpeed() * 0.7);
                 }
                 if (rotations.isEnabled()) {
-                    float yaw = 0, pitch = 0;
-                    float[][] angleRanges = new float[][]{{0.0f, 10.0f, 55.0f, 45.0f}, {270.0f, 280.0f, 55.0f, 45.0f}, {180.0f, 190.0f, 55.0f, 45.0f}, {90.0f, 100.0f, 55.0f, 45.0f}, {350.0f, 360.0f, -55.0f, -45.0f}, {260.0f, 270.0f, -55.0f, -45.0f}, {170.0f, 180.0f, -55.0f, -45.0f}, {80.0f, 90.0f, -55.0f, -45.0f}, {10.0f, 20.0f, 53.0f, 45.0f}, {280.0f, 290.0f, 53.0f, 45.0f}, {190.0f, 200.0f, 53.0f, 45.0f}, {100.0f, 110.0f, 53.0f, 45.0f}, {340.0f, 350.0f, -53.0f, -45.0f}, {250.0f, 260.0f, -53.0f, -45.0f}, {160.0f, 170.0f, -53.0f, -45.0f}, {70.0f, 80.0f, -53.0f, -45.0f}, {20.0f, 30.0f, 49.0f, 45.0f}, {290.0f, 300.0f, 49.0f, 45.0f}, {200.0f, 210.0f, 49.0f, 45.0f}, {110.0f, 120.0f, 49.0f, 45.0f}, {330.0f, 340.0f, -49.0f, -45.0f}, {240.0f, 250.0f, -49.0f, -45.0f}, {150.0f, 160.0f, -49.0f, -45.0f}, {60.0f, 70.0f, -46.0f, -45.0f}, {30.0f, 42.0f, 45.0f, 45.0f}, {300.0f, 312.0f, 45.0f, 45.0f}, {212.0f, 220.0f, 45.0f, 45.0f}, {120.0f, 130.0f, 45.0f, 45.0f}, {315.0f, 330.0f, -45.0f, -45.0f}, {225.0f, 240.0f, -45.0f, -45.0f}, {135.0f, 150.0f, -45.0f, -45.0f}, {45.0f, 60.0f, -45.0f, -45.0f}};
-                    float movementYaw = RotationUtils.getMovementYaw();
-                    float finishedYaw = movementYaw + 45.0f;
-
-<<<<<<< HEAD:src/main/java/dev/merguru/module/impl/player/Scaffold.java
-=======
-                    float[][] fArrayArray = angleRanges;
-                    int n = angleRanges.length;
-                    int n2 = 0;
-                    float bodyYaw = 0;
-
->>>>>>> parent of 7f9ac9c (fix):src/main/java/dev/meguru/module/impl/player/Scaffold.java
+                    float[] rotations = new float[]{0, 0};
                     switch (rotationMode.getMode()) {
-                        case "Simple":
-                            if ((blockCache = ScaffoldUtils.getBlockInfo()) == null) {
-                                blockCache = lastBlockCache;
-                            }
-                            if (blockCache != null) {
-                                cachedRots = RotationUtils.getRotations(blockCache.getPosition(), blockCache.getFacing());
-                                yaw = cachedRots[0];
-                                pitch = strictPitch;
-                            }
-                            break;
-                        case "SideA":
-                            yaw = MovementUtils.getMoveYaw(e.getYaw()) - 90;
-                            pitch = 77;
-                            break;
-                        case "Hypixel":
-                            for (float[] range : angleRanges) {
-                                if (movementYaw > range[0] && movementYaw < range[1]) {
-                                    finishedYaw = movementYaw + range[2];
-                                    break;
-                                }
-                            }
-                            preYaw = (float) MathUtils.lerp(preYaw, finishedYaw, 0.1F);
-                            yaw = preYaw;
-                            pitch = strictPitch;
-                            break;
-                        case "SideB":
-                            yaw = MovementUtils.getMoveYaw(e.getYaw()) + 90;
-                            pitch = 77;
-                            break;
                         case "NCP":
                             float prevYaw = cachedRots[0];
                             if ((blockCache = ScaffoldUtils.getBlockInfo()) == null) {
@@ -325,16 +191,15 @@ public class Scaffold extends Module {
                             if ((mc.thePlayer.onGround || (MovementUtils.isMoving() && tower.isEnabled() && mc.gameSettings.keyBindJump.isKeyDown())) && Math.abs(cachedRots[0] - prevYaw) >= 90) {
                                 cachedRots[0] = MovementUtils.getMoveYaw(e.getYaw()) - 180;
                             }
-                            yaw = cachedRots[0];
-                            pitch = cachedRots[1];
+                            rotations = cachedRots;
+                            e.setRotations(rotations[0], rotations[1]);
                             break;
                         case "Back":
-                            yaw = MovementUtils.getMoveYaw(e.getYaw()) - 180;
-                            pitch = 77;
+                            rotations = new float[]{MovementUtils.getMoveYaw(e.getYaw()) - 180, 77};
+                            e.setRotations(rotations[0], rotations[1]);
                             break;
                         case "Down":
-                            yaw = e.getYaw();
-                            pitch = 90;
+                            e.setPitch(90);
                             break;
                         case "45":
                             float val;
@@ -351,26 +216,25 @@ public class Scaffold extends Module {
                                     }
                                 }
                             } else {
-                                val = cachedRots[0];
+                                val = rotations[0];
                             }
-                            yaw = (val + MathHelper.wrapAngleTo180_float(mc.thePlayer.prevRotationYawHead)) / 2.0F;
-                            pitch = (77 + MathHelper.wrapAngleTo180_float(mc.thePlayer.prevRotationPitchHead)) / 2.0F;
+                            rotations = new float[]{
+                                    (val + MathHelper.wrapAngleTo180_float(mc.thePlayer.prevRotationYawHead)) / 2.0F,
+                                    (77 + MathHelper.wrapAngleTo180_float(mc.thePlayer.prevRotationPitchHead)) / 2.0F};
+                            e.setRotations(rotations[0], rotations[1]);
                             break;
                         case "Enum":
                             if (lastBlockCache != null) {
-                                yaw = RotationUtils.getEnumRotations(lastBlockCache.getFacing());
-                                pitch = 77;
+                                float yaw = RotationUtils.getEnumRotations(lastBlockCache.getFacing());
+                                e.setRotations(yaw, 77);
                             } else {
-                                yaw = mc.thePlayer.rotationYaw + 180;
-                                pitch = 77;
+                                e.setRotations(mc.thePlayer.rotationYaw + 180, 77);
                             }
                             break;
                         case "0":
-                            yaw = 0;
-                            pitch = 0;
+                            e.setRotations(0, 0);
                             break;
                     }
-                    e.setRotations(yaw, pitch);
                     RotationUtils.setVisualRotations(e);
                 }
 
@@ -385,72 +249,14 @@ public class Scaffold extends Module {
                 }
 
                 if (tower.isEnabled() && mc.gameSettings.keyBindJump.isKeyDown()) {
-                    if (cryptixSprintState) {
-                        mc.thePlayer.motionX *= 0.75;
-                        mc.thePlayer.motionZ *= 0.75;
-                        cryptixSprintState = false;
-                    }
                     double centerX = Math.floor(e.getX()) + 0.5, centerZ = Math.floor(e.getZ()) + 0.5;
                     switch (towerMode.getMode()) {
                         case "Vanilla":
                             mc.thePlayer.motionY = 0.42f;
                             break;
                         case "Verus":
-<<<<<<< HEAD:src/main/java/dev/merguru/module/impl/player/Scaffold.java
-                        case "2tick":
-=======
->>>>>>> parent of 7f9ac9c (fix):src/main/java/dev/meguru/module/impl/player/Scaffold.java
-                            double speed2 = towerSpeed.getValue() / 10.0 * (mc.thePlayer.isPotionActive(Potion.moveSpeed) ? 1.2 : 1.0);
-                            if (Math.round(mc.thePlayer.posY % 1 * 100) == 0) {
-                                mc.thePlayer.setPosition(mc.thePlayer.posX, Math.floor(mc.thePlayer.posY), mc.thePlayer.posZ);
+                            if (mc.thePlayer.ticksExisted % 2 == 0)
                                 mc.thePlayer.motionY = 0.42f;
-                                MovementUtils.strafe(speed2);
-                            } else if (mc.thePlayer.posY % 1.0 < 0.1 && !mc.thePlayer.onGround) {
-                                mc.thePlayer.setPosition(mc.thePlayer.posX, Math.floor(mc.thePlayer.posY), mc.thePlayer.posZ);
-                            }
-                            MovementUtils.strafe();
-                            towerTick++;
-<<<<<<< HEAD:src/main/java/dev/merguru/module/impl/player/Scaffold.java
-                            break;
-                        case "3tick":
-                            double speed3 = towerSpeed.getValue() / 10 * (mc.thePlayer.isPotionActive(Potion.moveSpeed) ? 1.25 : 1);
-                            if (Math.round(mc.thePlayer.posY % 1 * 100) == 0) {
-                                if(tower25 ? towerTick >= 3 : towerTick > 3) {
-                                    mc.thePlayer.setPosition(mc.thePlayer.posX, Math.floor(mc.thePlayer.posY), mc.thePlayer.posZ);
-                                    mc.thePlayer.motionY = 0.42F;
-                                    MovementUtils.strafe(speed3);
-                                    towerTick = 0;
-                                    tower25 = !tower25;
-                                } else {
-                                    mc.thePlayer.motionY = 0.05;
-                                    MovementUtils.strafe(speed3);
-                                }
-                            } else if (mc.thePlayer.posY % 1.0 < 0.1 && !mc.thePlayer.onGround) {
-                                mc.thePlayer.setPosition(mc.thePlayer.posX, Math.floor(mc.thePlayer.posY), mc.thePlayer.posZ);
-                            }
-                            if(mc.thePlayer.onGround) {
-                                MovementUtils.strafe(speed3);
-                            }
-                            MovementUtils.strafe();
-                            towerTick++;
-                            break;
-                        case "4tick":
-                            if (mc.thePlayer.onGround) {
-                                MovementUtils.strafe(towerSpeed.getValue() / 10.0);
-                                mc.thePlayer.motionY = 0.42;
-                            } else if (mc.thePlayer.offGroundTicks == 3) {
-                                BlockPos blockUnder = new BlockPos(mc.thePlayer.posX, keepYCoord - 1, mc.thePlayer.posZ);
-                                if (mc.theWorld.getBlockState(blockUnder).getBlock() instanceof BlockAir) {
-                                    towerTick = 1;
-                                } else {
-                                    mc.thePlayer.motionY = mc.thePlayer.posY % 1.0;
-                                    towerTick = 0;
-                                }
-                            } else if (mc.thePlayer.offGroundTicks == 4 && towerTick == 1) {
-                                mc.thePlayer.motionY -= 0.07;
-                            }
-=======
->>>>>>> parent of 7f9ac9c (fix):src/main/java/dev/meguru/module/impl/player/Scaffold.java
                             break;
                         case "Watchdog":
                             if (!MovementUtils.isMoving() && mc.theWorld.getBlockState(new BlockPos(mc.thePlayer).down()).getBlock() != Blocks.air && lastBlockCache != null) {
@@ -482,33 +288,12 @@ public class Scaffold extends Module {
                                 mc.thePlayer.jump();
                             }
                             break;
-                        case "Hypixel":
-                            if(MovementUtils.isMoving() && MovementUtils.getSpeed() > 0.1 && !mc.thePlayer.onGround) {
-                                if (towerTick == 1) {
-                                    mc.thePlayer.motionY = 0.33F;
-                                }
-                                if (towerTick == 2) {
-                                    mc.thePlayer.motionY = 1 - mc.thePlayer.posY % 1;
-                                }
-                                if (towerTick == 3) {
-                                    mc.thePlayer.motionY = 0.41965;
-                                    MovementUtils.strafe(0.195 + Math.random() * 0.00005);
-                                    towerTick = 0;
-                                }
-                                towerTick++;
-                            }else {
-                                towerTick = 1;
-                            }
-                            break;
                     }
-                } else {
-                    towerTick = 1;
-                    tower25 = true;
                 }
 
                 blockCache = ScaffoldUtils.getBlockInfo();
                 if (blockCache != null) {
-                    lastBlockCache = blockCache;
+                    lastBlockCache = ScaffoldUtils.getBlockInfo();
                 } else {
                     return;
                 }
@@ -517,18 +302,16 @@ public class Scaffold extends Module {
                     pre = true;
                 }
 
-                int placements = multiPlace.isEnabled() ? 3 : 1;
-                for(int i = 0; i < placements; i++) {
-                    if (ScaffoldUtils.getBlockInfo() == null) break;
-
-                    if (placeType.is("Pre") || (placeType.is("Dynamic") && pre)) {
-                        if (place()) {
-                            pre = false;
-                        }
-                    } else if (placeType.is("Post") || (placeType.is("Dynamic") && !pre)) {
-                        place();
+                if (placeType.is("Pre") || (placeType.is("Dynamic") && pre)) {
+                    if (place()) {
                         pre = false;
                     }
+                } else {
+                    if (placeType.is("Post") || (placeType.is("Dynamic") && !pre)) {
+                        place();
+                    }
+
+                    pre = false;
                 }
             }
         }
@@ -544,7 +327,6 @@ public class Scaffold extends Module {
             }
         }
     }
-
 
     @Override
     public void onBlockPlaceable(BlockPlaceableEvent event) {
@@ -658,6 +440,8 @@ public class Scaffold extends Module {
                 }
             }
             delayTimer.reset();
+            blockCache = null;
+
             if (placed && swapMode.is("Lite Spoof")) {
                 if (mc.thePlayer.inventory.currentItem != prevSlot) {
                     PacketUtils.sendPacket(new C09PacketHeldItemChange(prevSlot));
@@ -717,7 +501,6 @@ public class Scaffold extends Module {
 
     @Override
     public void onUpdateEvent(UpdateEvent event) {
-        --floatTick;
         if (autoJump.isEnabled() && !sprintMode.is("Watchdog") && GameSettings.isKeyDown(mc.gameSettings.keyBindForward)) {
             if (mc.thePlayer.onGround) {
                 mc.thePlayer.jump();
@@ -739,16 +522,6 @@ public class Scaffold extends Module {
             if (auto3rdPerson.isEnabled()) {
                 mc.gameSettings.thirdPersonView = 1;
             }
-
-            preYaw = mc.thePlayer.rotationYaw % 360;
-            keepYCoord = (int) mc.thePlayer.posY;
-            rotationTick = 0;
-            ground = true;
-            strictPitch = 83;
-            floatTick = 0;
-            towerTick = 1;
-            tower25 = true;
-            is = 0;
         }
         firstJump = true;
         speed = 1.1f;
@@ -761,7 +534,6 @@ public class Scaffold extends Module {
         } else {
             anim.setDuration(250);
         }
-
         super.onEnable();
     }
 
@@ -962,17 +734,11 @@ public class Scaffold extends Module {
 
     @Override
     public void onPacketSendEvent(PacketSendEvent e) {
-        if(mc.thePlayer == null) return;
-
-        if (sprint.isEnabled() && sprintMode.is("Cancel")) {
-            if (e.getPacket() instanceof C0BPacketEntityAction) {
-                C0BPacketEntityAction packet = (C0BPacketEntityAction) e.getPacket();
-                if (packet.getAction() == C0BPacketEntityAction.Action.START_SPRINTING) {
-                    e.cancel();
-                }
-            }
+        if (e.getPacket() instanceof C0BPacketEntityAction
+                && ((C0BPacketEntityAction) e.getPacket()).getAction() == C0BPacketEntityAction.Action.START_SPRINTING
+                && sprint.isEnabled() && sprintMode.is("Cancel")) {
+            e.cancel();
         }
-
         if (e.getPacket() instanceof C09PacketHeldItemChange && swapMode.is("Spoof")) {
             e.cancel();
         }
@@ -1018,11 +784,6 @@ public class Scaffold extends Module {
             x += r1;
         }
         return new Vec3i(x, y, z);
-    }
-
-    private boolean isDiagonal() {
-        float yaw = (mc.thePlayer.rotationYaw % 360.0f + 360.0f) % 360.0f > 180.0f ? (mc.thePlayer.rotationYaw % 360.0f + 360.0f) % 360.0f - 360.0f : (mc.thePlayer.rotationYaw % 360.0f + 360.0f) % 360.0f;
-        return !(!(yaw >= -170.0f) || !(yaw <= 170.0f) || yaw >= -10.0f && yaw <= 10.0f || yaw >= 80.0f && yaw <= 100.0f) && (!(yaw >= -100.0f) || !(yaw <= -80.0f));
     }
 
     public void calculateRotations() {

@@ -152,7 +152,7 @@ public class LoginPanel extends Panel {
 
         hoveringMicrosoft = HoveringUtil.isHovering(microX - 2, microsoftY - 2, microWidth + 4, microHeight + 4, mouseX, mouseY);
         hoverMicrosoftAnim.setDirection(hoveringMicrosoft ? Direction.FORWARDS : Direction.BACKWARDS);
-        mc.getTextureManager().bindTexture(new ResourceLocation("merguru/mc.png"));
+        mc.getTextureManager().bindTexture(new ResourceLocation("Merguru/mc.png"));
         RoundedUtil.drawRoundTextured(microX, microsoftY, microWidth, microHeight, 5, 1);
 
         RoundedUtil.drawRound(microX, microsoftY, microWidth, microHeight, 5,

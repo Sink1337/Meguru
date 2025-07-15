@@ -21,7 +21,7 @@ import static org.lwjgl.opengl.GL11.*;
  */
 public class WingModel extends ModelBase {
 
-    private final ResourceLocation location = new ResourceLocation("merguru/models/wings.png");
+    private final ResourceLocation location = new ResourceLocation("Merguru/models/wings.png");
     private final ModelRenderer wingTip, wing;
 
     public WingModel() {

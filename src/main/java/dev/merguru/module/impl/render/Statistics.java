@@ -71,7 +71,7 @@ public class Statistics extends Module {
 
     }
 
-    private final ShaderUtil circleShader = new ShaderUtil("merguru/shaders/circle-arc.frag");
+    private final ShaderUtil circleShader = new ShaderUtil("Merguru/shaders/circle-arc.frag");
 
     @Override
     public void onRender2DEvent(Render2DEvent e) {

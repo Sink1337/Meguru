@@ -17,7 +17,7 @@ public class ParticleImage {
     public ParticleImage(int particleNumber, Pair<Integer, Integer> dimensions) {
         this.dimensions = dimensions;
         particleType = dimensions.getFirst() > 350 ? ParticleType.BIG : ParticleType.SMALL;
-        location = new ResourceLocation("merguru/mainMenu/particles" + particleNumber + ".png");
+        location = new ResourceLocation("Merguru/mainMenu/particles" + particleNumber + ".png");
     }
 
 }
