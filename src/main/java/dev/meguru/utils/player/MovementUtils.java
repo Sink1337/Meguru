@@ -137,10 +137,6 @@ public class MovementUtils implements Utils {
         return Math.toRadians(yaw);
     }
 
-    public static void strafe() {
-        strafe(getSpeed());
-    }
-
     public static void strafe(double speed) {
         if(isMoving()) {
             mc.thePlayer.motionZ = Math.cos(getDirectionRadians()) * speed;

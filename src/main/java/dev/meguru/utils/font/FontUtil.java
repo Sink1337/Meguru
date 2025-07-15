@@ -85,7 +85,7 @@ public class FontUtil implements Utils {
 
         FontType(String fontName, String boldName, int... sizes) {
             this.location = new ResourceLocation("meguru/fonts/" + fontName + ".ttf");
-            this.boldLocation = new ResourceLocation("v/fonts/" + boldName + ".ttf");
+            this.boldLocation = new ResourceLocation("meguru/fonts/" + boldName + ".ttf");
             this.sizes = sizes;
         }
 
