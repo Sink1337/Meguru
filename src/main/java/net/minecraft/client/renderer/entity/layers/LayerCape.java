@@ -1,6 +1,6 @@
 package net.minecraft.client.renderer.entity.layers;
 
-import dev.merguru.module.impl.render.HUDMod;
+import dev.meguru.module.impl.render.HUDMod;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.entity.AbstractClientPlayer;
 import net.minecraft.client.renderer.GlStateManager;
@@ -12,7 +12,7 @@ import net.minecraft.util.Session;
 
 public class LayerCape implements LayerRenderer<AbstractClientPlayer> {
     private final RenderPlayer playerRenderer;
-    private final ResourceLocation cape = new ResourceLocation("Merguru/capes/c1.png");
+    private final ResourceLocation cape = new ResourceLocation("meguru/capes/c1.png");
 
     public LayerCape(RenderPlayer playerRendererIn) {
         this.playerRenderer = playerRendererIn;

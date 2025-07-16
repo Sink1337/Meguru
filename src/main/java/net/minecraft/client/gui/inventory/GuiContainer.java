@@ -1,8 +1,8 @@
 package net.minecraft.client.gui.inventory;
 
 import com.google.common.collect.Sets;
-import dev.merguru.module.impl.movement.InventoryMove;
-import dev.merguru.module.impl.player.ChestStealer;
+import dev.meguru.module.impl.movement.InventoryMove;
+import dev.meguru.module.impl.player.ChestStealer;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiScreen;
 import net.minecraft.client.renderer.GlStateManager;

@@ -1,6 +1,6 @@
 package net.minecraft.client.renderer.tileentity;
 
-import dev.merguru.utils.render.EntityCulling;
+import dev.meguru.utils.render.EntityCulling;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.IFontRenderer;
 import net.minecraft.client.renderer.*;

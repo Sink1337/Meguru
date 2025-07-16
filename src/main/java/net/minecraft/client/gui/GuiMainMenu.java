@@ -1,8 +1,8 @@
 package net.minecraft.client.gui;
 
 import com.google.common.collect.Lists;
-import dev.merguru.Merguru;
-import dev.merguru.ui.mainmenu.CustomMainMenu;
+import dev.meguru.Meguru;
+import dev.meguru.ui.mainmenu.CustomMainMenu;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.renderer.OpenGlHelper;
@@ -273,7 +273,7 @@ public class GuiMainMenu extends GuiScreen implements GuiYesNoCallback {
         }
 
         if (button.id == 3) {
-            this.mc.displayGuiScreen(Merguru.INSTANCE.getAltManager());
+            this.mc.displayGuiScreen(Meguru.INSTANCE.getAltManager());
         }
 
         if (button.id == 4) {

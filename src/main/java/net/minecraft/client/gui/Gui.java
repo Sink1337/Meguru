@@ -1,10 +1,10 @@
 package net.minecraft.client.gui;
 
-import dev.merguru.module.impl.render.HUDMod;
-import dev.merguru.utils.font.AbstractFontRenderer;
-import dev.merguru.utils.font.FontUtil;
-import dev.merguru.utils.render.GLUtil;
-import dev.merguru.utils.render.RenderUtil;
+import dev.meguru.module.impl.render.HUDMod;
+import dev.meguru.utils.font.AbstractFontRenderer;
+import dev.meguru.utils.font.FontUtil;
+import dev.meguru.utils.render.GLUtil;
+import dev.meguru.utils.render.RenderUtil;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.renderer.Tessellator;

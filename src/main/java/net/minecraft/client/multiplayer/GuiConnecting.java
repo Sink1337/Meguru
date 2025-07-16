@@ -61,7 +61,7 @@ public class GuiConnecting extends GuiScreen {
                     if (mc2.getSession() != null && mc2.getSession().getProfile() != null && mc2.getSession().getProfile().getId() != null) {
                         GuiConnecting.this.networkManager.sendPacket(new C00PacketLoginStart(GuiConnecting.this.mc2.getSession().getProfile()));
                     } else {
-                        GuiConnecting.this.mc2.displayGuiScreen(new GuiDisconnected(GuiConnecting.this.previousGuiScreen, "connect.failed", new ChatComponentTranslation("disconnect.genericReason", "Meguru: Null session (Not logged in?)")));
+                        GuiConnecting.this.mc2.displayGuiScreen(new GuiDisconnected(GuiConnecting.this.previousGuiScreen, "connect.failed", new ChatComponentTranslation("disconnect.genericReason", "meguru: Null session (Not logged in?)")));
                     }
                 } catch (UnknownHostException unknownhostexception) {
                     if (GuiConnecting.this.cancel) {

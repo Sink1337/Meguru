@@ -1,11 +1,11 @@
 package net.minecraft.client.entity;
 
-import dev.merguru.Merguru;
-import dev.merguru.commands.CommandHandler;
-import dev.merguru.event.impl.player.*;
-import dev.merguru.module.impl.exploit.Disabler;
-import dev.merguru.utils.addons.rise.component.RotationComponent;
-import dev.merguru.utils.addons.vector.Vector2f;
+import dev.meguru.Meguru;
+import dev.meguru.commands.CommandHandler;
+import dev.meguru.event.impl.player.*;
+import dev.meguru.module.impl.exploit.Disabler;
+import dev.meguru.utils.addons.rise.component.RotationComponent;
+import dev.meguru.utils.addons.vector.Vector2f;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.audio.MovingSoundMinecartRiding;
 import net.minecraft.client.audio.PositionedSoundRecord;
@@ -150,7 +150,7 @@ public class EntityPlayerSP extends AbstractClientPlayer {
      * Called to update the entity's position/logic.
      */
     public void onUpdate() {
-        Merguru.INSTANCE.getEventProtocol().handleEvent(new UpdateEvent());
+        Meguru.INSTANCE.getEventProtocol().handleEvent(new UpdateEvent());
 
         if (this.worldObj.isBlockLoaded(new BlockPos(this.posX, 0.0D, this.posZ))) {
             super.onUpdate();
@@ -204,7 +204,7 @@ public class EntityPlayerSP extends AbstractClientPlayer {
 
         if (this.isCurrentViewEntity()) {
             MotionEvent motionEvent = new MotionEvent(this.posX, this.getEntityBoundingBox().minY, this.posZ, this.rotationYaw, this.rotationPitch, this.onGround);
-            Merguru.INSTANCE.getEventProtocol().handleEvent(motionEvent);
+            Meguru.INSTANCE.getEventProtocol().handleEvent(motionEvent);
 
             if(!motionEvent.isCancelled()) {
                 double posX = motionEvent.getX(), posY = motionEvent.getY(), posZ = motionEvent.getZ();
@@ -254,7 +254,7 @@ public class EntityPlayerSP extends AbstractClientPlayer {
                 RotationComponent.isRotationg = false;
             }
             motionEvent.setPost();
-            Merguru.INSTANCE.getEventProtocol().handleEvent(motionEvent);
+            Meguru.INSTANCE.getEventProtocol().handleEvent(motionEvent);
             this.rotationPitchHead = motionEvent.getPitch();
         }
     }
@@ -295,12 +295,12 @@ public class EntityPlayerSP extends AbstractClientPlayer {
      * Sends a chat message from the player. Args: chatMessage
      */
     public void sendChatMessage(String message) {
-        if (Merguru.INSTANCE.getCommandHandler().execute(message) || message.startsWith(CommandHandler.CHAT_PREFIX)) {
+        if (Meguru.INSTANCE.getCommandHandler().execute(message) || message.startsWith(CommandHandler.CHAT_PREFIX)) {
             return;
         }
 
         PlayerSendMessageEvent playerSendMessageEvent = new PlayerSendMessageEvent(message);
-        Merguru.INSTANCE.getEventProtocol().handleEvent(playerSendMessageEvent);
+        Meguru.INSTANCE.getEventProtocol().handleEvent(playerSendMessageEvent);
         if (!playerSendMessageEvent.isCancelled()) {
             this.sendQueue.addToSendQueue(new C01PacketChatMessage(message));
         }
@@ -420,7 +420,7 @@ public class EntityPlayerSP extends AbstractClientPlayer {
 
     protected boolean pushOutOfBlocks(double x, double y, double z) {
         PushOutOfBlockEvent pushOutOfBlockEvent = new PushOutOfBlockEvent();
-        Merguru.INSTANCE.getEventProtocol().handleEvent(pushOutOfBlockEvent);
+        Meguru.INSTANCE.getEventProtocol().handleEvent(pushOutOfBlockEvent);
         if (!this.noClip || !pushOutOfBlockEvent.isCancelled()) {
             BlockPos blockpos = new BlockPos(x, y, z);
             double d0 = x - (double) blockpos.getX();
@@ -697,10 +697,10 @@ public class EntityPlayerSP extends AbstractClientPlayer {
         boolean flag2 = this.movementInput.moveForward >= f;
         this.movementInput.updatePlayerMoveState();
         PreInputEvent preInputEvent = new PreInputEvent();
-        Merguru.INSTANCE.getEventProtocol().handleEvent(preInputEvent);
+        Meguru.INSTANCE.getEventProtocol().handleEvent(preInputEvent);
         if (this.isUsingItem() && !this.isRiding()) {
             SlowDownEvent slowDownEvent = new SlowDownEvent();
-            Merguru.INSTANCE.getEventProtocol().handleEvent(slowDownEvent);
+            Meguru.INSTANCE.getEventProtocol().handleEvent(slowDownEvent);
             if (!slowDownEvent.isCancelled()) {
                 this.movementInput.moveStrafe *= 0.2F;
                 this.movementInput.moveForward *= 0.2F;
@@ -800,7 +800,7 @@ public class EntityPlayerSP extends AbstractClientPlayer {
 
         MoveEvent event = new MoveEvent(x, y, z, strafe, forward);
 
-        Merguru.INSTANCE.getEventProtocol().handleEvent(event);
+        Meguru.INSTANCE.getEventProtocol().handleEvent(event);
 
         if (!event.isCancelled()) {
             x = event.getX();
@@ -814,7 +814,7 @@ public class EntityPlayerSP extends AbstractClientPlayer {
     @Override
     public void jump() {
         JumpEvent jumpEvent = new JumpEvent();
-        Merguru.INSTANCE.getEventProtocol().handleEvent(jumpEvent);
+        Meguru.INSTANCE.getEventProtocol().handleEvent(jumpEvent);
         if (!jumpEvent.isCancelled()) {
             super.jump();
         }

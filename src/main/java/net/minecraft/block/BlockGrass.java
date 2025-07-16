@@ -1,6 +1,6 @@
 package net.minecraft.block;
 
-import dev.merguru.module.impl.render.XRay;
+import dev.meguru.module.impl.render.XRay;
 import net.minecraft.block.material.Material;
 import net.minecraft.block.properties.IProperty;
 import net.minecraft.block.properties.PropertyBool;
