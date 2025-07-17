@@ -221,14 +221,14 @@ public class Scaffold extends Module {
                             rotations = new float[]{
                                     (val + MathHelper.wrapAngleTo180_float(mc.thePlayer.prevRotationYawHead)) / 2.0F,
                                     (77 + MathHelper.wrapAngleTo180_float(mc.thePlayer.prevRotationPitchHead)) / 2.0F};
-                            e.setRotations(rotations[0], rotations[1]);
+                            RotationComponent.setRotations(rotations,10f,MovementFix.NORMAL);
                             break;
                         case "Enum":
                             if (lastBlockCache != null) {
                                 float yaw = RotationUtils.getEnumRotations(lastBlockCache.getFacing());
-                                e.setRotations(yaw, 77);
+                                RotationComponent.setRotations(new float[]{yaw, 77},10f,MovementFix.NORMAL);
                             } else {
-                                e.setRotations(mc.thePlayer.rotationYaw + 180, 77);
+                                RotationComponent.setRotations(new float[]{mc.thePlayer.rotationYaw + 180, 77},10f,MovementFix.NORMAL);
                             }
                             break;
                         case "0":

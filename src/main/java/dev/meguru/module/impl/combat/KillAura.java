@@ -14,6 +14,7 @@ import dev.meguru.module.api.TargetManager;
 import dev.meguru.module.impl.player.Scaffold;
 import dev.meguru.module.impl.render.HUDMod;
 import dev.meguru.module.settings.impl.*;
+import dev.meguru.utils.BlinkUtils;
 import dev.meguru.utils.addons.rise.MovementFix;
 import dev.meguru.utils.addons.rise.component.RotationComponent;
 import dev.meguru.utils.addons.vector.Vector2f;
@@ -110,6 +111,7 @@ public final class KillAura extends Module {
     public void onDisable() {
         TargetManager.target = null;
         targets.clear();
+        BlinkUtils.stopBlink();
         blocking = false;
         attacking = false;
         if (wasBlocking) {
@@ -129,8 +131,8 @@ public final class KillAura extends Module {
         if (event.isPost()) {
             if (TargetManager.target != null) {
                 if (attackTimer.hasTimeElapsed(cps, true)) {
-                    final int maxValue = (int) ((minCPS.getMaxValue() - maxCPS.getValue()) * 5.0);
-                    final int minValue = (int) ((minCPS.getMaxValue() - minCPS.getValue()) * 5.0);
+                    final int maxValue = (int) ((minCPS.getMaxValue() - maxCPS.getValue()) * 20);
+                    final int minValue = (int) ((minCPS.getMaxValue() - minCPS.getValue()) * 20);
                     cps = MathUtils.getRandomInRange(minValue, maxValue);
                     AttackEvent attackEvent = new AttackEvent(TargetManager.target);
                     Meguru.INSTANCE.getEventProtocol().handleEvent(attackEvent);
@@ -251,6 +253,7 @@ public final class KillAura extends Module {
                 }
             } else {
                 TargetManager.target = null;
+                BlinkUtils.stopBlink();
                 switchTimer.reset();
                 currentTargetIndex = 0;
             }
@@ -402,9 +405,11 @@ public final class KillAura extends Module {
         if (wasBlocking)
             return;
         EntityLivingBase targetEntity = TargetManager.target;
+        //BlinkUtils.stopBlink();
         if (interact)
             PacketUtils.sendPacket(new C02PacketUseEntity(targetEntity, C02PacketUseEntity.Action.INTERACT));
         PacketUtils.sendBlocking(true, false);
+        //BlinkUtils.startBlink();
         wasBlocking = true;
     }
 
