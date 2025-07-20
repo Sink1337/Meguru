@@ -1398,8 +1398,6 @@ public class EntityRenderer implements IResourceManagerReloadListener {
         GlStateManager.shadeModel(7424);
         GlStateManager.alphaFunc(516, 0.1F);
 
-        Meguru.INSTANCE.getEventProtocol().handleEvent(new Render3DEvent(partialTicks));
-
         if (!this.debugView) {
             GlStateManager.matrixMode(5888);
             GlStateManager.popMatrix();
@@ -1538,7 +1536,7 @@ public class EntityRenderer implements IResourceManagerReloadListener {
             this.renderCloudsCheck(renderglobal, partialTicks, pass);
         }
 
-
+        Meguru.INSTANCE.getEventProtocol().handleEvent(new Render3DEvent(partialTicks));
 
         this.mc.mcProfiler.endStartSection("hand");
 

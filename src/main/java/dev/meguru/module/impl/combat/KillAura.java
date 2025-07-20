@@ -56,7 +56,7 @@ public final class KillAura extends Module {
 
     private final ModeSetting mode = new ModeSetting("Mode", "Single", "Single", "Switch", "Multi");
 
-    private final NumberSetting switchDelay = new NumberSetting("Switch Delay", 50, 500, 1, 1);
+    private final NumberSetting switchDelay = new NumberSetting("Switch Delay", 50, 500, 0, 25);
     private final NumberSetting maxTargetAmount = new NumberSetting("Max Target Amount", 3, 50, 2, 1);
 
     private final NumberSetting minCPS = new NumberSetting("Min CPS", 10, 20, 1, 1);
